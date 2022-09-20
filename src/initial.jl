@@ -1,5 +1,5 @@
 """
-    eos_g(P::Float64,T::Float64)
+    eos_g(P::Number,T::Number)
 
 Initializes some constants. Returns some variables    
 
@@ -7,7 +7,7 @@ Initializes some constants. Returns some variables
 -`P`: represents pressure
 -`T`: represents the temperature in some units
 """
-function eos_g(P::Float64,T::Float64)
+function eos_g(P::Number,T::Number)
     # parametrization of redlich kwong taken from Huber et al. 2010
     rho_g     = -112.528*Complex(T-273.15)^-0.381 + 127.811*Complex(P*1e-5)^-1.135 + 112.04*Complex(T-273.15)^-0.411*Complex(P*1e-5)^0.033
     drho_g_dP = (-1.135)*127.811*Complex(P*1e-5)^-2.135 + 0.033*112.04*Complex(T-273.15)^-0.411*Complex(P*1e-5)^-0.967

@@ -1,10 +1,16 @@
 """
-    gas_heat_capacity(X_co2::Float64)
+    gas_heat_capacity(X_co2::Number)
 
 
 X_co2
 """
-function gas_heat_capacity(X_co2::Float64)
+function gas_heat_capacity(X_co2::Number)
+    if X_co2 == 0
+        c_g=0
+        dc_g_dX_co2=0
+        return [c_g, dc_g_dX_co2]
+    end
+
     # %Properties of CO2
     m_co2 = 44.01e-3
     c_co2 = 1200
@@ -18,9 +24,5 @@ function gas_heat_capacity(X_co2::Float64)
     c_g         = (m_h2o*c_h2o*(1-X_co2)+m_co2*c_co2*X_co2)/m_g
     dc_g_dX_co2 = ((-m_h2o*c_h2o+m_co2*c_co2)+ c_g*(m_h2o-m_co2))/m_g
 
-    if X_co2 == 0
-        c_g=0
-        dc_g_dX_co2=0
-    end
     return [c_g, dc_g_dX_co2]
 end
