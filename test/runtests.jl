@@ -1,18 +1,6 @@
 using Chamber
 using Test
 
-# @testset "Chamber.jl" begin
-#     # Write your tests here.
-#     @test 2+2 == 4
-#     @test 4^(0.5) == 2
-#     @test true
-# end
-
-# @testset "Data functions" begin
-#     @test true
-#     @test true
-# end
-
 @testset "GLQ_points_weights test" begin
     @test Chamber.GLQ_points_weights_hard(5) == [0 0]
     A = [1 1.0000000000000000 -0.5773502691896257; 2 1.0000000000000000 0.5773502691896257]
