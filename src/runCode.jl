@@ -22,6 +22,10 @@ The volcano eruption simulation
 - `range_depth`: Estimate depth of volcano chamber
 """
 function chamber(composition::String, end_time::Number=3e9, log_volume_km3::Number, range_water::Float64, range_co2::Float64, log_vfr::Float64, range_depth::Number) # ("silicic", 1e9, 0.2, 0.04, 0.001, -3.3, 8e3)
+    if !(composition in ["silicic", "mafic"])
+        @error("composition should be \"silicic\" or \"mafic\", not \"$composition\"")
+        return "Stop"
+    end
     plott = true
     plot_matlab = false
 
@@ -161,10 +165,10 @@ function chamber(composition::String, end_time::Number=3e9, log_volume_km3::Numb
     # IC Finder parameters
     param["IC_Finder"] = Dict{Any, Any}([])
     param["IC_Finder"]["max_count"] = 100
-    param["IC_Finder"]["Tol"] = if composition == "Silicic" 1e-9 else 1e-8 end
+    param["IC_Finder"]["Tol"] = if composition == "silicic" 1e-9 else 1e-8 end
     param["IC_Finder"]["min_eps_g"] = 1e-10
     param["IC_Finder"]["eps_g_guess_ini"] = 1e-2
-    param["IC_Finder"]["X_co2_guess_ini"] = 0.2 #if composition == "Silicic" 0.2 else 0.2 end 
+    param["IC_Finder"]["X_co2_guess_ini"] = 0.2
     param["IC_Finder"]["fraction"] = 0.2
     param["IC_Finder"]["delta_X_co2"] = 1e-2
     write(io, "IC_Finder parameters: $(param["IC_Finder"])\n")
