@@ -37,20 +37,6 @@ function chamber(composition::String, end_time::Number=3e9, log_volume_km3::Numb
 
     to = get_timer("share")
     @timeit to "runCode" begin
-    param = Dict{Any,Any}([])
-    param["composition"] = composition
-    param["rheol"] = "old"
-    param["fluxing"] = false
-    param["single_eruption"] = false
-    methods = Dict(
-        "QNDF"=>QNDF(autodiff=false),
-        "FBDF"=>FBDF(autodiff=false),
-        "Rodas4"=> Rodas4(autodiff=false),
-        "Tsit5"=>Tsit5(),
-        "KenCarp4"=>KenCarp4(autodiff=false),
-        "CVODE_BDF"=>CVODE_BDF(),
-        "Rosenbrock23"=>Rosenbrock23(autodiff=false),
-    )
     # time
     begin_time     = 0
     # error tolerances used in ode method
@@ -60,6 +46,22 @@ function chamber(composition::String, end_time::Number=3e9, log_volume_km3::Numb
     max_step      = 1e7 # 1e8  set higher # In silicic, T will error when max_step >= 1e8. Use 1e7.
     write(io, "rtol: $reltol, atol: $abstol\n")
     write(io, "first_step: $first_step, max_step: $max_step \n")
+
+    methods = Dict(
+        "QNDF"=>QNDF(autodiff=false),
+        "FBDF"=>FBDF(autodiff=false),
+        "Rodas4"=> Rodas4(autodiff=false),
+        "Tsit5"=>Tsit5(),
+        "KenCarp4"=>KenCarp4(autodiff=false),
+        "CVODE_BDF"=>CVODE_BDF(),
+        "Rosenbrock23"=>Rosenbrock23(autodiff=false),
+    )
+
+    param = Dict{Any,Any}([])
+    param["composition"] = composition
+    param["rheol"] = "old"
+    param["fluxing"] = false
+    param["single_eruption"] = false
 
     # some constants
     param["beta_m"]  = 1e10   # bulk modulus melt (Pa)
@@ -107,8 +109,19 @@ function chamber(composition::String, end_time::Number=3e9, log_volume_km3::Numb
         param["M"]  = 8.31       # gas constant
     end
 
+    param_saved_var = Dict{Any, Any}(
+        "maxTime" => 0,
+        "lengthTime" => 0,
+        "switch_Tprofile" => 0)
+    param_saved_var["storeSumk"] = zeros(param["maxn"])
+    param_saved_var["storeSumk_2"] = zeros(param["maxn"])
+    param_saved_var["storeSumk_old"] = zeros(param["maxn"])
+    param_saved_var["storeSumk_2_old"]= zeros(param["maxn"])
+    param["Q_out_old"] = 0
+
     range_volume_km3     = 10^log_volume_km3   # range of volume in km3
     range_radius         = 1000*(range_volume_km3/(4*pi/3))^(1/3)   # range of radius in m
+    V_0  = 4*pi/3*range_radius^3   # initial volume of the chamber (m^3)
     range_vfr        = 10^log_vfr   # volume flow rate (km3/yr)  
     range_mfr        = if param["fluxing"] 0 else rho_m0*range_vfr*1e9/(3600*24*365) end
 
@@ -119,12 +132,6 @@ function chamber(composition::String, end_time::Number=3e9, log_volume_km3::Numb
     write(io, "log_volume_km3: $log_volume_km3, range_water: $range_water, range_co2: $range_co2 \n")
     write(io, "log_vfr: $log_vfr, range_depth: $range_depth \n")
     write(io, "method: $method \n")
-
-    param["saved_var"] = Dict{Any, Any}(
-        "maxTime" => 0,
-        "lengthTime" => 0,
-        "switch_Tprofile" => 0)
-    param["Q_out_old"] = 0
 
     ## initial conditions
     # depth reservoir
@@ -139,10 +146,10 @@ function chamber(composition::String, end_time::Number=3e9, log_volume_km3::Numb
 
     # lithostatic pressure
     grav_acc      = 9.81   # gravitational acceleration (m/s2)
-    param["Tb"]   = Tb
     DP_crit       = 20e6   # critical overpressure (Pa)
-    P_0           = param["rho_r"]*grav_acc*depth   # initial chamber pressure (Pa)
     P_lit         = P_0
+    param["Tb"]   = Tb
+    P_0           = param["rho_r"]*grav_acc*depth   # initial chamber pressure (Pa)
     param["P_lit_0"] = P_0
     param["dP_lit_dt"] = 0
     param["dP_lit_dt_0"] = param["dP_lit_dt"]
@@ -162,28 +169,24 @@ function chamber(composition::String, end_time::Number=3e9, log_volume_km3::Numb
         @timeit to "find_liq_mafic" T_0 = find_liq_mafic(InitialConc_H2O, InitialConc_CO2, P_0, ini_eps_x)
     end
 
+    
     # IC Finder parameters
-    param["IC_Finder"] = Dict{Any, Any}([])
-    param["IC_Finder"]["max_count"] = 100
-    param["IC_Finder"]["Tol"] = if composition == "silicic" 1e-9 else 1e-8 end
-    param["IC_Finder"]["min_eps_g"] = 1e-10
-    param["IC_Finder"]["eps_g_guess_ini"] = 1e-2
-    param["IC_Finder"]["X_co2_guess_ini"] = 0.2
-    param["IC_Finder"]["fraction"] = 0.2
-    param["IC_Finder"]["delta_X_co2"] = 1e-2
-    write(io, "IC_Finder parameters: $(param["IC_Finder"])\n")
-
-    a    = range_radius   # initial radius of the chamber (m)
-    V_0  = 4*pi/3*a^3   # initial volume of the chamber (m^3)
-    T_R  = T_0+50   # Temperature of recharging magma (K)
-    T_in = T_R   # Temperature of inflowing magma (K)
+    param_IC_Finder = Dict{Any, Any}([])
+    param_IC_Finder["max_count"] = 100
+    param_IC_Finder["Tol"] = if composition == "silicic" 1e-9 else 1e-8 end
+    param_IC_Finder["min_eps_g"] = 1e-10
+    param_IC_Finder["eps_g_guess_ini"] = 1e-2
+    param_IC_Finder["X_co2_guess_ini"] = 0.2
+    param_IC_Finder["fraction"] = 0.2
+    param_IC_Finder["delta_X_co2"] = 1e-2
+    write(io, "IC_Finder parameters: $(param_IC_Finder)\n")
 
     if ~param["fluxing"]
         mdot_in = range_mfr
     else
         log_vfr    = -4.3   # log volume flow rate (km3/yr)
         range_vfr        = 10^log_vfr   # volume flow rate (km3/yr)
-        rho_g_in         = eos_g(P_0, T_in)[1]
+        rho_g_in         = eos_g(P_0, T_in)["rho_g"]
         range_mfr        = rho_g_in*range_vfr*1e9/(3600*24*365)
         mdot_in          = range_mfr   # place holder
         XCO2_in          = 0.8
@@ -194,7 +197,7 @@ function chamber(composition::String, end_time::Number=3e9, log_volume_km3::Numb
     param["Mdot_in_pass"] = mdot_in
     param["Mdot_out_pass"] = 10000
 
-    rho_g0 = eos_g(P_0, T_0)[1]   # initial gas density
+    rho_g0 = eos_g(P_0, T_0)["rho_g"]   # initial gas density
     if param["composition"] == "silicic"
         @timeit to "crystal_fraction_silicic" eps_x0 = crystal_fraction_silicic(T_0, P_0, 0, 0, InitialConc_H2O, InitialConc_CO2, rho_m0, rho_x0, rho_g0)[1]
     elseif param["composition"] == "mafic"
@@ -208,18 +211,15 @@ function chamber(composition::String, end_time::Number=3e9, log_volume_km3::Numb
     M_h2o_0 = InitialConc_H2O*V_0*rho   # Total mass of H2O, initial
 
     if param["composition"] == "silicic"
-        # println(M_h2o_0,", ", M_co2_0,", ", M_tot,", ", P_0,", ", T_0,", ", V_0,", ", rho_m0,", ", rho_x0,", ", param["mm_co2"],", ", param["mm_h2o"],", ", param["IC_Finder"])
-        @timeit to "IC_Finder_silicic" eps_g0, X_co20, C_co2, phase = IC_Finder_silicic(M_h2o_0, M_co2_0, M_tot, P_0, T_0, V_0, rho_m0, rho_x0, param["mm_co2"], param["mm_h2o"], param["IC_Finder"])
-        # print(f"[{eps_g0}, {X_co20}, {C_co2}, {phase}] = IC_Finder_silicic({M_h2o_0}, {M_co2_0}, {M_tot}, {P_0}, {T_0}, {V_0}, {rho_m0}, {rho_x0}, param)")
+        @timeit to "IC_Finder_silicic" eps_g0, X_co20, C_co2, phase = IC_Finder_silicic(M_h2o_0, M_co2_0, M_tot, P_0, T_0, V_0, rho_m0, rho_x0, param["mm_co2"], param["mm_h2o"], param_IC_Finder)
     elseif param["composition"] == "mafic"
-        # println("IC_Finder_mafic($M_h2o_0, $M_co2_0, $M_tot, $P_0, $T_0, $V_0, $rho_m0, $rho_x0)")
         write(io, "IC_Finder_mafic($M_h2o_0, $M_co2_0, $M_tot, $P_0, $T_0, $V_0, $rho_m0, $rho_x0)\n")
-        @timeit to "IC_Finder_mafic" eps_g0, X_co20, C_co2, phase = IC_Finder_mafic(M_h2o_0, M_co2_0, M_tot, P_0, T_0, V_0, rho_m0, rho_x0, param["mm_co2"], param["mm_h2o"], param["IC_Finder"])
+        @timeit to "IC_Finder_mafic" eps_g0, X_co20, C_co2, phase = IC_Finder_mafic(M_h2o_0, M_co2_0, M_tot, P_0, T_0, V_0, rho_m0, rho_x0, param["mm_co2"], param["mm_h2o"], param_IC_Finder)
     end
     println("IC_Finder done: [eps_g0, X_co20, C_co2] = [$eps_g0, $X_co20, $C_co2]")
     println("phase: ", phase)
     write(io, "IC_Finder done: $eps_g0, $X_co20, $C_co2, $phase\n")
-    param["saved_var"]["phase"] = phase
+    param_saved_var["phase"] = phase
 
     # update initial crystal volume fraction
     if param["composition"] == "silicic"
@@ -248,11 +248,6 @@ function chamber(composition::String, end_time::Number=3e9, log_volume_km3::Numb
         end
     end
 
-    # Calculate the total water content for initial magma
-    m_h2o_tot  = M_h2o_0
-    # Calculate the total CO2 content for initial magma
-    m_co2_tot  = M_co2_0
-
     # Calculate the water content (concentration) for inflowing magma contents
     tot_h2o_frac_in = M_h2o_0/(rho_0*V_0)   # CHANGE MASS FRACTION FROM XCO2_IN
     tot_co2_frac_in = M_co2_0/(rho_0*V_0)
@@ -272,30 +267,23 @@ function chamber(composition::String, end_time::Number=3e9, log_volume_km3::Numb
         "visc_relax" => 1,   # switch viscous relaxation on/off
         "eruption" => 0
     )
-
-    # initialize vector to store quantities
-    storeTime = [0]
-    storeTemp = [T_0]
-    time, P, DP, P0plusDP, T, eps_g, V, rho_m, rho_x = [], [], [], [], [], [], [], [], []
-    tot_Mass, tot_Mass_H2O, tot_Mass_CO2, X_co2 = [], [], [], []
-    TE, YE = [], []
     if param["single_eruption"]
         sw["eruption"] = 1
     end
 
+    # initialize vector to store quantities
+    storeTime = [0]
+    storeTemp = [T_0]
+
     # Initial temperature and viscosity profile around chamber
     @timeit to "GLQ_points_weights_hard" quadpts, weights = GLQ_points_weights_hard(param["GLQ_n"])
-    cc    = 10*a   #outer radius for heat conduction (m)
-    b     = a + cc
+    cc    = 10*range_radius   #outer radius for heat conduction (m)
+    b     = range_radius + cc
     quadpts_r = (b-a)/2*quadpts .+ (a+b)/2
-    param["saved_var"]["storeTime"] = storeTime
-    param["saved_var"]["storeTemp"] = storeTemp
-    param["saved_var"]["storeSumk"] = zeros(param["maxn"])
-    param["saved_var"]["storeSumk_2"] = zeros(param["maxn"])
-    param["saved_var"]["storeSumk_old"] = zeros(param["maxn"])
-    param["saved_var"]["storeSumk_2_old"]= zeros(param["maxn"])
-    # println("hcc ",param["maxn"],", ", a,", ", cc,", ", quadpts_r,", ", param["kappa"],", ", param["Tb"])
-    @timeit to "heat_conduction_chamber_profileCH" Trt = heat_conduction_chamber_profileCH(param["maxn"], a, cc, quadpts_r, param["kappa"], param["Tb"], param["saved_var"])
+    param_saved_var["storeTime"] = storeTime
+    param_saved_var["storeTemp"] = storeTemp
+
+    @timeit to "heat_conduction_chamber_profileCH" Trt = heat_conduction_chamber_profileCH(param["maxn"], a, cc, quadpts_r, param["kappa"], param["Tb"], param_saved_var)
     if param["rheol"] == "new"
         A = param["A"]
         B = param["B"]
@@ -309,14 +297,6 @@ function chamber(composition::String, end_time::Number=3e9, log_volume_km3::Numb
         dev_stress = DP_crit
         eta_rt     = (dev_stress^(1-nn)/AA)*exp(G/M/Trt)
     end
-
-    I      = sum((b-a)/2*(weights*(eta_rt/(quadpts_r).^4)))
-    eta_r0 = 3*a^3*I
-
-    # time scales (s)
-    tau_inj           = rho_0*V_0/(mdot_in)   # injection timescale
-    tau_cooling       = a^2/param["kappa"]   # cooling timescale
-    tau_visco_elastic = eta_r0/DP_crit       # relaxation timescale
 
     param["P_lit"] = P_lit
     param["DP_crit"] = DP_crit

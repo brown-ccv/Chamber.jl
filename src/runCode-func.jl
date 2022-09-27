@@ -59,7 +59,8 @@ function odeChamber(du,u,param,t)
     drho_x_dP      = rho_x/param["beta_x"]
     drho_x_dT      = -rho_x*param["alpha_x"]
 
-    rho_g,drho_g_dP,drho_g_dT = eos_g(P,T)
+    eos_g_results = eos_g(P,T)
+    rho_g,drho_g_dP,drho_g_dT = eos_g_results["rho_g"],eos_g_results["drho_g_dP"],eos_g_results["drho_g_dT"]
 
     M_h2o    = u[9]
     M_co2    = u[10]
@@ -219,7 +220,7 @@ function stopChamber_MT(out,u,t,int)
     tot_c = u[10]
 
     P = P0plusDP + P_lit - param["P_lit_0"] 
-    rho_g = eos_g(P, T)[1]
+    rho_g = eos_g(P, T)["rho_g"]
 
     m_h20 = tot_w/tot_m
     m_co2 = tot_c/tot_m
@@ -290,7 +291,7 @@ function affect!(int, idx)
 
     m_h2o = int.u[9]/int.u[8]
     m_co2 = int.u[10]/int.u[8]
-    rho_g0 = eos_g(P_0, int.u[2])[1]
+    rho_g0 = eos_g(P_0, int.u[2])["rho_g"]
     
     if param["composition"] == "silicic"
         eps_x0 =  crystal_fraction_silicic(int.u[2], P_0, int.u[3], int.u[7], m_h2o, m_co2, int.u[5], int.u[6], rho_g0)[1]
