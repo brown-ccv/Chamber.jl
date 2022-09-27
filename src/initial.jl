@@ -16,5 +16,5 @@ function eos_g(P::Number,T::Number)
     rho_g     = real(rho_g*1e3)
     drho_g_dP = real(drho_g_dP*1e-2)
     drho_g_dT = real(drho_g_dT*1e3)
-    return [rho_g, drho_g_dP, drho_g_dT]
+    return Dict(["rho_g"=>rho_g, "drho_g_dP"=>drho_g_dP, "drho_g_dT"=>drho_g_dT])
 end
