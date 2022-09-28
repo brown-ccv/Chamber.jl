@@ -21,7 +21,7 @@ The volcano eruption simulation
 - `log_vfr`: 
 - `range_depth`: Estimate depth of volcano chamber
 """
-function chamber(composition::String, end_time::Number=3e9, log_volume_km3::Number, range_water::Float64, range_co2::Float64, log_vfr::Float64, range_depth::Number) # ("silicic", 1e9, 0.2, 0.04, 0.001, -3.3, 8e3)
+function chamber(composition::String, end_time::Number, log_volume_km3::Number, range_water::Float64, range_co2::Float64, log_vfr::Float64, range_depth::Number) # ("silicic", 1e9, 0.2, 0.04, 0.001, -3.3, 8e3)
     if !(composition in ["silicic", "mafic"])
         @error("composition should be \"silicic\" or \"mafic\", not \"$composition\"")
         return "Stop"
@@ -43,7 +43,7 @@ function chamber(composition::String, end_time::Number=3e9, log_volume_km3::Numb
     reltol        = 1e-8
     abstol        = 1e-8
     first_step    = 1e5 # 1e6 set lower
-    max_step      = 1e7 # 1e8  set higher # In silicic, T will error when max_step >= 1e8. Use 1e7.
+    max_step      = 1e7 # 1e8 set higher # In silicic, T will error when max_step >= 1e8. Use 1e7.
     write(io, "rtol: $reltol, atol: $abstol\n")
     write(io, "first_step: $first_step, max_step: $max_step \n")
 
@@ -147,9 +147,9 @@ function chamber(composition::String, end_time::Number=3e9, log_volume_km3::Numb
     # lithostatic pressure
     grav_acc      = 9.81   # gravitational acceleration (m/s2)
     DP_crit       = 20e6   # critical overpressure (Pa)
+    P_0           = param["rho_r"]*grav_acc*depth   # initial chamber pressure (Pa)
     P_lit         = P_0
     param["Tb"]   = Tb
-    P_0           = param["rho_r"]*grav_acc*depth   # initial chamber pressure (Pa)
     param["P_lit_0"] = P_0
     param["dP_lit_dt"] = 0
     param["dP_lit_dt_0"] = param["dP_lit_dt"]
@@ -168,18 +168,8 @@ function chamber(composition::String, end_time::Number=3e9, log_volume_km3::Numb
     elseif param["composition"] == "mafic"
         @timeit to "find_liq_mafic" T_0 = find_liq_mafic(InitialConc_H2O, InitialConc_CO2, P_0, ini_eps_x)
     end
-
-    
-    # IC Finder parameters
-    param_IC_Finder = Dict{Any, Any}([])
-    param_IC_Finder["max_count"] = 100
-    param_IC_Finder["Tol"] = if composition == "silicic" 1e-9 else 1e-8 end
-    param_IC_Finder["min_eps_g"] = 1e-10
-    param_IC_Finder["eps_g_guess_ini"] = 1e-2
-    param_IC_Finder["X_co2_guess_ini"] = 0.2
-    param_IC_Finder["fraction"] = 0.2
-    param_IC_Finder["delta_X_co2"] = 1e-2
-    write(io, "IC_Finder parameters: $(param_IC_Finder)\n")
+    T_R  = T_0+50   # Temperature of recharging magma (K)
+    T_in = T_R   # Temperature of inflowing magma (K)
 
     if ~param["fluxing"]
         mdot_in = range_mfr
@@ -199,9 +189,9 @@ function chamber(composition::String, end_time::Number=3e9, log_volume_km3::Numb
 
     rho_g0 = eos_g(P_0, T_0)["rho_g"]   # initial gas density
     if param["composition"] == "silicic"
-        @timeit to "crystal_fraction_silicic" eps_x0 = crystal_fraction_silicic(T_0, P_0, 0, 0, InitialConc_H2O, InitialConc_CO2, rho_m0, rho_x0, rho_g0)[1]
+        @timeit to "crystal_fraction_silicic" eps_x0 = crystal_fraction_silicic(T_0, P_0, InitialConc_H2O, InitialConc_CO2)[1]
     elseif param["composition"] == "mafic"
-        @timeit to "crystal_fraction_mafic" eps_x0 = crystal_fraction_mafic(T_0, P_0, 0, 0, InitialConc_H2O, InitialConc_CO2, rho_m0, rho_x0, rho_g0)[1]
+        @timeit to "crystal_fraction_mafic" eps_x0 = crystal_fraction_mafic(T_0, P_0, InitialConc_H2O, InitialConc_CO2)[1]
     end
 
     eps_m0 = 1-eps_x0
@@ -210,10 +200,20 @@ function chamber(composition::String, end_time::Number=3e9, log_volume_km3::Numb
     M_co2_0 = InitialConc_CO2*V_0*rho   # Total mass of CO2, initial
     M_h2o_0 = InitialConc_H2O*V_0*rho   # Total mass of H2O, initial
 
+    # IC Finder parameters
+    param_IC_Finder = Dict{Any, Any}([])
+    param_IC_Finder["max_count"] = 100
+    param_IC_Finder["Tol"] = if composition == "silicic" 1e-9 else 1e-8 end
+    param_IC_Finder["min_eps_g"] = 1e-10
+    param_IC_Finder["eps_g_guess_ini"] = 1e-2
+    param_IC_Finder["X_co2_guess_ini"] = 0.2
+    param_IC_Finder["fraction"] = 0.2
+    param_IC_Finder["delta_X_co2"] = 1e-2
+    write(io, "IC_Finder parameters: $(param_IC_Finder)\n")
+
     if param["composition"] == "silicic"
-        @timeit to "IC_Finder_silicic" eps_g0, X_co20, C_co2, phase = IC_Finder_silicic(M_h2o_0, M_co2_0, M_tot, P_0, T_0, V_0, rho_m0, rho_x0, param["mm_co2"], param["mm_h2o"], param_IC_Finder)
+        @timeit to "IC_Finder_silicic" eps_g0, X_co20, C_co2, phase = IC_Finder_silicic(M_h2o_0, M_co2_0, M_tot, P_0, T_0, V_0, rho_m0, param["mm_co2"], param["mm_h2o"], param_IC_Finder)
     elseif param["composition"] == "mafic"
-        write(io, "IC_Finder_mafic($M_h2o_0, $M_co2_0, $M_tot, $P_0, $T_0, $V_0, $rho_m0, $rho_x0)\n")
         @timeit to "IC_Finder_mafic" eps_g0, X_co20, C_co2, phase = IC_Finder_mafic(M_h2o_0, M_co2_0, M_tot, P_0, T_0, V_0, rho_m0, rho_x0, param["mm_co2"], param["mm_h2o"], param_IC_Finder)
     end
     println("IC_Finder done: [eps_g0, X_co20, C_co2] = [$eps_g0, $X_co20, $C_co2]")
@@ -223,9 +223,9 @@ function chamber(composition::String, end_time::Number=3e9, log_volume_km3::Numb
 
     # update initial crystal volume fraction
     if param["composition"] == "silicic"
-        @timeit to "crystal_fraction_silicic" eps_x0 = crystal_fraction_silicic(T_0, P_0, eps_g0, X_co20, InitialConc_H2O, InitialConc_CO2, rho_m0, rho_x0, rho_g0)[1]
+        @timeit to "crystal_fraction_silicic" eps_x0 = crystal_fraction_silicic(T_0, P_0, InitialConc_H2O, InitialConc_CO2)[1]
     elseif param["composition"] == "mafic"
-        @timeit to "crystal_fraction_mafic" eps_x0 = crystal_fraction_mafic(T_0, P_0, eps_g0, X_co20, InitialConc_H2O, InitialConc_CO2, rho_m0, rho_x0, rho_g0)[1]
+        @timeit to "crystal_fraction_mafic" eps_x0 = crystal_fraction_mafic(T_0, P_0, InitialConc_H2O, InitialConc_CO2)[1]
     end
 
     # update initial melt volume fraction
@@ -279,11 +279,11 @@ function chamber(composition::String, end_time::Number=3e9, log_volume_km3::Numb
     @timeit to "GLQ_points_weights_hard" quadpts, weights = GLQ_points_weights_hard(param["GLQ_n"])
     cc    = 10*range_radius   #outer radius for heat conduction (m)
     b     = range_radius + cc
-    quadpts_r = (b-a)/2*quadpts .+ (a+b)/2
+    quadpts_r = (b-range_radius)/2*quadpts .+ (range_radius+b)/2
     param_saved_var["storeTime"] = storeTime
     param_saved_var["storeTemp"] = storeTemp
 
-    @timeit to "heat_conduction_chamber_profileCH" Trt = heat_conduction_chamber_profileCH(param["maxn"], a, cc, quadpts_r, param["kappa"], param["Tb"], param_saved_var)
+    @timeit to "heat_conduction_chamber_profileCH" Trt = heat_conduction_chamber_profileCH(param["maxn"], range_radius, cc, quadpts_r, param["kappa"], param["Tb"], param_saved_var)
     if param["rheol"] == "new"
         A = param["A"]
         B = param["B"]
