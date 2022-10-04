@@ -1,8 +1,4 @@
-module IC_finder
-using Roots
-include("initial.jl")
-using .initial: eos_g, crystal_fraction_silicic, exsolve_silicic, exsolve3_silicic, crystal_fraction_mafic, exsolve_mafic, exsolve3_mafic
-
+# Functions for initial condition
 function mco2_dissolved_sat_silicic(X, P, T)
     P_MPa = P/1e6
     # function & coefficients from Liu et al 2005
@@ -335,6 +331,4 @@ function IC_Finder_mafic(M_h2o_0, M_co2_0, M_tot, P_0, T_0, V_0, rho_m0, mm_co2,
         phase = 2
     end
     return [eps_g0, X_co20, mco2_diss, phase]
-end
-
 end

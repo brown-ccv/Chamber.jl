@@ -1,6 +1,3 @@
-module initial
-using SpecialFunctions, Roots
-
 """
     eos_g(P::Number, T::Number)
 
@@ -493,6 +490,4 @@ function crystal_fraction_mafic(T::Number, P::Number, mH2O::Number, mCO2::Number
         deps_x_dT=0
     end
     return [eps_x, deps_x_dP, deps_x_dT, deps_x_deps_g, deps_x_dmco2_t, deps_x_dmh2o_t]
-end
-
 end

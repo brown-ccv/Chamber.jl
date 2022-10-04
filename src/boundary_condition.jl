@@ -1,9 +1,3 @@
-include("initial.jl")
-include("heat.jl")
-include("GLQ_points_weights.jl")
-using .initial: crystal_fraction_silicic, crystal_fraction_mafic
-using .heat: gas_heat_capacity, heat_conduction_chamberCH, heat_conduction_chamber_profileCH
-
 """
     boundary_conditions_new(P::Number, T::Number, V::Number, rho_m::Number, rho_x::Number, c::Number, sw::Dict, T_in::Number, M_h2o::Number, M_co2::Number, total_Mass::Number, param::Dict, param_saved_var::Dict)
 

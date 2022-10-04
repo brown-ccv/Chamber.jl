@@ -1,5 +1,3 @@
-using DataFrames, CSV, Plots
-
 function plot_figs(csv_file, path)
     ENV["GKSwstype"] = "100"  # magic environmental variable for Plots
     df  = CSV.File(csv_file) |> DataFrame

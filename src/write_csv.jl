@@ -1,5 +1,3 @@
-using DataFrames, CSV
-
 function write_csv(data, path)
     number_of_data = length(data)
     println("number_of_data: $number_of_data")
