@@ -4,6 +4,8 @@ using DataFrames, CSV, TimerOutputs, Dates
 using Plots
 # include("func.jl")
 include("runCode-func.jl")
+include("write_csv.jl")
+include("plot_figs.jl")
 using .myfunc: eos_g, crystal_fraction_silicic, crystal_fraction_mafic, exsolve_silicic, exsolve_mafic, find_liq_silicic, find_liq_mafic, gas_heat_capacity, IC_Finder_silicic, IC_Finder_mafic, boundary_conditions_new, heat_conduction_chamber_profileCH, exsolve3_silicic, exsolve3_mafic, GLQ_points_weights_hard
 
 """
@@ -26,8 +28,6 @@ function chamber(composition::String, end_time::Number, log_volume_km3::Number, 
         @error("composition should be \"silicic\" or \"mafic\", not \"$composition\"")
         return "Stop"
     end
-    plott = true
-    plot_matlab = false
 
     method = "CVODE_BDF"
     datetime = Dates.format(now(), "YYmmddHHMM")
@@ -314,49 +314,10 @@ function chamber(composition::String, end_time::Number, log_volume_km3::Number, 
     end
     println(to)
     write(io, "$to\n")
-
-    df = DataFrame(sol)
-    number_of_data = length(sol)
-    println("number_of_data: $number_of_data")
-    write(io, "number_of_data: $number_of_data\n")
-    CSV.write("$path/out.csv", df)
     close(io)
 
-    ENV["GKSwstype"] = "100"  # magic environmental variable for Plots
-    if plott == true && plot_matlab === true
-        ## plot matlab result
-        matlab = joinpath(pwd(),"/home/calliehsu/Python_code/Mafic/matlab_mafic_wa_1e-2_co_8e-4_step_1e5_1e7.csv")  #matlab_mafic_wa_1e-2_co_1e-3 #matlab_mafic #matlab_silicic  # matlab_silicic_sat_005_00001_initialsteps_1e3_strange # matlab_silicic_saturated
-        df2 = CSV.File(matlab) |> DataFrame
-        tt = df2[!,1][df2[!,1].<=end_time]
-        p1 = plot(tt, df2[!,2][1:length(tt)], xaxis="Time (t)", yaxis="P+dP", label="Matlab", linewidth=2, marker=(:circle,3,Plots.stroke(1,:gray)))
-        p2 = plot(tt, df2[!,3][1:length(tt)], xaxis="Time (t)",yaxis="T", label="Matlab", linewidth=2, marker=(:circle,3,Plots.stroke(1,:gray)))
-        p3 = plot(tt, df2[!,4][1:length(tt)], xaxis="Time (t)",yaxis="eps_g", label="Matlab", linewidth=2, marker=(:circle,3,Plots.stroke(1,:gray)))
-        p4 = plot(tt, df2[!,5][1:length(tt)], xaxis="Time (t)",yaxis="V", label="Matlab", linewidth=2, marker=(:circle,3,Plots.stroke(1,:gray)))
-        p5 = plot(tt, df2[!,8][1:length(tt)], xaxis="Time (t)",yaxis="X_CO2", label="Matlab", linewidth=2, marker=(:circle,3,Plots.stroke(1,:gray)))
-        p6 = plot(tt, df2[!,9][1:length(tt)], xaxis="Time (t)",yaxis="tot_Mass", label="Matlab", linewidth=2, marker=(:circle,3,Plots.stroke(1,:gray)))
-        plot!(p1, df[!,1], df[!,2], label="Julia $method", linewidth=2, marker=(:x,3,Plots.stroke(2)))
-        plot!(p2, df[!,1], df[!,3], label="Julia $method", linewidth=2, marker=(:x,3,Plots.stroke(2)))
-        plot!(p3, df[!,1], df[!,4], label="Julia $method", linewidth=2, marker=(:x,3,Plots.stroke(2)))
-        plot!(p4, df[!,1], df[!,5], label="Julia $method", linewidth=2, marker=(:x,3,Plots.stroke(2)))
-        plot!(p5, df[!,1], df[!,8], label="Julia $method", linewidth=2, marker=(:x,3,Plots.stroke(2)))
-        plot!(p6, df[!,1], df[!,9], label="Julia $method", linewidth=2, marker=(:x,3,Plots.stroke(2)))
-    elseif plott == true
-        p1 = plot(df[!,1], df[!,2], xaxis="Time (t)",yaxis="P+dP", label="Julia $method", linewidth=2, marker=(:x,3,Plots.stroke(2)))
-        p2 = plot(df[!,1], df[!,3], xaxis="Time (t)",yaxis="T", label="Julia $method", linewidth=2, marker=(:x,3,Plots.stroke(2)))
-        p3 = plot(df[!,1], df[!,4], xaxis="Time (t)",yaxis="eps_g", label="Julia $method", linewidth=2, marker=(:x,3,Plots.stroke(2)))
-        p4 = plot(df[!,1], df[!,5], xaxis="Time (t)",yaxis="V", label="Julia $method", linewidth=2, marker=(:x,3,Plots.stroke(2)))
-        p5 = plot(df[!,1], df[!,8], xaxis="Time (t)",yaxis="X_CO2", label="Julia $method", linewidth=2, marker=(:x,3,Plots.stroke(2)))
-        p6 = plot(df[!,1], df[!,9], xaxis="Time (t)",yaxis="tot_Mass", label="Julia $method", linewidth=2, marker=(:x,3,Plots.stroke(2)))
-    end
-
-    if plott == true
-        savefig(p1, "$path/1_P.png")
-        savefig(p2, "$path/2_T.png")
-        savefig(p3, "$path/3_eps_g.png")
-        savefig(p4, "$path/4_V.png")
-        savefig(p5, "$path/5_X_CO2.png")
-        savefig(p6, "$path/6_tot_Mass.png")
-    end
+    write_csv(sol, path)
+    plot_figs("$path/out.csv", path)
 
     println(".. Done!")
 end
