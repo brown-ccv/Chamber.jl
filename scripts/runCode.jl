@@ -1,12 +1,4 @@
-using LinearAlgebra
-using DifferentialEquations, Sundials #CVODE_BDF
-using DataFrames, CSV, TimerOutputs, Dates
-using Plots
-# include("func.jl")
-include("runCode-func.jl")
-include("write_csv.jl")
-include("plot_figs.jl")
-using .myfunc: eos_g, crystal_fraction_silicic, crystal_fraction_mafic, exsolve_silicic, exsolve_mafic, find_liq_silicic, find_liq_mafic, gas_heat_capacity, IC_Finder_silicic, IC_Finder_mafic, boundary_conditions_new, heat_conduction_chamber_profileCH, exsolve3_silicic, exsolve3_mafic, GLQ_points_weights_hard
+using Chamber
 
 """
     chamber(composition::String, end_time::Int64, log_volume_km3::Number, range_water::Float64, range_co2::Float64, log_vfr::Float64, range_depth::Number)

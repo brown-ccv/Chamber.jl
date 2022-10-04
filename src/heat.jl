@@ -1,4 +1,3 @@
-module heat
 """
     gas_heat_capacity(X_co2::Number)
 
@@ -366,6 +365,4 @@ function heat_conduction_chamber_profileCH(maxn, a, c, r, kappa, Tb, param_sv)
     term3 = 2/(r*c)*sumn
     Trt = term1 .+ term2 .+ term3
     return Trt
-end
-
 end
