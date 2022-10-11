@@ -5,8 +5,6 @@
 Define the ODE equation.
 """
 function odeChamber(du, u, param, t)
-    @timeit to "odeChamber" begin
-
     storeTime = param_saved_var["storeTime"]
     storeTemp = param_saved_var["storeTemp"]
     phase = param_saved_var["phase"]
@@ -68,18 +66,18 @@ function odeChamber(du, u, param, t)
     m_co2=M_co2/(total_Mass)
 
     if param["composition"] == "silicic"
-        @timeit to "crystal_fraction_silicic" eps_x, deps_x_dP, deps_x_dT, deps_x_deps_g, deps_x_dmco2_t, deps_x_dmh2o_t = crystal_fraction_silicic(T,P,m_h2o,m_co2)
+        eps_x, deps_x_dP, deps_x_dT, deps_x_deps_g, deps_x_dmco2_t, deps_x_dmh2o_t = crystal_fraction_silicic(T,P,m_h2o,m_co2)
     elseif param["composition"] == "mafic"
-        @timeit to "crystal_fraction_mafic" eps_x, deps_x_dP, deps_x_dT, deps_x_deps_g, deps_x_dmco2_t, deps_x_dmh2o_t = crystal_fraction_mafic(T,P,m_h2o,m_co2)
+        eps_x, deps_x_dP, deps_x_dT, deps_x_deps_g, deps_x_dmco2_t, deps_x_dmh2o_t = crystal_fraction_mafic(T,P,m_h2o,m_co2)
     end
 
     eps_m=1-eps_x-eps_g
     rho = eps_m*rho_m + eps_g*rho_g + eps_x*rho_x
 
     if param["composition"] == "silicic"
-        @timeit to "exsolve_silicic" m_eq,dm_eq_dP,dm_eq_dT,dm_eq_dX_co2, C_co2_t,dC_co2_dP, dC_co2_dT, dC_co2_dX_co2 = exsolve_silicic(P,T, X_co2)
+        m_eq,dm_eq_dP,dm_eq_dT,dm_eq_dX_co2, C_co2_t,dC_co2_dP, dC_co2_dT, dC_co2_dX_co2 = exsolve_silicic(P,T, X_co2)
     elseif param["composition"] == "mafic"
-        @timeit to "exsolve_mafic" m_eq,dm_eq_dP,dm_eq_dT,dm_eq_dX_co2, C_co2_t,dC_co2_dP, dC_co2_dT, dC_co2_dX_co2 = exsolve_mafic(P,T, X_co2)
+        m_eq,dm_eq_dP,dm_eq_dT,dm_eq_dX_co2, C_co2_t,dC_co2_dP, dC_co2_dT, dC_co2_dX_co2 = exsolve_mafic(P,T, X_co2)
     end
 
     if phase == 3
@@ -104,7 +102,7 @@ function odeChamber(du, u, param, t)
     drc_dT          = eps_x*param["c_x"]*drho_x_dT+eps_g*c_g*drho_g_dT+eps_m*param["c_m"]*drho_m_dT+(rho_x*param["c_x"]-rho_m*param["c_m"])*deps_x_dT
 
     # boundary conditions
-    @timeit to "boundary_conditions_new" Mdot_in, Mdot_out, Mdot_v_in, Mdot_v_out,Mdot_c_in, Mdot_c_out, Hdot_in, Hdot_out, P_loss,eta_r = boundary_conditions_new(P, T, V, rho_m, rho_x, c, sw, T_in, M_h2o, M_co2, total_Mass, param, param_saved_var)
+    Mdot_in, Mdot_out, Mdot_v_in, Mdot_v_out,Mdot_c_in, Mdot_c_out, Hdot_in, Hdot_out, P_loss,eta_r = boundary_conditions_new(P, T, V, rho_m, rho_x, c, sw, param["T_in"], M_h2o, M_co2, total_Mass, param, param_saved_var)
     # coefficients in the system of unknowns Ax = B, here x= [dP/dt dT/dt deps_g/dt dX_co2/dt]
     # note: P, T, and phi are y(1), y(2) and y(3) respectively
     # values matrix A
@@ -178,7 +176,7 @@ function odeChamber(du, u, param, t)
         drho_x_dt      = drho_x_dP*dP_dt + drho_x_dT*dT_dt
         dX_co2_dt      = 0
     end
-    write(io, "  $t,  $(u[1]),  $(u[3]),  $(u[7])\n")
+    # write(io, "  $t,  $(u[1]),  $(u[3]),  $(u[7])\n")
     du[1]        = dDP_dt
     du[2]        = dT_dt
     du[3]        = deps_g_dt
@@ -192,7 +190,6 @@ function odeChamber(du, u, param, t)
     param_saved_var["storeTime"] = storeTime
     param_saved_var["storeTemp"] = storeTemp
     return du
-    end
 end
 
 """
@@ -201,7 +198,6 @@ end
 Define the stopping criteria for ODE solver. 
 """
 function stopChamber_MT(out, u, t, int)
-    @timeit to "stopChamber_MT" begin
     P_lit = param["P_lit"]
     DP_crit = param["DP_crit"]
     P0plusDP = u[1]
@@ -219,12 +215,12 @@ function stopChamber_MT(out, u, t, int)
     m_co2 = tot_c/tot_m
 
     if param["composition"] == "silicic"
-        @timeit to "crystal_fraction_silicic" eps_x = crystal_fraction_silicic(T,P,m_h20,m_co2)[1]
-        @timeit to "exsolve_silicic" m_eq_max = exsolve_silicic(P, T, 0)[1]
+        eps_x = crystal_fraction_silicic(T,P,m_h20,m_co2)[1]
+        m_eq_max = exsolve_silicic(P, T, 0)[1]
 
     elseif param["composition"] == "mafic"
-        @timeit to "crystal_fraction_mafic" eps_x = crystal_fraction_mafic(T,P,m_h20,m_co2)[1]
-        @timeit to "exsolve_mafic" m_eq_max = exsolve_mafic(P, T, 0)[1]
+        eps_x = crystal_fraction_mafic(T,P,m_h20,m_co2)[1]
+        m_eq_max = exsolve_mafic(P, T, 0)[1]
     end
     # MT's new stuff
     eps_m0 = 1 - eps_x
@@ -233,9 +229,9 @@ function stopChamber_MT(out, u, t, int)
     m_co2_melt = tot_c/(V*rho_m*eps_m0)
 
     if param["composition"] == "silicic"
-        @timeit to "exsolve3_silicic" C_co2_sat = exsolve3_silicic(P,T, m_h2o_melt)[1]
+        C_co2_sat = exsolve3_silicic(P,T, m_h2o_melt)[1]
     elseif param["composition"] == "mafic"
-        @timeit to "exsolve3_mafic" C_co2_sat = exsolve3_mafic(P,T, m_h2o_melt)[1]
+        C_co2_sat = exsolve3_mafic(P,T, m_h2o_melt)[1]
     end
 
     out[1] = eps_x
@@ -247,7 +243,6 @@ function stopChamber_MT(out, u, t, int)
     out[7] = -(P0plusDP-param["P_lit_0"]+DP_crit)
     out[8] = m_co2_melt - C_co2_sat
     param["out"] = out
-    end
 end
 
 """
@@ -257,9 +252,8 @@ Re-initialize the condition when the event happen.
 int, idx defined by DifferentialEquations 
 """
 function affect!(int, idx)
-    @timeit to "affect!" begin
     println("*event idx: ", idx)
-    write(io, "*event idx: $idx \n")
+    # write(io, "*event idx: $idx \n")
 
     storeTime = param_saved_var["storeTime"]
     storeTemp = param_saved_var["storeTemp"]
@@ -292,39 +286,39 @@ function affect!(int, idx)
         sw["eruption"] = 1
         println("reached critical pressure and need to start an eruption,  time: ", int.t)
         if "out" in keys(param)
-            write(io, " stopChamber_MT: $(param["out"])\n")
+            # write(io, " stopChamber_MT: $(param["out"])\n")
         end
     elseif idx == 4
         sw["eruption"] = 0
         println("If it just finished an eruption...  time: ", int.t)
         if "out" in keys(param)
-            write(io, " stopChamber_MT: $(param["out"])\n")
+            # write(io, " stopChamber_MT: $(param["out"])\n")
         end
     elseif idx == 6 || idx == 8
         phase_here = param_saved_var["phase"]
         println("starting ic finder for conversion of phase,  time: $(int.t), phase_here: $phase_here")
-        write(io, "starting ic finder for conversion of phase,  time: $(int.t), phase_here: $phase_here\n")
+        # write(io, "starting ic finder for conversion of phase,  time: $(int.t), phase_here: $phase_here\n")
         if "out" in keys(param)
-            write(io, " stopChamber_MT: $(param["out"])\n")
+            # write(io, " stopChamber_MT: $(param["out"])\n")
         end
         if param["composition"] == "silicic"
-            @timeit to "IC_Finder_silicic" eps_g_temp, X_co2_temp, C_co2_temp, phase = IC_Finder_silicic(int.u[9], int.u[10], int.u[8], P_0, int.u[2], int.u[4], int.u[5], param["mm_co2"], param["mm_h2o"], param_IC_Finder)
-            write(io, " 1. [$eps_g_temp, $X_co2_temp, $C_co2_temp, $phase] = IC_Finder_silicic($(int.u[9]), $(int.u[10]), $(int.u[8]), $P_0, $(int.u[2]), $(int.u[4]), $(int.u[5])),  max_count: $(param_IC_Finder["max_count"])\n")
+            eps_g_temp, X_co2_temp, C_co2_temp, phase = IC_Finder_silicic(int.u[9], int.u[10], int.u[8], P_0, int.u[2], int.u[4], int.u[5], param["mm_co2"], param["mm_h2o"], param_IC_Finder)
+            # write(io, " 1. [$eps_g_temp, $X_co2_temp, $C_co2_temp, $phase] = IC_Finder_silicic($(int.u[9]), $(int.u[10]), $(int.u[8]), $P_0, $(int.u[2]), $(int.u[4]), $(int.u[5])),  max_count: $(param_IC_Finder["max_count"])\n")
         elseif param["composition"] == "mafic"
-            @timeit to "IC_Finder_mafic" eps_g_temp, X_co2_temp, C_co2_temp, phase = IC_Finder_mafic(int.u[9], int.u[10], int.u[8], P_0, int.u[2], int.u[4], int.u[5], int.u[6], param["mm_co2"], param["mm_h2o"], param_IC_Finder)
-            write(io, " 1. [$eps_g_temp, $X_co2_temp, $C_co2_temp, $phase] = IC_Finder_mafic($(int.u[9]), $(int.u[10]), $(int.u[8]), $P_0, $(int.u[2]), $(int.u[4]), $(int.u[5]), $(int.u[6])),  max_count: $(param_IC_Finder["max_count"])\n")
+            eps_g_temp, X_co2_temp, C_co2_temp, phase = IC_Finder_mafic(int.u[9], int.u[10], int.u[8], P_0, int.u[2], int.u[4], int.u[5], param["mm_co2"], param["mm_h2o"], param_IC_Finder)
+            # write(io, " 1. [$eps_g_temp, $X_co2_temp, $C_co2_temp, $phase] = IC_Finder_mafic($(int.u[9]), $(int.u[10]), $(int.u[8]), $P_0, $(int.u[2]), $(int.u[4]), $(int.u[5])),  max_count: $(param_IC_Finder["max_count"])\n")
         end
 
         param_saved_var["phase"] = phase
         if phase_here != phase
             println("1st try in IC Finder successful")
-            write(io, "1st try in IC Finder successful\n")
+            # write(io, "1st try in IC Finder successful\n")
             int.u[3] = eps_g_temp
             int.u[7] = X_co2_temp
             C_co2 = C_co2_temp
         else
             println("trying new IC parameters...")
-            write(io, "trying new IC parameters...\n")
+            # write(io, "trying new IC parameters...\n")
             param_IC_Finder["max_count"] = 150
             param_IC_Finder["Tol"] = if composition == "Silicic" 1e-9 else 1e-8 end
             param_IC_Finder["min_eps_g"] = 1e-10
@@ -333,50 +327,50 @@ function affect!(int, idx)
             param_IC_Finder["fraction"] = 0.2
             param_IC_Finder["delta_X_co2"] = 1e-2
             if param["composition"] == "silicic"
-                @timeit to "IC_Finder_silicic" eps_g_temp, X_co2_temp, C_co2_temp, phase = IC_Finder_silicic(int.u[9], int.u[10], int.u[8], P_0, int.u[2], int.u[4], int.u[5], param["mm_co2"], param["mm_h2o"], param_IC_Finder)
-                write(io, " 2. [$eps_g_temp, $X_co2_temp, $C_co2_temp, $phase] = IC_Finder_silicic($(int.u[9]), $(int.u[10]), $(int.u[8]), $P_0, $(int.u[2]), $(int.u[4]), $(int.u[5])),  max_count: $(param_IC_Finder["max_count"])\n")
+                eps_g_temp, X_co2_temp, C_co2_temp, phase = IC_Finder_silicic(int.u[9], int.u[10], int.u[8], P_0, int.u[2], int.u[4], int.u[5], param["mm_co2"], param["mm_h2o"], param_IC_Finder)
+                # write(io, " 2. [$eps_g_temp, $X_co2_temp, $C_co2_temp, $phase] = IC_Finder_silicic($(int.u[9]), $(int.u[10]), $(int.u[8]), $P_0, $(int.u[2]), $(int.u[4]), $(int.u[5])),  max_count: $(param_IC_Finder["max_count"])\n")
             elseif param["composition"] == "mafic"
-                @timeit to "IC_Finder_mafic" eps_g_temp, X_co2_temp, C_co2_temp, phase = IC_Finder_mafic(int.u[9], int.u[10], int.u[8], P_0, int.u[2], int.u[4], int.u[5], int.u[6], param["mm_co2"], param["mm_h2o"], param_IC_Finder)
-                write(io, " 2. [$eps_g_temp, $X_co2_temp, $C_co2_temp, $phase] = IC_Finder_mafic($(int.u[9]), $(int.u[10]), $(int.u[8]), $P_0, $(int.u[2]), $(int.u[4]), $(int.u[5]), $(int.u[6])),  max_count: $(param_IC_Finder["max_count"])\n")
+                eps_g_temp, X_co2_temp, C_co2_temp, phase = IC_Finder_mafic(int.u[9], int.u[10], int.u[8], P_0, int.u[2], int.u[4], int.u[5], param["mm_co2"], param["mm_h2o"], param_IC_Finder)
+                # write(io, " 2. [$eps_g_temp, $X_co2_temp, $C_co2_temp, $phase] = IC_Finder_mafic($(int.u[9]), $(int.u[10]), $(int.u[8]), $P_0, $(int.u[2]), $(int.u[4]), $(int.u[5])),  max_count: $(param_IC_Finder["max_count"])\n")
             end
             param_saved_var["phase"] = phase
             ## change back to initial max_count
             param_IC_Finder["max_count"] = 100
             if phase_here != phase
                 println("2nd try in IC Finder successful")
-                write(io, "2nd try in IC Finder successful\n")
+                # write(io, "2nd try in IC Finder successful\n")
                 int.u[3] = eps_g_temp
                 int.u[7] = X_co2_temp
                 C_co2 = C_co2_temp
             else
                 println("2nd try in IC Finder not successful, trying new IC parameters...")
-                write(io, "2nd try in IC Finder not successful, trying new IC parameters...\n")
+                # write(io, "2nd try in IC Finder not successful, trying new IC parameters...\n")
                 param_IC_Finder["max_count"] = 100
                 param_IC_Finder["Tol"] = param_IC_Finder["Tol"]*0.1
                 if param["composition"] == "silicic"
-                    @timeit to "IC_Finder_silicic" eps_g_temp, X_co2_temp, C_co2_temp, phase = IC_Finder_silicic(int.u[9], int.u[10], int.u[8], P_0, int.u[2], int.u[4], int.u[5], param["mm_co2"], param["mm_h2o"], param_IC_Finder)
-                    write(io, " 3. [$eps_g_temp, $X_co2_temp, $C_co2_temp, $phase] = IC_Finder_silicic($(int.u[9]), $(int.u[10]), $(int.u[8]), $P_0, $(int.u[2]), $(int.u[4]), $(int.u[5])),  max_count: $(param_IC_Finder["max_count"])\n")
+                    eps_g_temp, X_co2_temp, C_co2_temp, phase = IC_Finder_silicic(int.u[9], int.u[10], int.u[8], P_0, int.u[2], int.u[4], int.u[5], param["mm_co2"], param["mm_h2o"], param_IC_Finder)
+                    # write(io, " 3. [$eps_g_temp, $X_co2_temp, $C_co2_temp, $phase] = IC_Finder_silicic($(int.u[9]), $(int.u[10]), $(int.u[8]), $P_0, $(int.u[2]), $(int.u[4]), $(int.u[5])),  max_count: $(param_IC_Finder["max_count"])\n")
                 elseif param["composition"] == "mafic"
-                    @timeit to "IC_Finder_mafic" eps_g_temp, X_co2_temp, C_co2_temp, phase = IC_Finder_mafic(int.u[9], int.u[10], int.u[8], P_0, int.u[2], int.u[4], int.u[5], int.u[6], param["mm_co2"], param["mm_h2o"], param_IC_Finder)
-                    write(io, " 3. [$eps_g_temp, $X_co2_temp, $C_co2_temp, $phase] = IC_Finder_mafic($(int.u[9]), $(int.u[10]), $(int.u[8]), $P_0, $(int.u[2]), $(int.u[4]), $(int.u[5]), $(int.u[6])),  max_count: $(param_IC_Finder["max_count"])\n")
+                    eps_g_temp, X_co2_temp, C_co2_temp, phase = IC_Finder_mafic(int.u[9], int.u[10], int.u[8], P_0, int.u[2], int.u[4], int.u[5], param["mm_co2"], param["mm_h2o"], param_IC_Finder)
+                    # write(io, " 3. [$eps_g_temp, $X_co2_temp, $C_co2_temp, $phase] = IC_Finder_mafic($(int.u[9]), $(int.u[10]), $(int.u[8]), $P_0, $(int.u[2]), $(int.u[4]), $(int.u[5])),  max_count: $(param_IC_Finder["max_count"])\n")
                 end
                 param_saved_var["phase"] = phase
                 ## change back to initial Tol
                 param_IC_Finder["Tol"] = param_IC_Finder["Tol"]*10
                 if phase_here != phase
                     println("3rd try in IC Finder successful")
-                    write(io, "3rd try in IC Finder successful\n")
+                    # write(io, "3rd try in IC Finder successful\n")
                     int.u[3] = eps_g_temp
                     int.u[7] = X_co2_temp
                     C_co2 = C_co2_temp
                 else
                     println("3rd try in IC Finder not successful")
-                    write(io, "3rd try in IC Finder not successful\n")
+                    # write(io, "3rd try in IC Finder not successful\n")
                 end
             end
         end
         println("phase_here: ", phase_here, "  new_phase: ", phase)
-        write(io, " phase_here: $phase_here, new_phase: $phase\n")
+        # write(io, " phase_here: $phase_here, new_phase: $phase\n")
 
     elseif idx == 1 || idx == 2 || idx == 5 || idx == 7 || idx === nothing
         if idx == 1
@@ -392,7 +386,6 @@ function affect!(int, idx)
         end
         terminate!(int)
     end
-    end
-    write(io, "time: $(int.t)\n")
-    write(io, "IC = [$(int.u[1]), $(int.u[2]), $(int.u[3]), $(int.u[4]), $(int.u[5]), $(int.u[6]), $(int.u[7]), $(int.u[8]), $(int.u[9]), $(int.u[10])]\n")
+    # write(io, "time: $(int.t)\n")
+    # write(io, "IC = [$(int.u[1]), $(int.u[2]), $(int.u[3]), $(int.u[4]), $(int.u[5]), $(int.u[6]), $(int.u[7]), $(int.u[8]), $(int.u[9]), $(int.u[10])]\n")
 end

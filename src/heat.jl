@@ -1,8 +1,8 @@
 """
     gas_heat_capacity(X_co2::Number)
 
-
-X_co2
+# Arguments
+`X_co2`: mole fraction of CO2 in the gas.
 """
 function gas_heat_capacity(X_co2::Number)
     if X_co2 == 0
@@ -27,7 +27,20 @@ function gas_heat_capacity(X_co2::Number)
     return [c_g, dc_g_dX_co2]
 end
 
-function heat_conduction_chamberCH(maxn, a, c, dr, kappa, rho, cp, Tb, param_sv)
+"""
+    heat_conduction_chamberCH(maxn::Number, a::Number, c::Number, dr::Number, kappa::Number, rho::Number, cp::Number, Tb::Number, param_sv::Dict)
+
+# Arguments
+`maxn`: number of terms
+`a`: radius of magma chamber (m)
+`c`: radius of outer shell (m)
+`dr`: grid spacing of calculate the heat transfer
+`kappa`: thermal diffusivity of host rocks
+`rho`: density of the magma
+`cp`: specific heat of magma
+`Tb`: boundary temperature of the outer shell
+"""
+function heat_conduction_chamberCH(maxn::Number, a::Number, c::Number, dr::Number, kappa::Number, rho::Number, cp::Number, Tb::Number, param_sv::Dict)
     storeTime = param_sv["storeTime"]
     maxTime = param_sv["maxTime"]
     storeTemp = param_sv["storeTemp"]
@@ -209,7 +222,18 @@ function heat_conduction_chamberCH(maxn, a, c, dr, kappa, rho, cp, Tb, param_sv)
     return Q
 end
 
-function heat_conduction_chamber_profileCH(maxn, a, c, r, kappa, Tb, param_sv)
+"""
+    heat_conduction_chamber_profileCH(maxn::Number, a::Number, c::Number, r::Number, kappa::Number, Tb::Number, param_sv::Dict)
+
+# Arguments
+`maxn`: number of terms
+`a`: radius of magma chamber (m)
+`c`: radius of outer shell (m)
+`r`: 
+`kappa`: thermal diffusivity of host rocks
+`Tb`: boundary temperature of the outer shell
+"""
+function heat_conduction_chamber_profileCH(maxn::Number, a::Number, c::Number, r::Vector{Float64}, kappa::Number, Tb::Number, param_sv::Dict)
     storeTime = param_sv["storeTime"]
     storeTemp = param_sv["storeTemp"]
     lengthTime = param_sv["lengthTime"]

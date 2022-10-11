@@ -1,7 +1,18 @@
 """
     boundary_conditions_new(P::Number, T::Number, V::Number, rho_m::Number, rho_x::Number, c::Number, sw::Dict, T_in::Number, M_h2o::Number, M_co2::Number, total_Mass::Number, param::Dict, param_saved_var::Dict)
 
-
+# Arguments
+`P`: Pressure (Pa)
+`T`: Temperature (K)
+`V`: chamber volume (m^3)
+`rho_m`: density of melt
+`rho_x`: density of crystal of magma
+`c`: heat of magma
+`sw`: eruption/cooling_module/viscous_relaxation control
+`T_in`: Temperature
+`M_h2o`: total mess of H2O in the magma
+`M_co2`: total mess of CO2 in the magma
+`total_Mass`: total mess of magma chamber
 """
 function boundary_conditions_new(P::Number, T::Number, V::Number, rho_m::Number, rho_x::Number, c::Number, sw::Dict, T_in::Number, M_h2o::Number, M_co2::Number, total_Mass::Number, param::Dict, param_saved_var::Dict)
     P_lit = param["P_lit"]
@@ -25,9 +36,9 @@ function boundary_conditions_new(P::Number, T::Number, V::Number, rho_m::Number,
     rho_g_in = eos_g(P_in,T_in)["rho_g"]
 
     if param["composition"] == "silicic"
-        @timeit to "crystal_fraction_silicic" eps_x_in = crystal_fraction_silicic(T_in,P_lit,tot_h2o_frac_in,tot_co2_frac_in)[1]
+        eps_x_in = crystal_fraction_silicic(T_in,P_lit,tot_h2o_frac_in,tot_co2_frac_in)[1]
     elseif param["composition"] == "mafic"
-        @timeit to "crystal_fraction_mafic" eps_x_in = crystal_fraction_mafic(T_in,P_lit,tot_h2o_frac_in,tot_co2_frac_in)[1]
+        eps_x_in = crystal_fraction_mafic(T_in,P_lit,tot_h2o_frac_in,tot_co2_frac_in)[1]
     end
 
     rho_in         = (1-eps_g_in-eps_x_in)*rho_m_in + eps_g_in*rho_g_in + eps_x_in*rho_x_in
@@ -66,7 +77,7 @@ function boundary_conditions_new(P::Number, T::Number, V::Number, rho_m::Number,
 
     if sw["heat_cond"] == 1
         # heat loss
-        @timeit to "heat_conduction_chamberCH" Q_out = heat_conduction_chamberCH(param["maxn"],a,cc,dr,param["kappa"],param["rho_r"],param["c_r"],param["Tb"],param_saved_var)
+        Q_out = heat_conduction_chamberCH(param["maxn"],a,cc,dr,param["kappa"],param["rho_r"],param["c_r"],param["Tb"],param_saved_var)
 
     elseif sw["heat_cond"] == 0
         Q_out = 0
@@ -83,11 +94,11 @@ function boundary_conditions_new(P::Number, T::Number, V::Number, rho_m::Number,
     Hdot_out       = c*T*Mdot_out + Q_out
 
     # viscous relaxation
-    @timeit to "GLQ_points_weights_hard" quadpts,weights = GLQ_points_weights_hard(param["GLQ_n"])
+    quadpts,weights = GLQ_points_weights_hard(param["GLQ_n"])
     b     = a +cc
     quadpts_r = (b-a)/2*quadpts .+ (a+b)/2
 
-    @timeit to "heat_conduction_chamber_profileCH" Trt = heat_conduction_chamber_profileCH(param["maxn"],a,cc,quadpts_r,param["kappa"],param["Tb"],param_saved_var)
+    Trt = heat_conduction_chamber_profileCH(param["maxn"],a,cc,quadpts_r,param["kappa"],param["Tb"],param_saved_var)
     if param["rheol"] == "new"
         A = param["A"]  # material-dependent constant for viscosity law (Pa s)
         B = param["B"]  # molar gas constant (J/mol/K)
