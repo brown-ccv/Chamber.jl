@@ -9,6 +9,7 @@ using Roots
 using SpecialFunctions
 using Sundials
 using TimerOutputs
+include("./Data/parameters.jl")
 include("./GLQ_points_weights.jl")
 include("./initial.jl")
 include("./heat.jl")
@@ -18,6 +19,7 @@ include("./boundary_condition.jl")
 include("./runCode-func.jl")
 include("./IC_finder.jl")
 export eos_g,
+       crystal_fraction_silicic
        crystal_fraction_mafic,
        exsolve_silicic,
        exsolve_mafic,
@@ -30,8 +32,11 @@ export eos_g,
        heat_conduction_chamber_profileCH,
        exsolve3_silicic,
        exsolve3_mafic,
-       GLQ_points_weights_hard
+       GLQ_points_weights_hard,
+       make_param,
+       make_param_saved_var,
+       make_sw,
+       make_param_IC_Finder
 
 # Write your package code here.
-
 end
