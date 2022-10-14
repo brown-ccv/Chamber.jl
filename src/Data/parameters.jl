@@ -1,6 +1,6 @@
-function make_param()
+function make_param(rheol)
     param = Dict{Any,Any}([])
-    param["rheol"] = "old"
+    param["rheol"] = rheol
     param["fluxing"] = false
     param["single_eruption"] = false
 
@@ -24,25 +24,26 @@ function make_param()
     param["maxn"] = 10000
     param["GLQ_n"] = 64
 
-    if param["rheol"] == "new"
-        param["A"] = 4.25e7      # material-dependent constant for viscosity law (Pa s)
-        param["B"] = 8.31        # molar gas constant (J/mol/K)
-        param["G"] = 141e3       # activation energy for creep (J/mol)
-    elseif param["rheol"] == "old"
-        param["nn"] = 1.9        # powerlaw exponent
-        param["AA"] = 2e-4*(1e6)^-param["nn"] #material dependent constant (Pa^-n s^-1)
-        param["G"]  = 141e3      # activation energy for creep (J/mol)
-        param["M"]  = 8.31       # gas constant
-    end
-
     param["Q_out_old"] = 0
-
     param["dP_lit_dt"] = 0
-    param["dP_lit_dt_0"] = param["dP_lit_dt"]
+    param["dP_lit_dt_0"] = 0
     param["P_lit_drop_max"] = 9e6
 
     # set the mass inflow rate
     param["Mdot_out_pass"] = 10000
+
+    r = rheol_dict[rheol]
+    if rheol == "new"
+        param["A"] = r.A        # material-dependent constant for viscosity law (Pa s)
+        param["B"] = r.B        # molar gas constant (J/mol/K)
+        param["G"] = r.G        # activation energy for creep (J/mol)
+    elseif rheol == "old"
+        param["nn"] = r.nn      # powerlaw exponent
+        param["AA"] = r.AA      #material dependent constant (Pa^-n s^-1)
+        param["G"]  = r.G       # activation energy for creep (J/mol)
+        param["M"]  = r.M       # gas constant
+    end
+
     return param
 end
 

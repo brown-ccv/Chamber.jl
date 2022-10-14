@@ -9,6 +9,7 @@ using Roots
 using SpecialFunctions
 using Sundials
 using TimerOutputs
+include("../scripts/utils.jl")
 include("./Data/parameters.jl")
 include("./GLQ_points_weights.jl")
 include("./initial.jl")
