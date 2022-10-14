@@ -65,10 +65,10 @@ function chamber(composition::String, end_time::Number, log_volume_km3::Number, 
         "Rosenbrock23"=>Rosenbrock23(autodiff=false),
     )
 
-    param = Chamber.make_param()
-    param_saved_var = Chamber.make_param_saved_var()
-    param_IC_Finder = Chamber.make_param_IC_Finder()
-    sw = Chamber.make_sw()
+    param = make_param()
+    param_saved_var = make_param_saved_var()
+    param_IC_Finder = make_param_IC_Finder()
+    sw = make_sw()
     param["composition"] = composition
 
     if param["composition"] == "silicic"

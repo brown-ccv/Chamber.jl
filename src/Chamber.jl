@@ -19,7 +19,7 @@ include("./boundary_condition.jl")
 include("./runCode-func.jl")
 include("./IC_finder.jl")
 export eos_g,
-       crystal_fraction_silicic
+       crystal_fraction_silicic,
        crystal_fraction_mafic,
        exsolve_silicic,
        exsolve_mafic,
@@ -33,6 +33,9 @@ export eos_g,
        exsolve3_silicic,
        exsolve3_mafic,
        GLQ_points_weights_hard,
+       odeChamber,
+       stopChamber_MT,
+       affect!,
        make_param,
        make_param_saved_var,
        make_sw,
