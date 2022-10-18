@@ -36,7 +36,7 @@ The volcano eruption simulation
 - `depth`: Estimate depth of volcano chamber
 """
 function chamber(composition::String, end_time::Number, log_volume_km3::Number, InitialConc_H2O::Float64, InitialConc_CO2::Float64, 
-    log_vfr::Float64, depth::Number, methods::Dict=methods, method::String="Tsit5", errtol=ErrTol(), ini_eps_x::Float64=0.15, rheol::String="old") # ("silicic", 1e9, 0.2, 0.04, 0.001, -3.3, 8e3)
+    log_vfr::Float64, depth::Number, methods::Dict=methods, method::String="Tsit5", odesetting=OdeSetting(), ini_eps_x::Float64=0.15, rheol::String="old") # ("silicic", 1e9, 0.2, 0.04, 0.001, -3.3, 8e3)
     if !(composition in ["silicic", "mafic"])
         @error("composition should be \"silicic\" or \"mafic\", not \"$composition\"")
         return "Stop"
@@ -53,16 +53,9 @@ function chamber(composition::String, end_time::Number, log_volume_km3::Number, 
     param_saved_var = make_param_saved_var()
     param_IC_Finder = make_param_IC_Finder()
     sw = make_sw()
-    param["composition"] = composition
-    c = composition_dict[composition]
-    param["c_m"] = c.c_m
-    param["c_x"] = c.c_x
-    param["L_m"] = c.L_m
 
     param_saved_var["storeSumk"] = zeros(param["maxn"])
-    param_saved_var["storeSumk_2"] = zeros(param["maxn"])
-    param_saved_var["storeSumk_old"] = zeros(param["maxn"])
-    param_saved_var["storeSumk_2_old"]= zeros(param["maxn"])
+    param_saved_var["storeSumk_2"] = param_saved_var["storeSumk_old"] = param_saved_var["storeSumk_2_old"] = param_saved_var["storeSumk"]
 
     volume_km3    = 10^log_volume_km3                 # range of volume in km3
     range_radius  = 1000*(volume_km3/(4*pi/3))^(1/3)  # range of radius in m
@@ -76,11 +69,8 @@ function chamber(composition::String, end_time::Number, log_volume_km3::Number, 
     P_lit         = P_0
     param["Tb"]   = Tb
     param["P_lit_0"] = P_0
-    P0plusDP_0  = P_0
-
     if param["single_eruption"]
         P_0 = P_0 + DP_crit
-        P0plusDP_0 = P_0
     end
 
     if composition == "silicic"
@@ -88,15 +78,14 @@ function chamber(composition::String, end_time::Number, log_volume_km3::Number, 
     elseif composition == "mafic"
         T_0 = find_liq_mafic(InitialConc_H2O, InitialConc_CO2, P_0, ini_eps_x)
     end
-    T_R  = T_0 + 50   # Temperature of recharging magma (K)
-    T_in = T_R        # Temperature of inflowing magma (K)
+    T_in = T_0 + 50        # Temperature of inflowing magma (K)
     param["T_in"] = T_in
 
-    if ~param["fluxing"]  # fluxing = false
+    if ~param["fluxing"]
         range_vfr        = 10^log_vfr   # volume flow rate (km3/yr)  
         range_mfr        = c.rho_m0*range_vfr*1e9/(3600*24*365)
         mdot_in = range_mfr
-    else  # fluxing = true
+    else
         log_vfr          = -4.3   # log volume flow rate (km3/yr)
         range_vfr        = 10^log_vfr   # volume flow rate (km3/yr)
         rho_g_in         = eos_g(P_0, T_in)["rho_g"]
@@ -181,14 +170,14 @@ function chamber(composition::String, end_time::Number, log_volume_km3::Number, 
     @info("params: $(param)")
 
     tspan    = (0, end_time)
-    IC       = [P0plusDP_0, T_0, eps_g0, V_0, c.rho_m0, c.rho_x0, X_co20, tot_Mass_0, tot_Mass_H2O_0, tot_Mass_CO2_0]
+    IC       = [P_0, T_0, eps_g0, V_0, c.rho_m0, c.rho_x0, X_co20, tot_Mass_0, tot_Mass_H2O_0, tot_Mass_CO2_0]
     println("tspan: ", tspan)
     println("IC: ", IC)
     @info("IC: $IC")
     close(io)
     cb = VectorContinuousCallback(stopChamber_MT, affect!, 8, rootfind=SciMLBase.RightRootFind)
     prob = ODEProblem(odeChamber,IC,tspan,param)
-    sol = solve(prob, methods[method], callback=cb, reltol=errtol.reltol, abstol=errtol.abstol, dt=errtol.first_step, dtmax=errtol.max_step)
+    sol = solve(prob, methods[method], callback=cb, reltol=odesetting.reltol, abstol=odesetting.abstol, dt=odesetting.first_step, dtmax=odesetting.max_step)
 
     write_csv(sol, path)
     plot_figs("$path/out.csv", path)
