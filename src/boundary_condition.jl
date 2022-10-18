@@ -27,7 +27,7 @@ end
 `M_co2`: total mess of CO2 in the magma
 `total_Mass`: total mess of magma chamber
 """
-function boundary_conditions_new(P::Number, T::Number, V::Number, rho_m::Number, rho_x::Number, c::Number, sw::Dict, T_in::Number, M_h2o::Number, M_co2::Number, total_Mass::Number, param::Dict, param_saved_var::Dict)
+function boundary_conditions_new(P::Number, T::Number, V::Number, rho_m::Number, rho_x::Number, c::Number, sw::SW, T_in::Number, M_h2o::Number, M_co2::Number, total_Mass::Number, param::Dict, param_saved_var::Dict)
     P_lit = param["P_lit"]
     tot_h2o_frac_in = param["tot_h2o_frac_in"]
     tot_co2_frac_in = param["tot_co2_frac_in"]
@@ -57,11 +57,11 @@ function boundary_conditions_new(P::Number, T::Number, V::Number, rho_m::Number,
     Mdot_c_in      = tot_co2_frac_in*Mdot_in
 
     # set outflow conditions
-    if sw["eruption"] == 0
+    if sw.eruption == 0
         Mdot_out   = 0
         Mdot_v_out = 0
         Mdot_c_out = 0
-    elseif sw["eruption"] == 1
+    elseif sw.eruption == 1
         Mdot_out   = Mdot_out_pass
         Mdot_v_out = M_h2o/total_Mass*Mdot_out_pass
         Mdot_c_out = M_co2/total_Mass*Mdot_out_pass
@@ -79,11 +79,11 @@ function boundary_conditions_new(P::Number, T::Number, V::Number, rho_m::Number,
         dr                   = 0.1*a
     end
 
-    if sw["heat_cond"] == 1
+    if sw.heat_cond == 1
         # heat loss
         Q_out = heat_conduction_chamberCH(param["maxn"],a,cc,dr,param["kappa"],param["rho_r"],param["c_r"],param["Tb"],param_saved_var)
 
-    elseif sw["heat_cond"] == 0
+    elseif sw.heat_cond == 0
         Q_out = 0
     else
         println("heat_cond not specified")
@@ -118,7 +118,7 @@ function boundary_conditions_new(P::Number, T::Number, V::Number, rho_m::Number,
     end
     I          = (b-a)/2*sum(weights*(eta_rt/(quadpts_r).^4))
     eta_r      = 3*a^3*I
-    P_loss = p_loss(sw["visc_relax"], P, P_lit, eta_r)
+    P_loss = p_loss(sw.visc_relax, P, P_lit, eta_r)
 
     return [Mdot_in, Mdot_out, Mdot_v_in, Mdot_v_out, Mdot_c_in, Mdot_c_out, Hdot_in, Hdot_out, P_loss, eta_r]
 end

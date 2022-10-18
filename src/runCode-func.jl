@@ -231,8 +231,8 @@ function stopChamber_MT(out, u, t, int)
 
     out[1] = eps_x
     out[2] = eps_x/(1-eps_g)-0.8
-    out[3] = if sw["eruption"] == 0 (P-P_lit)-DP_crit else -DP_crit end
-    out[4] = if sw["eruption"] == 1 P_lit-P else -DP_crit end
+    out[3] = if sw.eruption == 0 (P-P_lit)-DP_crit else -DP_crit end
+    out[4] = if sw.eruption == 1 P_lit-P else -DP_crit end
     out[5] = eps_x-0.5
     out[6] = m_h2o_melt - m_eq_max
     out[7] = -(P0plusDP-param["P_lit_0"]+DP_crit)
@@ -274,13 +274,13 @@ function affect!(int, idx)
     eps_x0 =  crystal_fraction_eps_x(param["composition"], int.u[2], P_0, m_h2o, m_co2)
 
     if idx == 3 && eps_x0 < 0.5
-        sw["eruption"] = 1
+        sw.eruption = 1
         println("reached critical pressure and need to start an eruption,  time: ", int.t)
         if "out" in keys(param)
             # write(io, " stopChamber_MT: $(param["out"])\n")
         end
     elseif idx == 4
-        sw["eruption"] = 0
+        sw.eruption = 0
         println("If it just finished an eruption...  time: ", int.t)
         if "out" in keys(param)
             # write(io, " stopChamber_MT: $(param["out"])\n")

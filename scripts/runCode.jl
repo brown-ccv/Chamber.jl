@@ -52,7 +52,7 @@ function chamber(composition::String, end_time::Number, log_volume_km3::Number, 
     param = make_param(composition, rheol)
     param_saved_var = make_param_saved_var()
     param_IC_Finder = make_param_IC_Finder()
-    sw = make_sw()
+    sw = SW()
 
     param_saved_var["storeSumk"] = zeros(param["maxn"])
     param_saved_var["storeSumk_2"] = param_saved_var["storeSumk_old"] = param_saved_var["storeSumk_2_old"] = param_saved_var["storeSumk"]
@@ -144,7 +144,7 @@ function chamber(composition::String, end_time::Number, log_volume_km3::Number, 
     tot_Mass_CO2_0 = M_co2_0
 
     if param["single_eruption"]
-        sw["eruption"] = 1
+        sw.eruption = 1
     end
 
     # initialize vector to store quantities
