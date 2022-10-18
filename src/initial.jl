@@ -434,7 +434,7 @@ end
 """
 function crystal_fraction(composition::String, T::Number, P::Number, mH2O::Number, mCO2::Number)
     if !(composition in ["silicic", "mafic"])
-        @error("composition must be \"silicic\" or \"mafic\".")
+        error("composition must be \"silicic\" or \"mafic\".")
     else
         # NEW VERSION WITH SAGE's PARAMETERIZATION
         if composition == "silicic"
@@ -471,7 +471,7 @@ end
 
 function crystal_fraction_eps_x(composition::String, T::Number, P::Number, mH2O::Number, mCO2::Number)
     if !(composition in ["silicic", "mafic"])
-        @error("composition must be \"silicic\" or \"mafic\".")
+        error("composition must be \"silicic\" or \"mafic\".")
     else
         if composition == "silicic"
             T = T-273
