@@ -53,6 +53,7 @@ function make_param(composition, rheol)
 end
 
 function make_param_saved_var()
+    ps = ParamSaved()
     return Dict{Any,Any}(
         "maxTime"         => ps.maxTime,
         "lengthTime"      => ps.lengthTime,
@@ -61,6 +62,7 @@ end
 
 function make_sw()
         # eruption/cooling_module/viscous_relaxation control
+        s = SW()
         return Dict{Any, Any}(
             "heat_cond"  => s.heat_cond,   # switch cooling module on/off
             "visc_relax" => s.visc_relax,   # switch viscous relaxation on/off
@@ -70,6 +72,7 @@ end
 
 function make_param_IC_Finder()
     # IC Finder parameters
+    pic = ParamICFinder()
     param_IC_Finder = Dict{Any, Any}([])
     param_IC_Finder["max_count"]       = pic.max_count
     param_IC_Finder["min_eps_g"]       = pic.min_eps_g

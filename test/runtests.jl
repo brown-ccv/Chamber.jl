@@ -29,3 +29,5 @@ end
     @test !isnothing(Chamber.make_param)
     @test !isnothing(Chamber.GLQ_points_weights_hard)
 end
+
+include("test-utils.jl")

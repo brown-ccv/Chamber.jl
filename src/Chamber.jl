@@ -40,7 +40,8 @@ export eos_g,
        make_param,
        make_param_saved_var,
        make_sw,
-       make_param_IC_Finder
+       make_param_IC_Finder,
+       SW
 
 # Write your package code here.
 end

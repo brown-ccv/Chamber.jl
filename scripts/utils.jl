@@ -67,10 +67,10 @@ mutable struct SW{T}
     heat_cond::T
     visc_relax::T
     eruption::T
+    SW() = new{Int8}(1,
+                     1,
+                     0)
 end
-s = SW{Int8}(1,
-             1,
-             0)
 
 # Parameters
 struct Param{T}
@@ -167,10 +167,10 @@ mutable struct ParamSaved
     maxTime::Number
     lengthTime::Int64
     switch_Tprofile::Int8
+    ParamSaved() = new(0,
+                       0,
+                       0)
 end
-ps = ParamSaved(0,
-                0,
-                0)
 
 mutable struct ParamICFinder
     max_count::Int64
@@ -179,11 +179,10 @@ mutable struct ParamICFinder
     X_co2_guess_ini::Float64
     fraction::Float64
     delta_X_co2::Float64
+    ParamICFinder() = new(100,
+                          1e-10,
+                          1e-2,
+                          0.2,
+                          0.2,
+                          1e-2)
 end
-
-pic = ParamICFinder(100,
-                    1e-10,
-                    1e-2,
-                    0.2,
-                    0.2,
-                    1e-2)
