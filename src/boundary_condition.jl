@@ -1,12 +1,14 @@
-function p_loss(visc_relax, P, P_lit, eta_r)
-    if visc_relax == 1
-        P_loss = (P - P_lit)/eta_r 
-    elseif visc_relax == 0
-        P_loss = 0
+function p_loss(visc_relax::Int8, P::Number, P_lit::Number, eta_r::Number)
+    if !(visc_relax in [0, 1])
+        error("visc_relax must be 0 or 1.")
     else
-        println("visc_relax not specified") 
+        if visc_relax == 1
+            P_loss = (P - P_lit)/eta_r 
+        elseif visc_relax == 0
+            P_loss = 0
+        end
+        return P_loss
     end
-    return P_loss
 end
 
 """
