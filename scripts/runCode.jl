@@ -49,7 +49,7 @@ function chamber(composition::String, end_time::Number, log_volume_km3::Number, 
     logger = SimpleLogger(io)
     global_logger(logger)
 
-    param = make_param(rheol)
+    param = make_param(composition, rheol)
     param_saved_var = make_param_saved_var()
     param_IC_Finder = make_param_IC_Finder()
     sw = make_sw()
