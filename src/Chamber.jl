@@ -4,6 +4,7 @@ using DataFrames
 using Dates
 using DifferentialEquations
 using LinearAlgebra
+using Parameters
 using Plots
 using Roots
 using SpecialFunctions
@@ -20,8 +21,8 @@ include("./boundary_condition.jl")
 include("./runCode-func.jl")
 include("./IC_finder.jl")
 export eos_g,
-       crystal_fraction_silicic,
-       crystal_fraction_mafic,
+       crystal_fraction,
+       crystal_fraction_eps_x,
        exsolve_silicic,
        exsolve_mafic,
        find_liq_silicic,

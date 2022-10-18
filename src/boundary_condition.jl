@@ -41,11 +41,7 @@ function boundary_conditions_new(P::Number, T::Number, V::Number, rho_m::Number,
     end
     rho_g_in = eos_g(P, T_in)["rho_g"]
 
-    if param["composition"] == "silicic"
-        eps_x_in = crystal_fraction_silicic(T_in,P_lit,tot_h2o_frac_in,tot_co2_frac_in)[1]
-    elseif param["composition"] == "mafic"
-        eps_x_in = crystal_fraction_mafic(T_in,P_lit,tot_h2o_frac_in,tot_co2_frac_in)[1]
-    end
+    eps_x_in = crystal_fraction_eps_x(param["composition"],T_in,P_lit,tot_h2o_frac_in,tot_co2_frac_in)
 
     rho_in         = (1-eps_g_in-eps_x_in)*rho_m + eps_g_in*rho_g_in + eps_x_in*rho_x
     c_g_in = gas_heat_capacity(X_co2_in)[1]

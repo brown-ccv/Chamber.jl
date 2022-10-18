@@ -423,54 +423,69 @@ function find_liq_mafic(water::Number, co2::Number, P::Number, ini_eps_x::Number
 end
 
 """
-    crystal_fraction_silicic(T::Number, P::Number, mH2O::Number, mCO2::Number)
+    crystal_fraction(composition::String, T::Number, P::Number, mH2O::Number, mCO2::Number)
 
 # Arguments
+-`composition`: "silicic" or "mafic"
 -`T`: Temperature (K)
 -`P`: Pressure (Pa)
 -`mH2O`: Weight fration of the H2O in magma.
 -`mCO2`: Weight fration of the CO2 in magma.
 """
-function crystal_fraction_silicic(T::Number, P::Number, mH2O::Number, mCO2::Number)
-    # NEW VERSION WITH SAGE's PARAMETERIZATION
-    T = T-273
-    a,dadx,dady,dadz,b,dbdx,dbdy,dbdz,c,dcdx,dcdy,dcdz = parameters_melting_curve_silicic(100*mH2O,100*mCO2,P)
-    eps_x=a*erfc(b*(T-c))
-    # derivatives
-    deps_x_deps_g = -1
-    deps_x_dT = -2*a*b*exp(-b^2*(T-c)^2)/sqrt(pi)
-    deps_x_dP = dadz*erfc(b*(T-c))-2*a*(T-c)/sqrt(pi)*exp(-b^2*(T-c)^2)*dbdz+2*a*b/sqrt(pi)*exp(-b^2*(T-c)^2)*dcdz
-    deps_x_dmco2_t = dady*erfc(b*(T-c))-2*a*(T-c)/sqrt(pi)*exp(-b^2*(T-c)^2)*dbdy+2*a*b/sqrt(pi)*exp(-b^2*(T-c)^2)*dcdy
-    deps_x_dmh2o_t = dadx*erfc(b*(T-c))-2*a*(T-c)/sqrt(pi)*exp(-b^2*(T-c)^2)*dbdx+2*a*b/sqrt(pi)*exp(-b^2*(T-c)^2)*dcdx
-    return [eps_x, deps_x_dP, deps_x_dT, deps_x_deps_g, deps_x_dmco2_t, deps_x_dmh2o_t]
-end
+function crystal_fraction(composition::String, T::Number, P::Number, mH2O::Number, mCO2::Number)
+    if !(composition in ["silicic", "mafic"])
+        @error("composition must be \"silicic\" or \"mafic\".")
+    else
+        # NEW VERSION WITH SAGE's PARAMETERIZATION
+        if composition == "silicic"
+            T = T-273
+            a,dadx,dady,dadz,b,dbdx,dbdy,dbdz,c,dcdx,dcdy,dcdz = parameters_melting_curve_silicic(100*mH2O,100*mCO2,P)
+            eps_x=a*erfc(b*(T-c))
+            # derivatives
+            deps_x_deps_g = -1
+            deps_x_dT = -2*a*b*exp(-b^2*(T-c)^2)/sqrt(pi)
+            deps_x_dP = dadz*erfc(b*(T-c))-2*a*(T-c)/sqrt(pi)*exp(-b^2*(T-c)^2)*dbdz+2*a*b/sqrt(pi)*exp(-b^2*(T-c)^2)*dcdz
+            deps_x_dmco2_t = dady*erfc(b*(T-c))-2*a*(T-c)/sqrt(pi)*exp(-b^2*(T-c)^2)*dbdy+2*a*b/sqrt(pi)*exp(-b^2*(T-c)^2)*dcdy
+            deps_x_dmh2o_t = dadx*erfc(b*(T-c))-2*a*(T-c)/sqrt(pi)*exp(-b^2*(T-c)^2)*dbdx+2*a*b/sqrt(pi)*exp(-b^2*(T-c)^2)*dcdx
+        elseif composition == "mafic"
+            T = T-273
+            a,dadx,dady,dadz,b,dbdx,dbdy,dbdz = parameters_melting_curve_mafic(100*mH2O,100*mCO2,P)
+            eps_x = a*T+b
+            # derivatives
+            deps_x_deps_g = -1
+            deps_x_dT = a
 
-"""
-    crystal_fraction_mafic(T::Number, P::Number, mH2O::Number, mCO2::Number)
+            deps_x_dmco2_t=dady*T+dbdy
+            deps_x_dmh2o_t=dadx*T+dbdx
+            deps_x_dP=dadz*T+dbdz
 
-# Arguments
--`T`: Temperature (K)
--`P`: Pressure (Pa)
--`mH2O`: Weight fration of the H2O in magma.
--`mCO2`: Weight fration of the CO2 in magma.
-"""
-function crystal_fraction_mafic(T::Number, P::Number, mH2O::Number, mCO2::Number)
-    # NEW VERSION WITH SAGE's PARAMETERIZATION
-    T = T-273
-    a,dadx,dady,dadz,b,dbdx,dbdy,dbdz = parameters_melting_curve_mafic(100*mH2O,100*mCO2,P)
-    eps_x = a*T+b
-    # derivatives
-    deps_x_deps_g = -1
-    deps_x_dT = a
-
-    deps_x_dmco2_t=dady*T+dbdy
-    deps_x_dmh2o_t=dadx*T+dbdx
-    deps_x_dP=dadz*T+dbdz
-
-    if eps_x < 0 || eps_x>1
-        eps_x=0
-        deps_x_deps_g=0
-        deps_x_dT=0
+            if eps_x < 0 || eps_x>1
+                eps_x=0
+                deps_x_deps_g=0
+                deps_x_dT=0
+            end
+        end
+        return [eps_x, deps_x_dP, deps_x_dT, deps_x_deps_g, deps_x_dmco2_t, deps_x_dmh2o_t]
     end
-    return [eps_x, deps_x_dP, deps_x_dT, deps_x_deps_g, deps_x_dmco2_t, deps_x_dmh2o_t]
 end
+
+function crystal_fraction_eps_x(composition::String, T::Number, P::Number, mH2O::Number, mCO2::Number)
+    if !(composition in ["silicic", "mafic"])
+        @error("composition must be \"silicic\" or \"mafic\".")
+    else
+        if composition == "silicic"
+            T = T-273
+            a,dadx,dady,dadz,b,dbdx,dbdy,dbdz,c,dcdx,dcdy,dcdz = parameters_melting_curve_silicic(100*mH2O,100*mCO2,P)
+            eps_x=a*erfc(b*(T-c))
+        elseif composition == "mafic"
+            T = T-273
+            a,dadx,dady,dadz,b,dbdx,dbdy,dbdz = parameters_melting_curve_mafic(100*mH2O,100*mCO2,P)
+            eps_x = a*T+b
+            if eps_x < 0 || eps_x>1
+                eps_x=0
+            end
+        end
+        return eps_x
+    end
+end
+

@@ -113,7 +113,7 @@ function IC_Finder_silicic(M_h2o::Number, M_co2::Number, M_tot::Number, P::Numbe
     rho_g = eos_g(P, T)["rho_g"]
     m_h2o_tot = M_h2o/M_tot
     m_co2_tot = M_co2/M_tot
-    eps_x0 = crystal_fraction_silicic(T, P, m_h2o_tot, m_co2_tot)[1]
+    eps_x0 = crystal_fraction_eps_x("silicic", T, P, m_h2o_tot, m_co2_tot)
 
     # Fixing total mass of volatiles set in MainChamber in real model
     eps_m0 = 1 - eps_x0
@@ -150,7 +150,7 @@ function IC_Finder_silicic(M_h2o::Number, M_co2::Number, M_tot::Number, P::Numbe
         count = 0
 
         while ((abs((X_co20-X_co2_prev)/X_co2_prev)>Tol || abs((eps_g0-eps_g_prev)/eps_g_prev)>Tol) && count<max_count)
-            eps_x0 = crystal_fraction_silicic(T, P, m_h2o_tot, m_co2_tot)[1]
+            eps_x0 = crystal_fraction_eps_x("silicic", T, P, m_h2o_tot, m_co2_tot)
             fun(x) = real(mco2_dissolved_sat_silicic(x, P, T)*(1-eps_g0-eps_x0)*V*rho_m+eps_g0*rho_g*V*x*mm_co2/(x*mm_co2+(1-x)*mm_h2o)-M_co2)
             X_co2_prev = X_co20
             fx = ZeroProblem(fun, X_co2_prev)
@@ -184,8 +184,7 @@ function IC_Finder_silicic(M_h2o::Number, M_co2::Number, M_tot::Number, P::Numbe
                 X_co20 = X_co2_guess
                 count = 0
                 while (abs((X_co20-X_co2_prev)/X_co2_prev)>Tol || abs((eps_g0-eps_g_prev)/eps_g_prev)>Tol) && count<max_count || X_co20 > 1
-                    eps_x0 = crystal_fraction_silicic(T, P, m_h2o_tot, m_co2_tot)[1]
-                    Mass_saturated = meq_water_silicic(X_co20, P, T)*rho_m*V*(1-eps_g0-eps_x0)
+                    eps_x0 = crystal_fraction_eps_x("silicic", T, P, m_h2o_tot, m_co2_tot)
                     fun(x) = real(mco2_dissolved_sat_silicic(x, P, T)*(1-eps_g0-eps_x0)*V*rho_m+eps_g0*rho_g*V*x*mm_co2/(x*mm_co2+(1-x)*mm_h2o)-M_co2)
                     X_co2_prev = X_co20
                     fx = ZeroProblem(fun, X_co2_prev)
@@ -247,7 +246,7 @@ function IC_Finder_mafic(M_h2o_0::Number, M_co2_0::Number, M_tot::Number, P_0::N
 
     mH2O = M_h2o_0/M_tot
     mCO2 = M_co2_0/M_tot
-    eps_x0 = crystal_fraction_mafic(T_0, P_0, mH2O, mCO2)[1]
+    eps_x0 = crystal_fraction_eps_x("mafic", T_0, P_0, mH2O, mCO2)
 
     eps_m0 = 1 - eps_x0
 
@@ -283,7 +282,7 @@ function IC_Finder_mafic(M_h2o_0::Number, M_co2_0::Number, M_tot::Number, P_0::N
         count = 0
 
         while ((abs((X_co20-X_co2_prev)/X_co2_prev)>Tol || abs((eps_g0-eps_g_prev)/eps_g_prev)>Tol) && count<max_count)
-            eps_x0 = crystal_fraction_mafic(T_0, P_0, mH2O, mCO2)[1]
+            eps_x0 = crystal_fraction_eps_x("mafic", T_0, P_0, mH2O, mCO2)
             fun(x) = real(mco2_dissolved_sat_mafic(x, P_0, T_0)*(1-eps_g0-eps_x0)*V_0*rho_m0+eps_g0*rho_g0*V_0*x*mm_co2/(x*mm_co2+(1-x)*mm_h2o)-M_co2_0)
             if ~isreal(X_co20) || isnan(X_co20)
                 X_co2_prev = 0
@@ -320,7 +319,7 @@ function IC_Finder_mafic(M_h2o_0::Number, M_co2_0::Number, M_tot::Number, P_0::N
                 count_loop = 0
                 while (abs((X_co20-X_co2_prev)/X_co2_prev)>Tol || abs((eps_g0-eps_g_prev)/eps_g_prev)>Tol) && count<max_count && X_co20<=1
                     count_loop = count_loop+1
-                    eps_x0 = crystal_fraction_mafic(T_0, P_0, mH2O, mCO2)[1]
+                    eps_x0 = crystal_fraction_eps_x("mafic", T_0, P_0, mH2O, mCO2)
                     fun(x) = real(mco2_dissolved_sat_mafic(x, P_0, T_0)*(1-eps_g0-eps_x0)*V_0*rho_m0+eps_g0*rho_g0*V_0*x*mm_co2/(x*mm_co2+(1-x)*mm_h2o)-M_co2_0)
 
                     if ~isreal(X_co20) || isnan(X_co20) || ~isreal(eps_g0) || isnan(eps_g0)

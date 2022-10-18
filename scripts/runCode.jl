@@ -81,9 +81,10 @@ function chamber(composition::String, end_time::Number, log_volume_km3::Number, 
     T_in = T_0 + 50        # Temperature of inflowing magma (K)
     param["T_in"] = T_in
 
+    rc = rheol_composition_dict[composition]
     if ~param["fluxing"]
         range_vfr        = 10^log_vfr   # volume flow rate (km3/yr)  
-        range_mfr        = c.rho_m0*range_vfr*1e9/(3600*24*365)
+        range_mfr        = rc.rho_m0*range_vfr*1e9/(3600*24*365)
         mdot_in = range_mfr
     else
         log_vfr          = -4.3   # log volume flow rate (km3/yr)
@@ -98,14 +99,10 @@ function chamber(composition::String, end_time::Number, log_volume_km3::Number, 
     param["Mdot_in_pass"] = mdot_in
 
     rho_g0 = eos_g(P_0, T_0)["rho_g"]   # initial gas density
-    if composition == "silicic"
-        eps_x0 = crystal_fraction_silicic(T_0, P_0, InitialConc_H2O, InitialConc_CO2)[1]
-    elseif composition == "mafic"
-        eps_x0 = crystal_fraction_mafic(T_0, P_0, InitialConc_H2O, InitialConc_CO2)[1]
-    end
+    eps_x0 = crystal_fraction_eps_x(composition, T_0, P_0, InitialConc_H2O, InitialConc_CO2)
 
     eps_m0 = 1-eps_x0
-    rho = c.rho_m0*eps_m0 + c.rho_x0*eps_x0
+    rho = rc.rho_m0*eps_m0 + rc.rho_x0*eps_x0
     M_tot =  V_0*rho   # Total mass, initial
     M_co2_0 = InitialConc_CO2*V_0*rho   # Total mass of CO2, initial
     M_h2o_0 = InitialConc_H2O*V_0*rho   # Total mass of H2O, initial
@@ -114,24 +111,17 @@ function chamber(composition::String, end_time::Number, log_volume_km3::Number, 
     param_IC_Finder["Tol"] = if composition == "silicic" 1e-9 else 1e-8 end
 
     if composition == "silicic"
-        eps_g0, X_co20, C_co2, phase = IC_Finder_silicic(M_h2o_0, M_co2_0, M_tot, P_0, T_0, V_0, c.rho_m0, param["mm_co2"], param["mm_h2o"], param_IC_Finder)
+        eps_g0, X_co20, C_co2, phase = IC_Finder_silicic(M_h2o_0, M_co2_0, M_tot, P_0, T_0, V_0, rc.rho_m0, param["mm_co2"], param["mm_h2o"], param_IC_Finder)
     elseif composition == "mafic"
-        eps_g0, X_co20, C_co2, phase = IC_Finder_mafic(M_h2o_0, M_co2_0, M_tot, P_0, T_0, V_0, c.rho_m0, param["mm_co2"], param["mm_h2o"], param_IC_Finder)
+        eps_g0, X_co20, C_co2, phase = IC_Finder_mafic(M_h2o_0, M_co2_0, M_tot, P_0, T_0, V_0, rc.rho_m0, param["mm_co2"], param["mm_h2o"], param_IC_Finder)
     end
     println("IC_Finder done: [eps_g0, X_co20, C_co2] = [$eps_g0, $X_co20, $C_co2]")
     println("phase: ", phase)
     @info("IC_Finder done: $eps_g0, $X_co20, $C_co2, $phase")
     param_saved_var["phase"] = phase
 
-    # update initial crystal volume fraction
-    if composition == "silicic"
-        eps_x0 = crystal_fraction_silicic(T_0, P_0, InitialConc_H2O, InitialConc_CO2)[1]
-    elseif composition == "mafic"
-        eps_x0 = crystal_fraction_mafic(T_0, P_0, InitialConc_H2O, InitialConc_CO2)[1]
-    end
-
     # update initial bulk density (kg/m^3)
-    rho_0  = (1-eps_g0-eps_x0)*c.rho_m0 + eps_g0*rho_g0 + eps_x0*c.rho_x0
+    rho_0  = (1-eps_g0-eps_x0)*rc.rho_m0 + eps_g0*rho_g0 + eps_x0*rc.rho_x0
 
     # update solubility
     if phase == 2
@@ -170,7 +160,7 @@ function chamber(composition::String, end_time::Number, log_volume_km3::Number, 
     @info("params: $(param)")
 
     tspan    = (0, end_time)
-    IC       = [P_0, T_0, eps_g0, V_0, c.rho_m0, c.rho_x0, X_co20, tot_Mass_0, tot_Mass_H2O_0, tot_Mass_CO2_0]
+    IC       = [P_0, T_0, eps_g0, V_0, rc.rho_m0, rc.rho_x0, X_co20, tot_Mass_0, tot_Mass_H2O_0, tot_Mass_CO2_0]
     println("tspan: ", tspan)
     println("IC: ", IC)
     @info("IC: $IC")

@@ -65,11 +65,7 @@ function odeChamber(du, u, param, t)
     m_h2o= M_h2o/(total_Mass)
     m_co2=M_co2/(total_Mass)
 
-    if param["composition"] == "silicic"
-        eps_x, deps_x_dP, deps_x_dT, deps_x_deps_g, deps_x_dmco2_t, deps_x_dmh2o_t = crystal_fraction_silicic(T,P,m_h2o,m_co2)
-    elseif param["composition"] == "mafic"
-        eps_x, deps_x_dP, deps_x_dT, deps_x_deps_g, deps_x_dmco2_t, deps_x_dmh2o_t = crystal_fraction_mafic(T,P,m_h2o,m_co2)
-    end
+    eps_x, deps_x_dP, deps_x_dT, deps_x_deps_g, deps_x_dmco2_t, deps_x_dmh2o_t = crystal_fraction(param["composition"],T,P,m_h2o,m_co2)
 
     eps_m=1-eps_x-eps_g
     rho = eps_m*rho_m + eps_g*rho_g + eps_x*rho_x
@@ -214,12 +210,11 @@ function stopChamber_MT(out, u, t, int)
     m_h20 = tot_w/tot_m
     m_co2 = tot_c/tot_m
 
+    eps_x = crystal_fraction_eps_x(param["composition"],T,P,m_h20,m_co2)
     if param["composition"] == "silicic"
-        eps_x = crystal_fraction_silicic(T,P,m_h20,m_co2)[1]
         m_eq_max = exsolve_silicic(P, T, 0)[1]
 
     elseif param["composition"] == "mafic"
-        eps_x = crystal_fraction_mafic(T,P,m_h20,m_co2)[1]
         m_eq_max = exsolve_mafic(P, T, 0)[1]
     end
     # MT's new stuff
@@ -276,11 +271,7 @@ function affect!(int, idx)
     m_h2o = int.u[9]/int.u[8]
     m_co2 = int.u[10]/int.u[8]
 
-    if param["composition"] == "silicic"
-        eps_x0 =  crystal_fraction_silicic(int.u[2], P_0, m_h2o, m_co2)[1]
-    elseif param["composition"] == "mafic"
-        eps_x0 =  crystal_fraction_mafic(int.u[2], P_0, m_h2o, m_co2)[1]
-    end
+    eps_x0 =  crystal_fraction_eps_x(param["composition"], int.u[2], P_0, m_h2o, m_co2)
 
     if idx == 3 && eps_x0 < 0.5
         sw["eruption"] = 1

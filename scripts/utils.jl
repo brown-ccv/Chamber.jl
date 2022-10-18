@@ -88,8 +88,8 @@ struct Param{T}
     kappa::T
     rho_r::T
     c_r::T
-    maxn::T
-    GLQ_n::T
+    maxn::Int64
+    GLQ_n::Int64
     Q_out_old::T
     dP_lit_dt::T
     dP_lit_dt_0::T
@@ -111,8 +111,8 @@ function Param{T}(fluxing::Bool=true,
     kappa::T  =0,
     rho_r::T  =0,
     c_r::T=0,
-    maxn::T=0,
-    GLQ_n::T=0,
+    maxn::Int64=0,
+    GLQ_n::Int64=0,
     Q_out_old::T=0,
     dP_lit_dt::T=0,
     dP_lit_dt_0::T=0,
