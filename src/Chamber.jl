@@ -21,6 +21,7 @@ include("./boundary_condition.jl")
 include("./runCode-func.jl")
 include("./IC_finder.jl")
 export eos_g,
+       eos_g_rho_g,
        crystal_fraction,
        crystal_fraction_eps_x,
        exsolve_silicic,

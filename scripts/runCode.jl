@@ -90,7 +90,7 @@ function chamber(composition::String, end_time::Number, log_volume_km3::Number, 
     else
         log_vfr          = -4.3   # log volume flow rate (km3/yr)
         range_vfr        = 10^log_vfr   # volume flow rate (km3/yr)
-        rho_g_in         = eos_g(P_0, T_in)["rho_g"]
+        rho_g_in         = eos_g_rho_g(P_0, T_in)
         range_mfr        = rho_g_in*range_vfr*1e9/(3600*24*365)
         mdot_in          = range_mfr   # place holder
         param["XCO2_in"] = 0.8

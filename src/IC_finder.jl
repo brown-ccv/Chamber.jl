@@ -110,7 +110,7 @@ function IC_Finder_silicic(M_h2o::Number, M_co2::Number, M_tot::Number, P::Numbe
     delta_X_co2 = param_IC["delta_X_co2"]
     ## ------------------------------
 
-    rho_g = eos_g(P, T)["rho_g"]
+    rho_g = eos_g_rho_g(P, T)
     m_h2o_tot = M_h2o/M_tot
     m_co2_tot = M_co2/M_tot
     eps_x0 = crystal_fraction_eps_x("silicic", T, P, m_h2o_tot, m_co2_tot)
@@ -242,7 +242,7 @@ function IC_Finder_mafic(M_h2o_0::Number, M_co2_0::Number, M_tot::Number, P_0::N
     delta_X_co2 = param_IC["delta_X_co2"]
     ## ------------------------------
     count_fzeros = 0
-    rho_g0 = eos_g(P_0, T_0)["rho_g"]
+    rho_g0 = eos_g_rho_g(P_0, T_0)
 
     mH2O = M_h2o_0/M_tot
     mCO2 = M_co2_0/M_tot
