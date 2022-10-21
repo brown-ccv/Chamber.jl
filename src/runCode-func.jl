@@ -24,15 +24,12 @@ function odeChamber(du, u, param, t)
 
     if ~isempty(storeTime)
         if storeTime[end] == t
-            storeTime[end] = t
             storeTemp[end] = T
-        elseif t == 0
-        else
+        elseif t != 0
             storeTime = [storeTime; t]
             storeTemp = [storeTemp; T]
         end
-    elseif t == 0
-    else
+    elseif t != 0
         storeTime = [storeTime; t]
         storeTemp = [storeTemp; T]
     end
