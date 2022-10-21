@@ -14,7 +14,7 @@ This is for a21 and a22
     a21: P
     a22: T
 """
-a21(eps_m, dm_eq_dX, m_eq, deps_x_dX, dV_dX, V, drho_m_dX, rho_m, X_co2, m_g, eps_g, mm_h2o, drho_g_dX, rho_g) = 
+a2x(eps_m, dm_eq_dX, m_eq, deps_x_dX, dV_dX, V, drho_m_dX, rho_m, X_co2, m_g, eps_g, mm_h2o, drho_g_dX, rho_g) = 
 eps_m*dm_eq_dX-
 m_eq*deps_x_dX+
 m_eq*eps_m*dV_dX/V+
@@ -109,3 +109,76 @@ b4(Mdot_c_in, Mdot_c_out, rho_m, V, C_co2, deps_x_dmh2o_t, dM_h2o_t_dt, deps_x_d
     C_co2*eps_m*P_loss-
     (X_co2)/m_g*rho_g/rho_m*eps_g*mm_co2*P_loss-
     a41*dP_lit_dt
+
+    if phase == 3
+        # set up matrices to solve using Cramer"s rule
+        A          = [a11 a12 a13 a14; a21 a22 a23 a24; a31 a32 a33 a34; a41 a42 a43 a44]
+        A_P        = [b1  a12 a13 a14; b2  a22 a23 a24; b3  a32 a33 a34; b4  a42 a43 a44]
+        A_T        = [a11 b1  a13 a14; a21 b2  a23 a24; a31 b3  a33 a34; a41 b4  a43 a44]
+        A_eps_g    = [a11 a12 b1  a14; a21 a22 b2  a24; a31 a32 b3  a34; a41 a42 b4  a44]
+        A_X_co2    = [a11 a12 a13 b1 ; a21 a22 a23 b2 ; a31 a32 a33 b3 ; a41 a42 a43 b4 ]
+
+        det_A          = det(A)
+        dDP_dt         = det(A_P)/det_A
+        dT_dt          = det(A_T)/det_A
+        deps_g_dt      = det(A_eps_g)/det_A
+        dX_co2_dt      = det(A_X_co2)/det_A
+        dP_dt          = dDP_dt+param["dP_lit_dt"]
+        dV_dt          = dV_dP*dP_dt + dV_dT*dT_dt + V*P_loss
+        drho_m_dt      = drho_m_dP*dP_dt + drho_m_dT*dT_dt
+        drho_x_dt      = drho_x_dP*dP_dt + drho_x_dT*dT_dt
+    else
+
+        A          = [a11 a12; a31 a32]
+        A_P        = [b1  a12; b3  a32]
+        A_T        = [a11 b1 ; a31 b3]
+        
+        det_A          = det(A)
+        dDP_dt         = det(A_P)/det_A
+        dT_dt          = det(A_T)/det_A
+        deps_g_dt      = 0
+            
+        dP_dt          = dDP_dt+param["dP_lit_dt"]
+        dV_dt          = dV_dP*dP_dt + dV_dT*dT_dt + V*P_loss
+        drho_m_dt      = drho_m_dP*dP_dt + drho_m_dT*dT_dt
+        drho_x_dt      = drho_x_dP*dP_dt + drho_x_dT*dT_dt
+        dX_co2_dt      = 0
+    end
+
+    b2 = b2(Mdot_v_in, Mdot_v_out, rho_m, V, m_eq, deps_x_dmh2o_t, dM_h2o_t_dt, deps_x_dmco2_t, dM_co2_t_dt, eps_m, P_loss, X_co2, m_g, rho_g, eps_g, mm_h2o, a21, dP_lit_dt)
+    b4 = b4(Mdot_c_in, Mdot_c_out, rho_m, V, C_co2, deps_x_dmh2o_t, dM_h2o_t_dt, deps_x_dmco2_t, dM_co2_t_dt, eps_m, P_loss, X_co2, m_g, rho_g, eps_g, mm_co2, a41, dP_lit_dt)
+
+
+
+    a11 = a1x(rho, drho_dP, V, dV_dP)
+    a12 = a1x(rho, drho_dT, V, dV_dT)
+    a31 = a31(drc_dP, rc, dV_dP, V, L_m, eps_x, drho_x_dP, T, rho_x, deps_x_dP, L_e, dm_eq_dP, rho_m, eps_m, m_eq, drho_m_dP)
+    a32 = a32(drc_dT, rc, T, dV_dT, V, L_m, eps_x, drho_x_dT, rho_x, deps_x_dT, L_e, dm_eq_dT, rho_m, eps_m, m_eq, drho_m_dT)
+    b1 = b1(Mdot_in, Mdot_out, rho, V, P_loss, rho_x, rho_m, deps_x_dmh2o_t, dM_h2o_t_dt, deps_x_dmco2_t, dM_co2_t_dt, a11, dP_lit_dt)
+    b3 = b3(Hdot_in, Hdot_out, rc, T, V, rho_x, c_x, rho_m, c_m, deps_x_dmh2o_t, dM_h2o_t_dt, deps_x_dmco2_t, dM_co2_t_dt, L_m, L_e, m_eq, P_loss, eps_x, eps_m, a31, dP_lit_dt)
+    if phase != 3
+        A = [a11 a12; a31 a32]
+        b = [b1, b3]
+        return [A, b]
+    elseif phase == 3
+        a13 = a13(rho, drho_deps_g)
+        a14 = 0
+        a21 = a2x(eps_m, dm_eq_dP, m_eq, deps_x_dP, dV_dP, V, drho_m_dP, rho_m, X_co2, m_g, eps_g, mm_h2o, drho_g_dP, rho_g)
+        a22 = a2x(eps_m, dm_eq_dT, m_eq, deps_x_dT, dV_dT, V, drho_m_dT, rho_m, X_co2, m_g, eps_g, mm_h2o, drho_g_dT, rho_g)
+        a23 = a23(m_eq, X_co2, m_g, rho_g, mm_h2o, rho_m)
+        a24 = a24(eps_m, dm_eq_dX_co2, m_g, eps_g, rho_g, mm_h2o, rho_m, X_co2, mm_co2)
+        a33 = a33(rho_g, c_g, rho_m, c_m, rc, L_e, m_eq, T)
+        a34 = a34(L_e, rho_m, eps_m, dm_eq_dX_co2, rc, T)
+        a41 = a4x(eps_m, dC_co2_dP, C_co2, deps_x_dP, dV_dP, V, drho_m_dP, rho_m, X_co2, m_g, eps_g, mm_co2, drho_g_dP, rho_g)
+        a42 = a4x(eps_m, dC_co2_dT, C_co2, deps_x_dT, dV_dT, V, drho_m_dT, rho_m, X_co2, m_g, eps_g, mm_co2, drho_g_dT, rho_g)
+        a43 = a43(C_co2, X_co2, m_g, rho_g, mm_co2, rho_m)
+        a44 = a44(eps_m, dC_co2_dX_co2, m_g, eps_g, rho_g, mm_co2, rho_m, X_co2, mm_h2o)
+
+        b2 = b2(Mdot_v_in, Mdot_v_out, rho_m, V, m_eq, deps_x_dmh2o_t, dM_h2o_t_dt, deps_x_dmco2_t, dM_co2_t_dt, eps_m, P_loss, X_co2, m_g, rho_g, eps_g, mm_h2o, a21, dP_lit_dt)
+        b4 = b4(Mdot_c_in, Mdot_c_out, rho_m, V, C_co2, deps_x_dmh2o_t, dM_h2o_t_dt, deps_x_dmco2_t, dM_co2_t_dt, eps_m, P_loss, X_co2, m_g, rho_g, eps_g, mm_co2, a41, dP_lit_dt)
+
+        A = [a11 a12 a13 a14; a21 a22 a23 a24; a31 a32 a33 a34; a41 a42 a43 a44]
+        b = [b1, b2, b3, b4]
+        return [A, b]
+    end
+
