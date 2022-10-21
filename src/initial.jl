@@ -399,37 +399,31 @@ function parameters_melting_curve_mafic(mH2O::Number, mCO2::Number, P::Number)
 end
 
 """
-    find_liq_silicic(water::Number, co2::Number, P::Number, ini_eps_x::Number)
+    find_liq(composition::String, water::Number, co2::Number, P::Number, ini_eps_x::Number)
 
 # Arguments
+-`composition`: "silicic" or "mafic"
 -`water`: Weight fration of the H2O in magma.
 -`co2`: Weight fration of the CO2 in magma.
 -`P`: Pressure (Pa)
 -`ini_eps_x`: The starting volumn fraction of crystal.
 """
-function find_liq_silicic(water::Number, co2::Number, P::Number, ini_eps_x::Number)
-    a, dadx, dady, dadz, b, dbdx, dbdy, dbdz, c, dcdx, dcdy, dcdz = parameters_melting_curve_silicic(100*water,100*co2,P)
-    f(x) = a*erfc(b*(x-c))-ini_eps_x
-    x0 = 1000 # in celsius
-    Tll = fzero(f, (0, x0), maxevals=100)
-    Tl = Tll + 273.15
-    return Tl
-end
-
-"""
-    find_liq_mafic(water::Number, co2::Number, P::Number, ini_eps_x::Number)
-
-# Arguments
--`water`: Weight fration of the H2O in magma.
--`co2`: Weight fration of the CO2 in magma.
--`P`: Pressure (Pa)
--`ini_eps_x`: The starting volumn fraction of crystal.
-"""
-function find_liq_mafic(water::Number, co2::Number, P::Number, ini_eps_x::Number)
-    a, dadx, dady, dadz, b, dbdx, dbdy, dbdz = parameters_melting_curve_mafic(100*water,100*co2,P)
-    Tl=(ini_eps_x-b)/a
-    Tl=Tl+273.15
-    return Tl
+function find_liq(composition::String, water::Number, co2::Number, P::Number, ini_eps_x::Number)
+    if !(composition in ["silicic", "mafic"])
+        error("composition must be \"silicic\" or \"mafic\".")
+    else
+        if composition == "silicic"
+            a, dadx, dady, dadz, b, dbdx, dbdy, dbdz, c, dcdx, dcdy, dcdz = parameters_melting_curve_silicic(100*water,100*co2,P)
+            f(x) = a*erfc(b*(x-c))-ini_eps_x
+            x0 = 1000
+            Tl = fzero(f, (0, x0), maxevals=100)
+        elseif composition == "mafic"
+            a, dadx, dady, dadz, b, dbdx, dbdy, dbdz = parameters_melting_curve_mafic(100*water,100*co2,P)
+            Tl = (ini_eps_x-b)/a
+        end
+        Tl = Tl + 273.15
+        return Tl
+    end
 end
 
 """
