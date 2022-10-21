@@ -88,7 +88,7 @@ function odeChamber(du, u, param, t)
     drho_deps_g = -rho_m + rho_g
 
     # % specific heat of gas
-    c_g = gas_heat_capacity(X_co2)[1]
+    c_g = gas_heat_capacity(X_co2)
     c = (1/rho)*(rho_x*eps_x*param["c_x"]+rho_m*eps_m*param["c_m"]+rho_g*eps_g*c_g)
 
     # computing the product of density and specific heat for the mixture and
