@@ -36,7 +36,7 @@ function odeChamber(du, u, param, t)
         storeTime = [storeTime; t]
         storeTemp = [storeTemp; T]
     end
-    cross = findfirst(>(0),abs.(diff(sign.(diff(storeTime)))))
+    cross = findfirst(!=(0), diff(sign.(diff(storeTime))))
     if cross !== nothing
         cross_time=  storeTime[end]
         storeTemp = [storeTemp[storeTime.<cross_time]; storeTemp[end]]
