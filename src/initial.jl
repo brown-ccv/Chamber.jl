@@ -52,38 +52,21 @@ function exsolve(composition::String, P::Number, T::Number, X_co2::Number)
         dPwdP    = 1-X_co2
         dPwdXco2 = -P
         if composition == "silicic"
-            b1 = 354.94
-            b2 = 9.623
-            b3 = -1.5223
-            b4 = 1.2439e-3
-            b5 = -1.084e-4
-            b6 = -1.362e-5
+            @unpack b1, b2, b3, b4, b5, b6 = ExsolveSilicic()
             meq       = (b1*Complex(Pw)^0.5+b2*Pw+b3*Complex(Pw)^1.5)/T+b4*Complex(Pw)^1.5+Pc*(b5*Complex(Pw)^0.5+b6*Pw)
             dmeqdT    = -1*(b1*Complex(Pw)^0.5+b2*Pw+b3*Complex(Pw)^1.5)*T^(-2)
             dmeqdP    = dPwdP*((1/T)*(0.5*b1*Complex(Pw)^(-0.5)+b2+1.5*b3*Complex(Pw)^0.5)+1.5*b4*Complex(Pw)^0.5+Pc*(0.5*b5*Complex(Pw)^(-0.5)+b6))+dPcdP*(b5*Complex(Pw)^0.5+b6*Pw)
             dmeqdXco2 = dPwdXco2*((1/T)*(0.5*b1*Complex(Pw)^(-0.5)+b2+1.5*b3*Complex(Pw)^0.5)+1.5*b4*Complex(Pw)^0.5+Pc*(0.5*b5*Complex(Pw)^(-0.5)+b6))+dPcdXco2*(b5*Complex(Pw)^0.5+b6*Pw)
         elseif composition == "mafic"
             T_C = T-273.15
-            b1  = 2.99622526644026
-            b2  = 0.00322422830627781
-            b3  = -9.1389095360385
-            b4  = 0.0336065247530767
-            b5  = 0.00747236662935722
-            b6  = -0.0000150329805347769
-            b7  = -0.01233608521548
-            b8  = -4.14842647942619e-6
-            b9  = -0.655454303068124
-            b10 = -7.35270395041104e-6
+            @unpack b1, b2, b3, b4, b5, b6, b7, b8, b9, b10 = ExsolveMafic()
             meq       = b1+b2*T_C+b3*X_co2+b4*P+b5*T_C*X_co2+b6*T_C*P+b7*X_co2*P+b8*T_C^2+b9*Complex(X_co2)^2+b10*Complex(P)^2
             dmeqdT    = b2+b5*X_co2+b6*P+2*b8*T_C
             dmeqdP    = b4+b6*T_C+b7*X_co2+2*b10*P
             dmeqdXco2 = b3+b5*T_C+b7*P+2*b9*X_co2
         end
         # coefficients for CO2 partitioning
-        c1 = 5668
-        c2 = -55.99
-        c3 = 0.4133
-        c4 = 2.041e-3
+        @unpack c1, c2, c3, c4 = Co2PartitionCoeff()
         C_co2       = Pc*(c1+c2*Pw)/T+Pc*(c3*Complex(Pw)^0.5+c4*Complex(Pw)^1.5)
         dC_co2dT    = -1*Pc*(c1+c2*Pw)*Complex(T)^(-2)
         dC_co2dP    = Complex(T)^(-1)*(dPcdP*(c1+c2*Pw)+Pc*(c2*dPwdP))+dPcdP*(c3*Complex(Pw)^0.5+c4*Complex(Pw)^1.5)+Pc*(0.5*c3*Complex(Pw)^(-0.5)*dPwdP+1.5*c4*Complex(Pw)^0.5*dPwdP)
