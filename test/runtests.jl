@@ -10,9 +10,9 @@ using Test
 end
 
 @testset "gas_heat_capacity test" begin
-    @test Chamber.gas_heat_capacity(0) == [0, 0]
-    @test Chamber.gas_heat_capacity(0.5) == [1978.5523133967436, -2209.5171570266443]
-    @test Chamber.gas_heat_capacity(1) == [1200.0, -1097.332424448989]
+    @test Chamber.gas_heat_capacity(0) == 0
+    @test Chamber.gas_heat_capacity(0.5) == 1978.5523133967436
+    @test Chamber.gas_heat_capacity(1) == 1200.0
 end
 
 @testset "initial test" begin
@@ -20,14 +20,10 @@ end
     @test round(Chamber.eos_g(0, 1000)["drho_g_dT"], digits=5) == 4.79215
 end
 
-# @testset "export functions" begin
-#     @test !isnothing(make_param)
-#     @test !isnothing(GLQ_points_weights_hard)
-# end
-
 @testset "export functions Chamber" begin
     @test !isnothing(Chamber.make_param)
     @test !isnothing(Chamber.GLQ_points_weights_hard)
 end
 
 include("test-utils.jl")
+include("test-matrix.jl")

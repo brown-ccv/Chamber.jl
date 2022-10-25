@@ -20,6 +20,7 @@ include("./plot_figs.jl")
 include("./boundary_condition.jl")
 include("./runCode-func.jl")
 include("./IC_finder.jl")
+include("./utils-matrix.jl")
 export eos_g,
        eos_g_rho_g,
        crystal_fraction,
@@ -42,7 +43,9 @@ export eos_g,
        make_param_saved_var,
        make_sw,
        make_param_IC_Finder,
-       SW
+       SW,
+       a1x, a13, a2x, a23, a24, a31, a32, a33, a34, a4x, a43, a44,
+       b1, b2, b3, b4
 
 # Write your package code here.
 end
