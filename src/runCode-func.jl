@@ -68,7 +68,6 @@ function odeChamber(du, u, param, t)
     eps_x, deps_x_dP, deps_x_dT, deps_x_deps_g, deps_x_dmco2_t, deps_x_dmh2o_t = crystal_fraction(param["composition"],T,P,m_h2o,m_co2)
 
     eps_m=1-eps_x-eps_g
-    rho = eps_m*rho_m + eps_g*rho_g + eps_x*rho_x
 
     if param["composition"] == "silicic"
         m_eq,dm_eq_dP,dm_eq_dT,dm_eq_dX_co2, C_co2_t,dC_co2_dP, dC_co2_dT, dC_co2_dX_co2 = exsolve_silicic(P,T, X_co2)
