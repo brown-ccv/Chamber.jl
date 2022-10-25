@@ -186,3 +186,24 @@ mutable struct ParamICFinder
                           0.2,
                           1e-2)
 end
+
+
+rho(eps_m, eps_g, eps_x, rho_m, rho_g, rho_x) =
+    eps_m*rho_m +
+    eps_g*rho_g +
+    eps_x*rho_x
+drho_dX(eps_m, eps_g, eps_x, drho_m_dX, drho_g_dX, drho_x_dX) =
+    eps_m*drho_m_dX +
+    eps_g*drho_g_dX +
+    eps_x*drho_x_dX +
+    (rho_x-rho_m)*deps_x_dX
+
+rc(rho_x, eps_x, c_x, rho_m, eps_m, c_m, rho_g, eps_g, c_g) =
+    rho_x*eps_x*c_x+
+    rho_m*eps_m*c_m+
+    rho_g*eps_g*c_g
+drc_dX(eps_x, c_x, drho_x_dX, eps_g, c_g, drho_g_dX, eps_m, c_m, drho_m_dX, rho_x, rho_m, deps_x_dX) =
+    eps_x*c_x*drho_x_dX+
+    eps_g*c_g*drho_g_dX+
+    eps_m*c_m*drho_m_dX+
+    (rho_x*c_x-rho_m*c_m)*deps_x_dX
