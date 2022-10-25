@@ -26,16 +26,16 @@ function odeChamber(du, u, param, t)
         if storeTime[end] == t
             storeTemp[end] = T
         elseif t != 0
-            storeTime = [storeTime; t]
-            storeTemp = [storeTemp; T]
+            push!(storeTime, t)
+            push!(storeTemp, T)
         end
     elseif t != 0
-        storeTime = [storeTime; t]
-        storeTemp = [storeTemp; T]
+        push!(storeTime, t)
+        push!(storeTemp, T)
     end
     cross = findfirst(!=(0), diff(sign.(diff(storeTime))))
     if cross !== nothing
-        cross_time=  storeTime[end]
+        cross_time= storeTime[end]
         storeTemp = [storeTemp[storeTime.<cross_time]; storeTemp[end]]
         storeTime = [storeTime[storeTime.<cross_time]; cross_time]
     end
