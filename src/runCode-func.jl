@@ -33,7 +33,7 @@ function odeChamber(du, u, param, t)
         storeTime = [storeTime; t]
         storeTemp = [storeTemp; T]
     end
-    cross = findfirst(>(0),abs.(diff(sign.(diff(storeTime)))))
+    cross = findfirst(!=(0), diff(sign.(diff(storeTime))))
     if cross !== nothing
         cross_time=  storeTime[end]
         storeTemp = [storeTemp[storeTime.<cross_time]; storeTemp[end]]
@@ -65,7 +65,6 @@ function odeChamber(du, u, param, t)
     eps_x, deps_x_dP, deps_x_dT, deps_x_deps_g, deps_x_dmco2_t, deps_x_dmh2o_t = crystal_fraction(param["composition"],T,P,m_h2o,m_co2)
 
     eps_m=1-eps_x-eps_g
-    rho = eps_m*rho_m + eps_g*rho_g + eps_x*rho_x
 
     if param["composition"] == "silicic"
         m_eq,dm_eq_dP,dm_eq_dT,dm_eq_dX_co2, C_co2_t,dC_co2_dP, dC_co2_dT, dC_co2_dX_co2 = exsolve_silicic(P,T, X_co2)
@@ -85,7 +84,7 @@ function odeChamber(du, u, param, t)
     drho_deps_g = -rho_m + rho_g
 
     # % specific heat of gas
-    c_g = gas_heat_capacity(X_co2)[1]
+    c_g = gas_heat_capacity(X_co2)
     c = (1/rho)*(rho_x*eps_x*param["c_x"]+rho_m*eps_m*param["c_m"]+rho_g*eps_g*c_g)
 
     # computing the product of density and specific heat for the mixture and

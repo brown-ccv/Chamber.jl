@@ -46,7 +46,7 @@ function boundary_conditions_new(P::Number, T::Number, V::Number, rho_m::Number,
     eps_x_in = crystal_fraction_eps_x(param["composition"],T_in,P_lit,tot_h2o_frac_in,tot_co2_frac_in)
 
     rho_in         = (1-eps_g_in-eps_x_in)*rho_m + eps_g_in*rho_g_in + eps_x_in*rho_x
-    c_g_in = gas_heat_capacity(X_co2_in)[1]
+    c_g_in = gas_heat_capacity(X_co2_in)
     c_in           = ((1-eps_g_in-eps_x_in)*rho_m*param["c_m"] + eps_g_in*rho_g_in*c_g_in + eps_x_in*rho_x*param["c_x"])/rho_in
     if param["fluxing"] == "yes"
         c_in = c_g_in
