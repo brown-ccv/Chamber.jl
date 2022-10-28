@@ -1,5 +1,6 @@
 using Chamber
 using Test
+include("matrix-a-data.jl")
 
 @testset "GLQ_points_weights test" begin
     @test Chamber.GLQ_points_weights_hard(5) == [0 0]
@@ -10,16 +11,16 @@ using Test
 end
 
 @testset "gas_heat_capacity test" begin
-    @test Chamber.gas_heat_capacity(0) == [0, 0]
-    @test Chamber.gas_heat_capacity(0.5) == [1978.5523133967436, -2209.5171570266443]
-    @test Chamber.gas_heat_capacity(1) == [1200.0, -1097.332424448989]
+    @test Chamber.gas_heat_capacity(0) == 0
+    @test Chamber.gas_heat_capacity(0.5) == 1978.5523133967436
+    @test Chamber.gas_heat_capacity(1) == 1200.0
 end
 
 @testset "initial test" begin
     @test Chamber.eos_g(2.1582e8, 1000.0).rho_g == 502.5694116183761
     @test Chamber.eos_g(2.1582e8, 1000.0).drho_g_dP == 1.3610427024362434e-6
     @test Chamber.eos_g(2.1582e8, 1000.0).drho_g_dT == -0.649635523875751
-    @test round(Chamber.eos_g(0, 1000.0).drho_g_dT, digits=5) == 4.79215
+    @test round(Chamber.eos_g(0.0, 1000.0).drho_g_dT, digits=5) == 4.79215
 end
 
 # @testset "export functions" begin
@@ -33,3 +34,4 @@ end
 end
 
 include("test-utils.jl")
+include("test-rho_rc.jl")

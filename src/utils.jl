@@ -188,22 +188,43 @@ mutable struct ParamICFinder
 end
 
 
-rho(eps_m, eps_g, eps_x, rho_m, rho_g, rho_x) =
+function rho_f(;eps_m::T, eps_g::T, eps_x::T, rho_m::T, rho_g::T, rho_x::T)::T where T<:Float64
     eps_m*rho_m +
     eps_g*rho_g +
     eps_x*rho_x
-drho_dX(eps_m, eps_g, eps_x, drho_m_dX, drho_g_dX, drho_x_dX) =
+end
+function drho_dX_f(;eps_m::T, eps_g::T, eps_x::T, drho_m_dX::T, drho_g_dX::T, drho_x_dX::T, rho_x::T, rho_m::T, deps_x_dX::T)::T where T<:Float64
     eps_m*drho_m_dX +
     eps_g*drho_g_dX +
     eps_x*drho_x_dX +
     (rho_x-rho_m)*deps_x_dX
+end
 
-rc(rho_x, eps_x, c_x, rho_m, eps_m, c_m, rho_g, eps_g, c_g) =
+function rc_f(;rho_x::T, eps_x::T, c_x::T, rho_m::T, eps_m::T, c_m::T, rho_g::T, eps_g::T, c_g::T)::T where T<:Float64
     rho_x*eps_x*c_x+
     rho_m*eps_m*c_m+
     rho_g*eps_g*c_g
-drc_dX(eps_x, c_x, drho_x_dX, eps_g, c_g, drho_g_dX, eps_m, c_m, drho_m_dX, rho_x, rho_m, deps_x_dX) =
+end
+
+function drc_dX_f(;eps_x::T, c_x::T, drho_x_dX::T, eps_g::T, c_g::T, drho_g_dX::T, eps_m::T, c_m::T, 
+    drho_m_dX::T, rho_x::T, rho_m::T, deps_x_dX::T)::T where T<:Float64
     eps_x*c_x*drho_x_dX+
     eps_g*c_g*drho_g_dX+
     eps_m*c_m*drho_m_dX+
     (rho_x*c_x-rho_m*c_m)*deps_x_dX
+end
+
+function build_rho_rc(eps_m::T, eps_g::T, eps_x::T, rho_m::T, rho_g::T, rho_x::T, drho_m_dP::T, drho_g_dP::T, 
+    drho_x_dP::T, drho_m_dT::T, drho_g_dT::T, drho_x_dT::T, c_x::T, c_m::T, c_g::T, deps_x_dP::T, deps_x_dT::T)::Vector{T} where T<:Float64
+    rho         = rho_f(eps_m=eps_m, eps_g=eps_g, eps_x=eps_x, rho_m=rho_m, rho_g=rho_g, rho_x=rho_x)
+    drho_dP     = drho_dX_f(eps_m=eps_m, eps_g=eps_g, eps_x=eps_x, drho_m_dX=drho_m_dP, drho_g_dX=drho_g_dP, drho_x_dX=drho_x_dP, rho_x=rho_x, rho_m=rho_m, deps_x_dX=deps_x_dP)
+    drho_dT     = drho_dX_f(eps_m=eps_m, eps_g=eps_g, eps_x=eps_x, drho_m_dX=drho_m_dT, drho_g_dX=drho_g_dT, drho_x_dX=drho_x_dT, rho_x=rho_x, rho_m=rho_m, deps_x_dX=deps_x_dT)
+    drho_deps_g = -rho_m + rho_g
+
+    # computing the product of density and specific heat for the mixture and
+    # its derivatives
+    rc              = rc_f(rho_x=rho_x, eps_x=eps_x, c_x=c_x, rho_m=rho_m, eps_m=eps_m, c_m=c_m, rho_g=rho_g, eps_g=eps_g, c_g=c_g) 
+    drc_dP          = drc_dX_f(eps_x=eps_x, c_x=c_x, drho_x_dX=drho_x_dP, eps_g=eps_g, c_g=c_g, drho_g_dX=drho_g_dP, eps_m=eps_m, c_m=c_m, drho_m_dX=drho_m_dP, rho_x=rho_x, rho_m=rho_m, deps_x_dX=deps_x_dP)
+    drc_dT          = drc_dX_f(eps_x=eps_x, c_x=c_x, drho_x_dX=drho_x_dT, eps_g=eps_g, c_g=c_g, drho_g_dX=drho_g_dT, eps_m=eps_m, c_m=c_m, drho_m_dX=drho_m_dT, rho_x=rho_x, rho_m=rho_m, deps_x_dX=deps_x_dT)
+    return [rho, drho_dP, drho_dT, drho_deps_g, rc, drc_dP, drc_dT]
+end
