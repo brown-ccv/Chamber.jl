@@ -1,7 +1,7 @@
 # For function eos_g
-rho_g(P, T)     = real(1e3*(-112.528*Complex(T-273.15)^-0.381 + 127.811*Complex(P*1e-5)^-1.135 + 112.04*Complex(T-273.15)^-0.411*Complex(P*1e-5)^0.033))
-drho_g_dP(P, T) = real(1e-2*((-1.135)*127.811*Complex(P*1e-5)^-2.135 + 0.033*112.04*Complex(T-273.15)^-0.411*Complex(P*1e-5)^-0.967))
-drho_g_dT(P, T) = real(1e3*((-0.381)*(-112.528)*Complex(T-273.15)^-1.381 + (-0.411)*112.04*Complex(T-273.15)^-1.411*Complex(P*1e-5)^0.033))
+rho_g(P::Float64, T::Float64)::Float64     = real(1e3*(-112.528*Complex(T-273.15)^-0.381 + 127.811*Complex(P*1e-5)^-1.135 + 112.04*Complex(T-273.15)^-0.411*Complex(P*1e-5)^0.033))
+drho_g_dP(P::Float64, T::Float64)::Float64 = real(1e-2*((-1.135)*127.811*Complex(P*1e-5)^-2.135 + 0.033*112.04*Complex(T-273.15)^-0.411*Complex(P*1e-5)^-0.967))
+drho_g_dT(P::Float64, T::Float64)::Float64 = real(1e3*((-0.381)*(-112.528)*Complex(T-273.15)^-1.381 + (-0.411)*112.04*Complex(T-273.15)^-1.411*Complex(P*1e-5)^0.033))
 
 struct EosG{T}
     rho_g::T

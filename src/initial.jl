@@ -10,7 +10,7 @@ parametrization of redlich kwong taken from Huber et al. 2010
 """
 function eos_g(P::Number, T::Number)
     eos_g = EosG(P, T)
-    return Dict(["rho_g"=>eos_g.rho_g, "drho_g_dP"=>eos_g.drho_g_dP, "drho_g_dT"=>eos_g.drho_g_dT])
+    return eos_g
 end
 
 """
