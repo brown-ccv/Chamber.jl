@@ -53,7 +53,7 @@ function odeChamber(du, u, param, t)
     drho_x_dT      = -rho_x*param["alpha_x"]
 
     eos_g_results = eos_g(P,T)
-    rho_g,drho_g_dP,drho_g_dT = eos_g_results["rho_g"],eos_g_results["drho_g_dP"],eos_g_results["drho_g_dT"]
+    rho_g,drho_g_dP,drho_g_dT = eos_g_results.rho_g, eos_g_results.drho_g_dP, eos_g_results.drho_g_dT
 
     M_h2o    = u[9]
     M_co2    = u[10]

@@ -95,7 +95,7 @@ function chamber(composition::String, end_time::Number, log_volume_km3::Number, 
     # set the mass inflow rate
     param["Mdot_in_pass"] = mdot_in
 
-    rho_g0 = eos_g(P_0, T_0)["rho_g"]   # initial gas density
+    rho_g0 = eos_g(P_0, T_0).rho_g   # initial gas density
     eps_x0 = crystal_fraction_eps_x(composition, T_0, P_0, InitialConc_H2O, InitialConc_CO2)
 
     eps_m0 = 1-eps_x0
