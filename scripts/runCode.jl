@@ -11,7 +11,6 @@ using Sundials
 using TimerOutputs
 using Logging
 include("./solver_methods.jl")
-include("./utils.jl")
 
 # thermal gradient
 T_surface     = 0+273   # surface temperature (K)

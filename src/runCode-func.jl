@@ -78,23 +78,16 @@ function odeChamber(du, u, param, t)
         C_co2 = m_co2
     end
 
-    rho         = eps_m*rho_m + eps_g*rho_g + eps_x*rho_x
-    drho_dP     = eps_m*drho_m_dP + eps_g*drho_g_dP + eps_x*drho_x_dP+(rho_x-rho_m)*deps_x_dP
-    drho_dT     = eps_m*drho_m_dT + eps_g*drho_g_dT + eps_x*drho_x_dT+(rho_x-rho_m)*deps_x_dT
-    drho_deps_g = -rho_m + rho_g
-
     # % specific heat of gas
     c_g = gas_heat_capacity(X_co2)
+    rho, drho_dP, drho_dT, drho_deps_g, rc, drc_dP, drc_dT = 
+        build_rho_rc(eps_m, eps_g, eps_x, rho_m, rho_g, rho_x, drho_m_dP, drho_g_dP, drho_x_dP, 
+        drho_m_dT, drho_g_dT, drho_x_dT, param["c_x"], param["c_m"], c_g, deps_x_dP, deps_x_dT)
     c = (1/rho)*(rho_x*eps_x*param["c_x"]+rho_m*eps_m*param["c_m"]+rho_g*eps_g*c_g)
 
-    # computing the product of density and specific heat for the mixture and
-    # its derivatives
-    rc              = rho_x*eps_x*param["c_x"]+rho_m*eps_m*param["c_m"]+rho_g*eps_g*c_g
-    drc_dP          = eps_x*param["c_x"]*drho_x_dP+eps_g*c_g*drho_g_dP+eps_m*param["c_m"]*drho_m_dP+(rho_x*param["c_x"]-rho_m*param["c_m"])*deps_x_dP
-    drc_dT          = eps_x*param["c_x"]*drho_x_dT+eps_g*c_g*drho_g_dT+eps_m*param["c_m"]*drho_m_dT+(rho_x*param["c_x"]-rho_m*param["c_m"])*deps_x_dT
-
     # boundary conditions
-    Mdot_in, Mdot_out, Mdot_v_in, Mdot_v_out,Mdot_c_in, Mdot_c_out, Hdot_in, Hdot_out, P_loss,eta_r = boundary_conditions_new(P, T, V, rho_m, rho_x, c, sw, param["T_in"], M_h2o, M_co2, total_Mass, param, param_saved_var)
+    Mdot_in, Mdot_out, Mdot_v_in, Mdot_v_out,Mdot_c_in, Mdot_c_out, Hdot_in, Hdot_out, P_loss,eta_r = 
+        boundary_conditions_new(P, T, V, rho_m, rho_x, c, sw, param["T_in"], M_h2o, M_co2, total_Mass, param, param_saved_var)
     # coefficients in the system of unknowns Ax = B, here x= [dP/dt dT/dt deps_g/dt dX_co2/dt]
     # note: P, T, and phi are y(1), y(2) and y(3) respectively
     # values matrix A
