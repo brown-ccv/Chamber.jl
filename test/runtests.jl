@@ -35,3 +35,4 @@ end
 
 include("test-utils.jl")
 include("test-rho_rc.jl")
+include("test-exsolve.jl")
