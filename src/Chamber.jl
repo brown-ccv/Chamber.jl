@@ -10,7 +10,7 @@ using Roots
 using SpecialFunctions
 using Sundials
 using TimerOutputs
-include("../scripts/utils.jl")
+include("utils.jl")
 include("./Data/parameters.jl")
 include("./GLQ_points_weights.jl")
 include("./initial.jl")
@@ -41,7 +41,8 @@ export eos_g,
        make_param_saved_var,
        make_sw,
        make_param_IC_Finder,
-       SW
+       SW,
+       rho_f, drho_dX_f, rc_f, drc_dX_f, build_rho_rc
 
 # Write your package code here.
 end
