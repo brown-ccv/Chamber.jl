@@ -24,7 +24,7 @@ function eos_g_rho_g(P::Number, T::Number)::Float64
 end
 
 """
-    exsolve_silicic(P::Number, T::Number, X_co2::Number)
+    exsolve(composition::String, P::Number, T::Number, X_co2::Number)
 
 This script uses Liu et al. (2006) to calculate the solubility of water
 
@@ -33,106 +33,49 @@ This script uses Liu et al. (2006) to calculate the solubility of water
 -`T`: represents the temperature in some units
 -`X_co2`: mole fraction of CO2 in gas.
 """
-function exsolve_silicic(P::Number, T::Number, X_co2::Number)
-    # partial pressures of CO2 and Water
-    P = P/1e6  # Have to convert to MPa
-    Pc       = P*X_co2
-    dPcdP    = X_co2
-    dPcdXco2 = P
-    Pw       = P*(1-X_co2)
-    dPwdP    = 1-X_co2
-    dPwdXco2 = -P
-    b1 = 354.94
-    b2 = 9.623
-    b3 = -1.5223
-    b4 = 1.2439e-3
-    b5 = -1.084e-4
-    b6 = -1.362e-5
-    meq       = (b1*Complex(Pw)^0.5+b2*Pw+b3*Complex(Pw)^1.5)/T+b4*Complex(Pw)^1.5+Pc*(b5*Complex(Pw)^0.5+b6*Pw)
-    dmeqdT    = -1*(b1*Complex(Pw)^0.5+b2*Pw+b3*Complex(Pw)^1.5)*T^(-2)
-    dmeqdP    = dPwdP*((1/T)*(0.5*b1*Complex(Pw)^(-0.5)+b2+1.5*b3*Complex(Pw)^0.5)+1.5*b4*Complex(Pw)^0.5+Pc*(0.5*b5*Complex(Pw)^(-0.5)+b6))+dPcdP*(b5*Complex(Pw)^0.5+b6*Pw)
-    dmeqdXco2 = dPwdXco2*((1/T)*(0.5*b1*Complex(Pw)^(-0.5)+b2+1.5*b3*Complex(Pw)^0.5)+1.5*b4*Complex(Pw)^0.5+Pc*(0.5*b5*Complex(Pw)^(-0.5)+b6))+dPcdXco2*(b5*Complex(Pw)^0.5+b6*Pw)
-
-    # coefficients for CO2 partitioning
-    c1 = 5668
-    c2 = -55.99
-    c3 = 0.4133
-    c4 = 2.041e-3
-    C_co2       = Pc*(c1+c2*Pw)/T+Pc*(c3*Complex(Pw)^0.5+c4*Complex(Pw)^1.5)
-    dC_co2dT    = -1*Pc*(c1+c2*Pw)*Complex(T)^(-2)
-    dC_co2dP    = Complex(T)^(-1)*(dPcdP*(c1+c2*Pw)+Pc*(c2*dPwdP))+dPcdP*(c3*Complex(Pw)^0.5+c4*Complex(Pw)^1.5)+Pc*(0.5*c3*Complex(Pw)^(-0.5)*dPwdP+1.5*c4*Complex(Pw)^0.5*dPwdP)
-    dC_co2dXco2 = Complex(T)^(-1)*(dPcdXco2*(c1+c2*Pw)+Pc*(c2*dPwdXco2))+dPcdXco2*(c3*Complex(Pw)^0.5+c4*Complex(Pw)^1.5)+Pc*(0.5*c3*Complex(Pw)^(-0.5)*dPwdXco2+1.5*c4*Complex(Pw)^0.5*dPwdXco2)
-
-    meq       = 1e-2*real(meq)
-    dmeqdP    = 1e-8*real(dmeqdP)
-    dmeqdT    = 1e-2*real(dmeqdT)
-    dmeqdXco2 = 1e-2*real(dmeqdXco2)
-    C_co2       = 1e-6*real(C_co2)
-    dC_co2dP    = 1e-12*real(dC_co2dP)
-    dC_co2dT    = 1e-6*real(dC_co2dT)
-    dC_co2dXco2 = 1e-6*real(dC_co2dXco2)
-
-    return [meq, dmeqdP, dmeqdT, dmeqdXco2, C_co2, dC_co2dP, dC_co2dT, dC_co2dXco2]
-end
-
-"""
-    exsolve_mafic(P::Number, T::Number, X_co2::Number)
-
-# Arguments
--`P`: pressure (Pa)
--`T`: temperature (K)
--`X_co2`: mole fraction of CO2 in gas.
-"""
-function exsolve_mafic(P::Number, T::Number, X_co2::Number)
-    # Henry's law
-    # partial pressures of CO2 and Water
-    P = P/1e6
-    Pc       = P*X_co2
-    dPcdP    = X_co2
-    dPcdXco2 = P
-    Pw       = P*(1-X_co2)
-    dPwdP    = 1-X_co2
-    dPwdXco2 = -P
-
-    T_C = T-273.15
-    b1  = 2.99622526644026
-    b2  = 0.00322422830627781
-    b3  = -9.1389095360385
-    b4  = 0.0336065247530767
-    b5  = 0.00747236662935722
-    b6  = -0.0000150329805347769
-    b7  = -0.01233608521548
-    b8  = -4.14842647942619e-6
-    b9  = -0.655454303068124
-    b10 = -7.35270395041104e-6
-
-    meq       = b1+b2*T_C+b3*X_co2+b4*P+b5*T_C*X_co2+b6*T_C*P+b7*X_co2*P+b8*T_C^2+b9*Complex(X_co2)^2+b10*Complex(P)^2
-    dmeqdT    = b2+b5*X_co2+b6*P+2*b8*T_C
-    dmeqdP    = b4+b6*T_C+b7*X_co2+2*b10*P
-    dmeqdXco2 = b3+b5*T_C+b7*P+2*b9*X_co2
-    
-    # coefficients for CO2 partitioning
-    # Old school Liu - rhyolite
-    c1 = 5668
-    c2 = -55.99
-    c3 = 0.4133
-    c4 = 2.041e-3
-
-    C_co2       = Pc*(c1+c2*Pw)/T+Pc*(c3*Complex(Pw)^0.5+c4*Complex(Pw)^1.5)
-    dC_co2dT    = -1*Pc*(c1+c2*Pw)*Complex(T)^(-2)
-    dC_co2dP    = Complex(T)^(-1)*(dPcdP*(c1+c2*Pw)+Pc*(c2*dPwdP))+dPcdP*(c3*Complex(Pw)^0.5+c4*Complex(Pw)^1.5)+Pc*(0.5*c3*Complex(Pw)^(-0.5)*dPwdP+1.5*c4*Complex(Pw)^0.5*dPwdP)
-    dC_co2dXco2 = Complex(T)^(-1)*(dPcdXco2*(c1+c2*Pw)+Pc*(c2*dPwdXco2))+dPcdXco2*(c3*Complex(Pw)^0.5+c4*Complex(Pw)^1.5)+Pc*(0.5*c3*Complex(Pw)^(-0.5)*dPwdXco2+1.5*c4*Complex(Pw)^0.5*dPwdXco2)
-
-    meq       = real(1e-2*meq)
-    dmeqdP    = 1e-8*dmeqdP
-    dmeqdT    = 1e-2*dmeqdT
-    dmeqdXco2 = 1e-2*dmeqdXco2
-
-    C_co2       = real(1e-6*C_co2)
-    dC_co2dP    = real(1e-12*dC_co2dP)
-    dC_co2dT    = real(1e-6*dC_co2dT)
-    dC_co2dXco2 = real(1e-6*dC_co2dXco2)
-    return [meq, dmeqdP, dmeqdT, dmeqdXco2, C_co2, dC_co2dP, dC_co2dT, dC_co2dXco2]
+function exsolve(composition::String, P::Number, T::Number, X_co2::Number)
+    if !(composition in ["silicic", "mafic"])
+        @error("composition must be \"silicic\" or \"mafic\".")
+    else
+        # Henry's law
+        # partial pressures of CO2 and Water
+        P = P/1e6
+        Pc       = P*X_co2
+        dPcdP    = X_co2
+        dPcdXco2 = P
+        Pw       = P*(1-X_co2)
+        dPwdP    = 1-X_co2
+        dPwdXco2 = -P
+        if composition == "silicic"
+            @unpack b1, b2, b3, b4, b5, b6 = ExsolveSilicic()
+            meq       = (b1*Complex(Pw)^0.5+b2*Pw+b3*Complex(Pw)^1.5)/T+b4*Complex(Pw)^1.5+Pc*(b5*Complex(Pw)^0.5+b6*Pw)
+            dmeqdT    = -1*(b1*Complex(Pw)^0.5+b2*Pw+b3*Complex(Pw)^1.5)*T^(-2)
+            dmeqdP    = dPwdP*((1/T)*(0.5*b1*Complex(Pw)^(-0.5)+b2+1.5*b3*Complex(Pw)^0.5)+1.5*b4*Complex(Pw)^0.5+Pc*(0.5*b5*Complex(Pw)^(-0.5)+b6))+dPcdP*(b5*Complex(Pw)^0.5+b6*Pw)
+            dmeqdXco2 = dPwdXco2*((1/T)*(0.5*b1*Complex(Pw)^(-0.5)+b2+1.5*b3*Complex(Pw)^0.5)+1.5*b4*Complex(Pw)^0.5+Pc*(0.5*b5*Complex(Pw)^(-0.5)+b6))+dPcdXco2*(b5*Complex(Pw)^0.5+b6*Pw)
+        elseif composition == "mafic"
+            T_C = T-273.15
+            @unpack b1, b2, b3, b4, b5, b6, b7, b8, b9, b10 = ExsolveMafic()
+            meq       = b1+b2*T_C+b3*X_co2+b4*P+b5*T_C*X_co2+b6*T_C*P+b7*X_co2*P+b8*T_C^2+b9*Complex(X_co2)^2+b10*Complex(P)^2
+            dmeqdT    = b2+b5*X_co2+b6*P+2*b8*T_C
+            dmeqdP    = b4+b6*T_C+b7*X_co2+2*b10*P
+            dmeqdXco2 = b3+b5*T_C+b7*P+2*b9*X_co2
+        end
+        # coefficients for CO2 partitioning
+        @unpack c1, c2, c3, c4 = Co2PartitionCoeff()
+        C_co2       = Pc*(c1+c2*Pw)/T+Pc*(c3*Complex(Pw)^0.5+c4*Complex(Pw)^1.5)
+        dC_co2dT    = -1*Pc*(c1+c2*Pw)*Complex(T)^(-2)
+        dC_co2dP    = Complex(T)^(-1)*(dPcdP*(c1+c2*Pw)+Pc*(c2*dPwdP))+dPcdP*(c3*Complex(Pw)^0.5+c4*Complex(Pw)^1.5)+Pc*(0.5*c3*Complex(Pw)^(-0.5)*dPwdP+1.5*c4*Complex(Pw)^0.5*dPwdP)
+        dC_co2dXco2 = Complex(T)^(-1)*(dPcdXco2*(c1+c2*Pw)+Pc*(c2*dPwdXco2))+dPcdXco2*(c3*Complex(Pw)^0.5+c4*Complex(Pw)^1.5)+Pc*(0.5*c3*Complex(Pw)^(-0.5)*dPwdXco2+1.5*c4*Complex(Pw)^0.5*dPwdXco2)
+        meq       = 1e-2*real(meq)
+        dmeqdP    = 1e-8*real(dmeqdP)
+        dmeqdT    = 1e-2*real(dmeqdT)
+        dmeqdXco2 = 1e-2*real(dmeqdXco2)
+        C_co2       = 1e-6*real(C_co2)
+        dC_co2dP    = 1e-12*real(dC_co2dP)
+        dC_co2dT    = 1e-6*real(dC_co2dT)
+        dC_co2dXco2 = 1e-6*real(dC_co2dXco2)
+        return [meq, dmeqdP, dmeqdT, dmeqdXco2, C_co2, dC_co2dP, dC_co2dT, dC_co2dXco2]
+    end
 end
 
 """

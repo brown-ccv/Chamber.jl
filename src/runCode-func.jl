@@ -66,11 +66,7 @@ function odeChamber(du, u, param, t)
 
     eps_m=1-eps_x-eps_g
 
-    if param["composition"] == "silicic"
-        m_eq,dm_eq_dP,dm_eq_dT,dm_eq_dX_co2, C_co2_t,dC_co2_dP, dC_co2_dT, dC_co2_dX_co2 = exsolve_silicic(P,T, X_co2)
-    elseif param["composition"] == "mafic"
-        m_eq,dm_eq_dP,dm_eq_dT,dm_eq_dX_co2, C_co2_t,dC_co2_dP, dC_co2_dT, dC_co2_dX_co2 = exsolve_mafic(P,T, X_co2)
-    end
+    m_eq,dm_eq_dP,dm_eq_dT,dm_eq_dX_co2, C_co2_t,dC_co2_dP, dC_co2_dT, dC_co2_dX_co2 = exsolve(param["composition"], P,T, X_co2)
 
     if phase == 3
         C_co2=C_co2_t
@@ -200,12 +196,8 @@ function stopChamber_MT(out, u, t, int)
     m_co2 = tot_c/tot_m
 
     eps_x = crystal_fraction_eps_x(param["composition"],T,P,m_h20,m_co2)
-    if param["composition"] == "silicic"
-        m_eq_max = exsolve_silicic(P, T, 0)[1]
+    m_eq_max = exsolve(param["composition"], P, T, 0)[1]
 
-    elseif param["composition"] == "mafic"
-        m_eq_max = exsolve_mafic(P, T, 0)[1]
-    end
     # MT's new stuff
     eps_m0 = 1 - eps_x
 
