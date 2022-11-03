@@ -85,6 +85,18 @@ a44_f(eps_m, dC_co2_dX_co2, m_g, eps_g, rho_g, mm_co2, rho_m, X_co2, mm_h2o) = r
 
 
 # Vector B
+"""
+    dM_X_t_dt_f(rho, V, Mdot_v_in, Mdot_v_out, m_h2o, Mdot_in, Mdot_out)
+
+For `dM_h2o_t_dt` & `dM_co2_t_dt`
+
+- Mdot_X_in: `Mdot_v_in` or `Mdot_c_in`
+- Mdot_X_out: `Mdot_v_out` or `Mdot_c_out`
+- m_X: `m_h2o` or `m_co2`
+"""
+dM_X_t_dt_f(rho, V, Mdot_X_in, Mdot_X_out, m_X, Mdot_in, Mdot_out) = 
+    1/(rho*V)*((Mdot_X_in-Mdot_X_out)-m_X*(Mdot_in-Mdot_out))
+
 # b1: conservation of (total) mass
 b1_f(Mdot_in, Mdot_out, rho, V, P_loss, rho_x, rho_m, deps_x_dmh2o_t, dM_h2o_t_dt, deps_x_dmco2_t, dM_co2_t_dt, a11, dP_lit_dt) = 
     (Mdot_in - Mdot_out)/(rho*V)-
@@ -119,44 +131,9 @@ b4_f(Mdot_c_in, Mdot_c_out, rho_m, V, C_co2, deps_x_dmh2o_t, dM_h2o_t_dt, deps_x
     (X_co2)/m_g*rho_g/rho_m*eps_g*mm_co2*P_loss-
     a41*dP_lit_dt
 
-    # if phase == 3
-    #     # set up matrices to solve using Cramer"s rule
-    #     A          = [a11 a12 a13 a14; a21 a22 a23 a24; a31 a32 a33 a34; a41 a42 a43 a44]
-    #     A_P        = [b1  a12 a13 a14; b2  a22 a23 a24; b3  a32 a33 a34; b4  a42 a43 a44]
-    #     A_T        = [a11 b1  a13 a14; a21 b2  a23 a24; a31 b3  a33 a34; a41 b4  a43 a44]
-    #     A_eps_g    = [a11 a12 b1  a14; a21 a22 b2  a24; a31 a32 b3  a34; a41 a42 b4  a44]
-    #     A_X_co2    = [a11 a12 a13 b1 ; a21 a22 a23 b2 ; a31 a32 a33 b3 ; a41 a42 a43 b4 ]
-
-    #     det_A          = det(A)
-    #     dDP_dt         = det(A_P)/det_A
-    #     dT_dt          = det(A_T)/det_A
-    #     deps_g_dt      = det(A_eps_g)/det_A
-    #     dX_co2_dt      = det(A_X_co2)/det_A
-    #     dP_dt          = dDP_dt+param["dP_lit_dt"]
-    #     dV_dt          = dV_dP*dP_dt + dV_dT*dT_dt + V*P_loss
-    #     drho_m_dt      = drho_m_dP*dP_dt + drho_m_dT*dT_dt
-    #     drho_x_dt      = drho_x_dP*dP_dt + drho_x_dT*dT_dt
-    # else
-
-    #     A          = [a11 a12; a31 a32]
-    #     A_P        = [b1  a12; b3  a32]
-    #     A_T        = [a11 b1 ; a31 b3]
-        
-    #     det_A          = det(A)
-    #     dDP_dt         = det(A_P)/det_A
-    #     dT_dt          = det(A_T)/det_A
-    #     deps_g_dt      = 0
-            
-    #     dP_dt          = dDP_dt+param["dP_lit_dt"]
-    #     dV_dt          = dV_dP*dP_dt + dV_dT*dT_dt + V*P_loss
-    #     drho_m_dt      = drho_m_dP*dP_dt + drho_m_dT*dT_dt
-    #     drho_x_dt      = drho_x_dP*dP_dt + drho_x_dT*dT_dt
-    #     dX_co2_dt      = 0
-    # end
-
-function build_matrix(phase::Int, rho::Float64, drho_dP::Float64, V::Float64, dV_dP::Float64, drho_dT::Float64, dV_dT::Float64, drc_dP::Float64, rc::Float64, L_m::Float64, eps_x::Float64, drho_x_dP::Float64, T::Float64, 
+function build_matrix(phase::Float64, rho::Float64, drho_dP::Float64, V::Float64, dV_dP::Float64, drho_dT::Float64, dV_dT::Float64, drc_dP::Float64, rc::Float64, L_m::Float64, eps_x::Float64, drho_x_dP::Float64, T::Float64, 
         rho_x::Float64, deps_x_dP::Float64, L_e::Float64, dm_eq_dP::Float64, rho_m::Float64, eps_m::Float64, m_eq::Float64, drho_m_dP::Float64, drc_dT::Float64, drho_x_dT::Float64, deps_x_dT::Float64, dm_eq_dT::Float64, 
-        drho_m_dT::Float64, Mdot_in::Float64, Mdot_out::Float64, P_loss::Float64, deps_x_dmh2o_t::Float64, dM_h2o_t_dt::Float64, deps_x_dmco2_t::Float64, dM_co2_t_dt::Float64, dP_lit_dt::Float64, 
+        drho_m_dT::Float64, Mdot_in::Float64, Mdot_out::Float64, P_loss::Float64, deps_x_dmh2o_t::Float64, m_h2o::Float64, m_co2::Float64, deps_x_dmco2_t::Float64, dP_lit_dt::Float64, 
         Hdot_in::Float64, Hdot_out::Float64, c_x::Float64, c_m::Float64, drho_deps_g::Float64, X_co2::Float64, m_g::Float64, eps_g::Float64, mm_h2o::Float64, drho_g_dP::Float64, rho_g::Float64, drho_g_dT::Float64, dm_eq_dX_co2::Float64, 
         mm_co2::Float64, c_g::Float64, dC_co2_dP::Float64, C_co2::Float64, dC_co2_dT::Float64, dC_co2_dX_co2::Float64, Mdot_v_in::Float64, Mdot_v_out::Float64, Mdot_c_in::Float64, Mdot_c_out::Float64)
 
@@ -164,6 +141,8 @@ function build_matrix(phase::Int, rho::Float64, drho_dP::Float64, V::Float64, dV
     a12 = a1x_f(rho, drho_dT, V, dV_dT)
     a31 = a31_f(drc_dP, rc, dV_dP, V, L_m, eps_x, drho_x_dP, T, rho_x, deps_x_dP, L_e, dm_eq_dP, rho_m, eps_m, m_eq, drho_m_dP)
     a32 = a32_f(drc_dT, rc, T, dV_dT, V, L_m, eps_x, drho_x_dT, rho_x, deps_x_dT, L_e, dm_eq_dT, rho_m, eps_m, m_eq, drho_m_dT)
+    dM_h2o_t_dt = dM_X_t_dt_f(rho, V, Mdot_v_in, Mdot_v_out, m_h2o, Mdot_in, Mdot_out)
+    dM_co2_t_dt = dM_X_t_dt_f(rho, V, Mdot_c_in, Mdot_c_out, m_co2, Mdot_in, Mdot_out)
     b1 = b1_f(Mdot_in, Mdot_out, rho, V, P_loss, rho_x, rho_m, deps_x_dmh2o_t, dM_h2o_t_dt, deps_x_dmco2_t, dM_co2_t_dt, a11, dP_lit_dt)
     b3 = b3_f(Hdot_in, Hdot_out, rc, T, V, rho_x, c_x, rho_m, c_m, deps_x_dmh2o_t, dM_h2o_t_dt, deps_x_dmco2_t, dM_co2_t_dt, L_m, L_e, m_eq, P_loss, eps_x, eps_m, a31, dP_lit_dt)
     if phase != 3
