@@ -11,7 +11,6 @@ using Sundials
 using TimerOutputs
 using Logging
 include("./solver_methods.jl")
-include("./utils.jl")
 
 # thermal gradient
 T_surface     = 0+273   # surface temperature (K)
@@ -74,6 +73,7 @@ function chamber(composition::String, end_time::Number, log_volume_km3::Number, 
     end
 
     T_0 = find_liq(composition, InitialConc_H2O, InitialConc_CO2, P_0, ini_eps_x)
+
     T_in = T_0 + 50        # Temperature of inflowing magma (K)
     param["T_in"] = T_in
 
@@ -94,7 +94,7 @@ function chamber(composition::String, end_time::Number, log_volume_km3::Number, 
     # set the mass inflow rate
     param["Mdot_in_pass"] = mdot_in
 
-    rho_g0 = eos_g(P_0, T_0)["rho_g"]   # initial gas density
+    rho_g0 = eos_g(P_0, T_0).rho_g   # initial gas density
     eps_x0 = crystal_fraction_eps_x(composition, T_0, P_0, InitialConc_H2O, InitialConc_CO2)
 
     eps_m0 = 1-eps_x0
