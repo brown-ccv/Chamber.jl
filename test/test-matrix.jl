@@ -46,8 +46,16 @@ A, b = build_matrix(phase, rho, drho_dP, V, dV_dP, drho_dT, dV_dT, drc_dP, rc, L
         drho_m_dT, Mdot_in, Mdot_out, P_loss, deps_x_dmh2o_t, m_h2o, m_co2, deps_x_dmco2_t, dP_lit_dt, 
         Hdot_in, Hdot_out, c_x, c_m, drho_deps_g, X_co2, m_g, eps_g, mm_h2o, drho_g_dP, rho_g, drho_g_dT, dm_eq_dX_co2, 
         mm_co2, c_g, dC_co2_dP, C_co2, dC_co2_dT, dC_co2_dX_co2, Mdot_v_in, Mdot_v_out, Mdot_c_in, Mdot_c_out)
-
+x = A\b
 @testset "Build Matrix phase=3" begin
     @test A == [a11 a12 a13 a14; a21 a22 a23 a24; a31 a32 a33 a34; a41 a42 a43 a44]
     @test b == [b1, b2, b3, b4]
+    @test x[1] == dDP_dt
+    @test round(x[2], digits=24) == round(dT_dt, digits=24)
+    @test round(x[3], digits=27) == round(deps_g_dt, digits=27)
+    @test round(x[4], digits=25) == round(dX_co2_dt, digits=25)
+    @test dDP_dt + dP_lit_dt == dP_dt
+    @test dV_dP*dP_dt + dV_dT*dT_dt + V*P_loss == dV_dt
+    @test drho_m_dP*dP_dt + drho_m_dT*dT_dt == drho_m_dt
+    @test drho_x_dP*dP_dt + drho_x_dT*dT_dt == drho_x_dt
 end
