@@ -149,7 +149,7 @@ function stopChamber_MT(out, u, t, int)
     m_co2 = tot_c/tot_m
 
     eps_x = crystal_fraction_eps_x(param["composition"],T,P,m_h20,m_co2)
-    m_eq_max = exsolve(param["composition"], P, T, 0)[1]
+    m_eq_max = exsolve_meq(param["composition"], P, T, 0)
 
     # MT's new stuff
     eps_m0 = 1 - eps_x

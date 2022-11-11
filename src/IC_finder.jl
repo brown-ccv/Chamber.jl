@@ -121,7 +121,7 @@ function IC_Finder_silicic(M_h2o::Number, M_co2::Number, M_tot::Number, P::Numbe
     m_co2_melt = M_co2/(V*rho_m*eps_m0)
 
     # CHECK IF SATURATED
-    m_eq_max = exsolve("silicic", P, T, 0.0)[1]
+    m_eq_max = exsolve_meq("silicic", P, T, 0.0)
 
     if m_h2o_melt > m_eq_max
         phase = 3
@@ -254,7 +254,7 @@ function IC_Finder_mafic(M_h2o_0::Number, M_co2_0::Number, M_tot::Number, P_0::N
     Conc_co2 = M_co2_0/(V_0*rho_m0*eps_m0)
 
     # CHECK IF SATURATED
-    m_eq_max = exsolve("mafic", P_0, T_0, 0)[1]
+    m_eq_max = exsolve_meq("mafic", P_0, T_0, 0)
 
     if Conc_Water > m_eq_max
         phase = 3

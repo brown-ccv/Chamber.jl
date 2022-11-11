@@ -1,4 +1,3 @@
-include("initial-utils.jl")
 """
     eos_g(P::Number, T::Number)
 
@@ -40,41 +39,44 @@ function exsolve(composition::String, P::Number, T::Number, X_co2::Number)
         # Henry's law
         # partial pressures of CO2 and Water
         P = P/1e6
-        Pc       = P*X_co2
-        dPcdP    = X_co2
-        dPcdXco2 = P
-        Pw       = P*(1-X_co2)
-        dPwdP    = 1-X_co2
-        dPwdXco2 = -P
+        Pc, dPcdP, dPcdXco2 = P*X_co2, X_co2, P
+        Pw, dPwdP, dPwdXco2 = P*(1-X_co2), 1-X_co2, -P
+        if composition == "silicic"
+            meq, dmeqdT, dmeqdP, dmeqdXco2 = build_meq_silicic(Pw, Pc, T, dPwdP, dPcdP, dPwdXco2, dPcdXco2)
+        elseif composition == "mafic"
+            meq, dmeqdT, dmeqdP, dmeqdXco2 = build_meq_mafic(P, T, X_co2)
+        end
+        # coefficients for CO2 partitioning
+        C_co2, dC_co2dT, dC_co2dP, dC_co2dXco2 = build_co2(Pw, Pc, T, dPwdP, dPcdP, dPwdXco2, dPcdXco2)
+        return [meq, dmeqdP, dmeqdT, dmeqdXco2, C_co2, dC_co2dP, dC_co2dT, dC_co2dXco2]
+    end
+end
+
+"""
+    exsolve_meq(composition::String, P::Number, T::Number, X_co2::Number)
+
+This script uses Liu et al. (2006) to calculate the solubility of water
+
+# Arguments
+-`P`: represents pressure
+-`T`: represents the temperature in some units
+-`X_co2`: mole fraction of CO2 in gas.
+"""
+function exsolve_meq(composition::String, P::Number, T::Number, X_co2::Number)
+    if !(composition in ["silicic", "mafic"])
+        @error("composition must be \"silicic\" or \"mafic\".")
+    else
+        P = P/1e6
+        Pc, Pw = P*X_co2, P*(1-X_co2)
         if composition == "silicic"
             @unpack b1, b2, b3, b4, b5, b6 = ExsolveSilicic()
-            meq       = (b1*Complex(Pw)^0.5+b2*Pw+b3*Complex(Pw)^1.5)/T+b4*Complex(Pw)^1.5+Pc*(b5*Complex(Pw)^0.5+b6*Pw)
-            dmeqdT    = -1*(b1*Complex(Pw)^0.5+b2*Pw+b3*Complex(Pw)^1.5)*T^(-2)
-            dmeqdP    = dPwdP*((1/T)*(0.5*b1*Complex(Pw)^(-0.5)+b2+1.5*b3*Complex(Pw)^0.5)+1.5*b4*Complex(Pw)^0.5+Pc*(0.5*b5*Complex(Pw)^(-0.5)+b6))+dPcdP*(b5*Complex(Pw)^0.5+b6*Pw)
-            dmeqdXco2 = dPwdXco2*((1/T)*(0.5*b1*Complex(Pw)^(-0.5)+b2+1.5*b3*Complex(Pw)^0.5)+1.5*b4*Complex(Pw)^0.5+Pc*(0.5*b5*Complex(Pw)^(-0.5)+b6))+dPcdXco2*(b5*Complex(Pw)^0.5+b6*Pw)
+            meq = meq_silicic(Pw, Pc, T, b1, b2, b3, b4, b5, b6)
         elseif composition == "mafic"
             T_C = T-273.15
             @unpack b1, b2, b3, b4, b5, b6, b7, b8, b9, b10 = ExsolveMafic()
-            meq       = b1+b2*T_C+b3*X_co2+b4*P+b5*T_C*X_co2+b6*T_C*P+b7*X_co2*P+b8*T_C^2+b9*Complex(X_co2)^2+b10*Complex(P)^2
-            dmeqdT    = b2+b5*X_co2+b6*P+2*b8*T_C
-            dmeqdP    = b4+b6*T_C+b7*X_co2+2*b10*P
-            dmeqdXco2 = b3+b5*T_C+b7*P+2*b9*X_co2
+            meq = meq_mafic(P, T_C, X_co2, b1, b2, b3, b4, b5, b6, b7, b8, b9, b10)
         end
-        # coefficients for CO2 partitioning
-        @unpack c1, c2, c3, c4 = Co2PartitionCoeff()
-        C_co2       = Pc*(c1+c2*Pw)/T+Pc*(c3*Complex(Pw)^0.5+c4*Complex(Pw)^1.5)
-        dC_co2dT    = -1*Pc*(c1+c2*Pw)*Complex(T)^(-2)
-        dC_co2dP    = Complex(T)^(-1)*(dPcdP*(c1+c2*Pw)+Pc*(c2*dPwdP))+dPcdP*(c3*Complex(Pw)^0.5+c4*Complex(Pw)^1.5)+Pc*(0.5*c3*Complex(Pw)^(-0.5)*dPwdP+1.5*c4*Complex(Pw)^0.5*dPwdP)
-        dC_co2dXco2 = Complex(T)^(-1)*(dPcdXco2*(c1+c2*Pw)+Pc*(c2*dPwdXco2))+dPcdXco2*(c3*Complex(Pw)^0.5+c4*Complex(Pw)^1.5)+Pc*(0.5*c3*Complex(Pw)^(-0.5)*dPwdXco2+1.5*c4*Complex(Pw)^0.5*dPwdXco2)
-        meq       = 1e-2*real(meq)
-        dmeqdP    = 1e-8*real(dmeqdP)
-        dmeqdT    = 1e-2*real(dmeqdT)
-        dmeqdXco2 = 1e-2*real(dmeqdXco2)
-        C_co2       = 1e-6*real(C_co2)
-        dC_co2dP    = 1e-12*real(dC_co2dP)
-        dC_co2dT    = 1e-6*real(dC_co2dT)
-        dC_co2dXco2 = 1e-6*real(dC_co2dXco2)
-        return [meq, dmeqdP, dmeqdT, dmeqdXco2, C_co2, dC_co2dP, dC_co2dT, dC_co2dXco2]
+        return meq
     end
 end
 
