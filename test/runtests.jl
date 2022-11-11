@@ -23,16 +23,12 @@ end
     @test round(Chamber.eos_g(0.0, 1000.0).drho_g_dT, digits=5) == 4.79215
 end
 
-# @testset "export functions" begin
-#     @test !isnothing(make_param)
-#     @test !isnothing(GLQ_points_weights_hard)
-# end
-
 @testset "export functions Chamber" begin
     @test !isnothing(Chamber.make_param)
     @test !isnothing(Chamber.GLQ_points_weights_hard)
 end
 
 include("test-utils.jl")
+include("test-matrix.jl")
 include("test-rho_rc.jl")
 include("test-exsolve.jl")

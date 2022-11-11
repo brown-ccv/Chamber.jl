@@ -143,8 +143,8 @@ function chamber(composition::String, end_time::Number, log_volume_km3::Number, 
     end
 
     # initialize vector to store quantities
-    param_saved_var["storeTime"] = [0]
-    param_saved_var["storeTemp"] = [T_0]
+    param_saved_var["storeTime"] = Vector{Float64}([0])
+    param_saved_var["storeTemp"] = Vector{Float64}([T_0])
 
     param["P_lit"] = P_lit
     param["DP_crit"] = DP_crit
