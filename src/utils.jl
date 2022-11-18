@@ -73,7 +73,7 @@ mutable struct SW{T}
 end
 
 # Parameters
-struct Param{T}
+mutable struct Param{T}
     fluxing::Bool
     single_eruption::Bool
     beta_m::T
@@ -95,73 +95,30 @@ struct Param{T}
     dP_lit_dt_0::T
     P_lit_drop_max::T
     Mdot_out_pass::T
-    end
-
-function Param{T}(fluxing::Bool=true,
-    single_eruption::Bool=true,
-    beta_m::T=0,
-    beta_x::T=0,
-    alpha_m::T=0,
-    alpha_x::T=0,
-    L_e::T=0,
-    mm_co2::T=0,
-    mm_h2o::T=0,
-    alpha_r::T=0,
-    beta_r::T =0,
-    kappa::T  =0,
-    rho_r::T  =0,
-    c_r::T=0,
-    maxn::Int64=0,
-    GLQ_n::Int64=0,
-    Q_out_old::T=0,
-    dP_lit_dt::T=0,
-    dP_lit_dt_0::T=0,
-    P_lit_drop_max::T=0,
-    Mdot_out_pass::T=0) where T
-    return Param{T}(rheol,
-    fluxing,
-    single_eruption,
-    beta_m,
-    beta_x,
-    alpha_m,
-    alpha_x,
-    L_e,
-    mm_co2,
-    mm_h2o,
-    alpha_r,
-    beta_r,
-    kappa,
-    rho_r,
-    c_r,
-    maxn,
-    GLQ_n,
-    Q_out_old,
-    dP_lit_dt,
-    dP_lit_dt_0,
-    P_lit_drop_max,
-    Mdot_out_pass)
+    XCO2_in::T
+    Param() = new{Float64}(false,
+                           false,
+                           1e10,
+                           1e10,
+                           1e-5,
+                           1e-5,
+                           610e3,
+                           44.01e-3,
+                           18.02e-3,
+                           1e-5,
+                           1e10,
+                           1e-6,
+                           2750,
+                           1200,
+                           10000,
+                           64,
+                           0,
+                           0,
+                           0,
+                           9e6,
+                           10000,
+                           0.8)
 end
-p =  Param{Float64}(false,
-                    false,
-                    1e10,
-                    1e10,
-                    1e-5,
-                    1e-5,
-                    610e3,
-                    44.01e-3,
-                    18.02e-3,
-                    1e-5,
-                    1e10,
-                    1e-6,
-                    2750,
-                    1200,
-                    10000,
-                    64,
-                    0,
-                    0,
-                    0,
-                    9e6,
-                    10000)
 
 mutable struct ParamSaved
     maxTime::Number
@@ -227,4 +184,17 @@ function build_rho_rc(eps_m::T, eps_g::T, eps_x::T, rho_m::T, rho_g::T, rho_x::T
     drc_dP          = drc_dX_f(eps_x=eps_x, c_x=c_x, drho_x_dX=drho_x_dP, eps_g=eps_g, c_g=c_g, drho_g_dX=drho_g_dP, eps_m=eps_m, c_m=c_m, drho_m_dX=drho_m_dP, rho_x=rho_x, rho_m=rho_m, deps_x_dX=deps_x_dP)
     drc_dT          = drc_dX_f(eps_x=eps_x, c_x=c_x, drho_x_dX=drho_x_dT, eps_g=eps_g, c_g=c_g, drho_g_dX=drho_g_dT, eps_m=eps_m, c_m=c_m, drho_m_dX=drho_m_dT, rho_x=rho_x, rho_m=rho_m, deps_x_dX=deps_x_dT)
     return [rho, drho_dP, drho_dT, drho_deps_g, rc, drc_dP, drc_dT]
+end
+
+function build_mdot_in(fluxing::Bool, rho_m0::Number, log_vfr::Number, P_0::Number, T_in::Number)::Float64
+    if ~fluxing
+        range_vfr = 10^log_vfr   # volume flow rate (km3/yr)  
+        mdot_in   = rho_m0*range_vfr*1e9/(3600*24*365)
+    else
+        log_vfr   = -4.3         # log volume flow rate (km3/yr)
+        range_vfr = 10^log_vfr   # volume flow rate (km3/yr)
+        rho_g_in  = eos_g_rho_g(P_0, T_in)
+        mdot_in   = rho_g_in*range_vfr*1e9/(3600*24*365)
+    end
+    return mdot_in
 end

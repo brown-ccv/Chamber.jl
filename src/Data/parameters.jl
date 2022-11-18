@@ -1,4 +1,5 @@
 function make_param(composition, rheol)
+    p = Param()
     param = Dict{Any,Any}([])
     param["composition"]     = composition
     param["rheol"]           = rheol
@@ -49,6 +50,7 @@ function make_param(composition, rheol)
         param["G"]  = r.G       # activation energy for creep (J/mol)
         param["M"]  = r.M       # gas constant
     end
+    param["XCO2_in"] = p.XCO2_in
     return param
 end
 
