@@ -228,3 +228,5 @@ function build_rho_rc(eps_m::T, eps_g::T, eps_x::T, rho_m::T, rho_g::T, rho_x::T
     drc_dT          = drc_dX_f(eps_x=eps_x, c_x=c_x, drho_x_dX=drho_x_dT, eps_g=eps_g, c_g=c_g, drho_g_dX=drho_g_dT, eps_m=eps_m, c_m=c_m, drho_m_dX=drho_m_dT, rho_x=rho_x, rho_m=rho_m, deps_x_dX=deps_x_dT)
     return [rho, drho_dP, drho_dT, drho_deps_g, rc, drc_dP, drc_dT]
 end
+
+rho_0_f(eps_g0::Number, eps_x0::Number, rho_g0::Number, rho_m0::Number, rho_x0::Number)::Float64 = (1-eps_g0-eps_x0)*rho_m0 + eps_g0*rho_g0 + eps_x0*rho_x0
