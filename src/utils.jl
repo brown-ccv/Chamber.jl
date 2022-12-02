@@ -186,6 +186,8 @@ function build_rho_rc(eps_m::T, eps_g::T, eps_x::T, rho_m::T, rho_g::T, rho_x::T
     return [rho, drho_dP, drho_dT, drho_deps_g, rc, drc_dP, drc_dT]
 end
 
+rho_0_f(eps_g0::Number, eps_x0::Number, rho_g0::Number, rho_m0::Number, rho_x0::Number)::Float64 = (1-eps_g0-eps_x0)*rho_m0 + eps_g0*rho_g0 + eps_x0*rho_x0
+
 function build_mdot_in(fluxing::Bool, rho_m0::Number, log_vfr::Number, P_0::Number, T_in::Number)::Float64
     if ~fluxing
         range_vfr = 10^log_vfr   # volume flow rate (km3/yr)  

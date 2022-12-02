@@ -104,7 +104,7 @@ function chamber(composition::String, end_time::Number, log_volume_km3::Number, 
     param_saved_var["phase"] = phase
 
     # update initial bulk density (kg/m^3)
-    rho_0  = (1-eps_g0-eps_x0)*rc.rho_m0 + eps_g0*rho_g0 + eps_x0*rc.rho_x0
+    rho_0  = rho_0_f(eps_g0, eps_x0, rho_g0, rc.rho_m0, rc.rho_x0)
 
     # update solubility
     if phase == 2
