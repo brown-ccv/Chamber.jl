@@ -11,7 +11,6 @@ using SpecialFunctions
 using Sundials
 using TimerOutputs
 include("utils.jl")
-include("./Data/parameters.jl")
 include("./GLQ_points_weights.jl")
 include("./initial-utils.jl")
 include("./initial.jl")
@@ -38,13 +37,13 @@ export get_timestamp, OdeSetting, rheol_composition_dict, rheol_dict,
        exsolve3_silicic,
        exsolve3_mafic,
        GLQ_points_weights_hard,
+       compute_dXdP_dXdT,
        odeChamber,
        stopChamber_MT,
        affect!,
-       make_param,
-       make_param_saved_var,
-       make_sw,
-       make_param_IC_Finder,
+       Param,
+       ParamSaved,
+       ParamICFinder,
        SW,
        rho_f, drho_dX_f, rc_f, drc_dX_f, build_rho_rc, rho_0_f,
        build_mdot_in,
