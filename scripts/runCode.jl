@@ -191,21 +191,15 @@ function chamber(composition::String, end_time::Number, log_volume_km3::Number, 
         # effective gas molar mass
         m_g = mm_co2*X_co2 + mm_h2o*(1-X_co2)
 
-        if ~isempty(storeTime)
-            if storeTime[end] == t
-                storeTemp[end] = T
-            elseif t != 0
-                storeTime = [storeTime; t]
-                storeTemp = [storeTemp; T]
-                # push!(storeTime, t)
-                # push!(storeTemp, T)
-            end
+        if storeTime[end] == t
+            storeTemp[end] = T
         elseif t != 0
             storeTime = [storeTime; t]
             storeTemp = [storeTemp; T]
             # push!(storeTime, t)
             # push!(storeTemp, T)
         end
+
         cross = findfirst(!=(0), diff(sign.(diff(storeTime))))
         if cross !== nothing
             cross_time= storeTime[end]
@@ -455,6 +449,7 @@ function chamber(composition::String, end_time::Number, log_volume_km3::Number, 
     plot_figs("$path/out.csv", path)
 
     println(".. Done!")
+    return sol
 end
 
 # chamber("silicic", 1e9, 0.2, 0.04, 0.001, -3.3, 8e3)
