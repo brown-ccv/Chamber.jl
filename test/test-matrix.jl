@@ -28,7 +28,7 @@ include("test-matrix-b-data.jl")
     @test b4 == b4_f(Mdot_c_in, Mdot_c_out, rho_m, V, C_co2, deps_x_dmh2o_t, dM_h2o_t_dt, deps_x_dmco2_t, dM_co2_t_dt, eps_m, P_loss, X_co2, m_g, rho_g, eps_g, mm_co2, a41, dP_lit_dt)
 end
 
-phase = 2
+phase = Int8(2)
 A, b = build_matrix(phase, rho, drho_dP, V, dV_dP, drho_dT, dV_dT, drc_dP, rc, L_m, eps_x, drho_x_dP, T, 
         rho_x, deps_x_dP, L_e, dm_eq_dP, rho_m, eps_m, m_eq, drho_m_dP, drc_dT, drho_x_dT, deps_x_dT, dm_eq_dT, 
         drho_m_dT, Mdot_in, Mdot_out, P_loss, deps_x_dmh2o_t, m_h2o, m_co2, deps_x_dmco2_t, dP_lit_dt, 
@@ -40,7 +40,7 @@ A, b = build_matrix(phase, rho, drho_dP, V, dV_dP, drho_dT, dV_dT, drc_dP, rc, L
     @test b == [b1, b3]
 end
 
-phase = 3
+phase = Int8(3)
 A, b = build_matrix(phase, rho, drho_dP, V, dV_dP, drho_dT, dV_dT, drc_dP, rc, L_m, eps_x, drho_x_dP, T, 
         rho_x, deps_x_dP, L_e, dm_eq_dP, rho_m, eps_m, m_eq, drho_m_dP, drc_dT, drho_x_dT, deps_x_dT, dm_eq_dT, 
         drho_m_dT, Mdot_in, Mdot_out, P_loss, deps_x_dmh2o_t, m_h2o, m_co2, deps_x_dmco2_t, dP_lit_dt, 

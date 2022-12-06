@@ -48,6 +48,9 @@ function chamber(composition::String, end_time::Number, log_volume_km3::Number, 
     logger = SimpleLogger(io)
     global_logger(logger)
 
+    to = get_timer("share")
+    @timeit to "chamber" begin
+
     rc = rheol_composition_dict[composition]
     param =  Param{Float64}(composition=composition,
                             rheol=rheol,
@@ -440,11 +443,14 @@ function chamber(composition::String, end_time::Number, log_volume_km3::Number, 
     println("tspan: ", tspan)
     println("IC: ", IC)
     @info("IC: $IC")
-    close(io)
     cb = VectorContinuousCallback(stopChamber_MT, affect!, 8, rootfind=SciMLBase.RightRootFind)
     prob = ODEProblem(odeChamber,IC,tspan,param)
     sol = solve(prob, methods[method], callback=cb, reltol=odesetting.reltol, abstol=odesetting.abstol, dt=odesetting.first_step, dtmax=odesetting.max_step)
 
+    end
+    println(to)
+    @info(to)
+    close(io)
     write_csv(sol, path)
     plot_figs("$path/out.csv", path)
 
