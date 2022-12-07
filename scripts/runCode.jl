@@ -1,24 +1,6 @@
 using Chamber
-# using CSV
-# using DataFrames
-# using Dates
-# using DifferentialEquations
-# using LinearAlgebra
-# using Plots
-# using Roots
-# using SpecialFunctions
-# using Sundials
-# using TimerOutputs
-# using Logging
 include("./solver_methods.jl")
-# include("../src/utils.jl")
 
-# thermal gradient
-T_surface     = 0+273   # surface temperature (K)
-T_gradient    = 32/1e3   # thermal gradient (K/m)
-
-# lithostatic pressure
-grav_acc      = 9.81   # gravitational acceleration (m/s2)
 """
     chamber(composition::String, end_time::Int64, log_volume_km3::Number, InitialConc_H2O::Float64, InitialConc_CO2::Float64, log_vfr::Float64, depth::Number)
 
@@ -66,6 +48,7 @@ function chamber(composition::String, end_time::Number, log_volume_km3::Number, 
         param.nn, param.AA, param.G, param.M = r.nn, r.AA, r.G, r.M
     end
 
+    c = Const()
     param_IC_Finder = ParamICFinder()
     param_saved_var = ParamSaved()
     sw = SW()
@@ -75,18 +58,17 @@ function chamber(composition::String, end_time::Number, log_volume_km3::Number, 
     param_saved_var.storeSumk_2 = zeros(param.maxn)
     param_saved_var.storeSumk_old = zeros(param.maxn)
     param_saved_var.storeSumk_2_old = zeros(param.maxn)
-    # param_saved_var.storeSumk_2 = param_saved_var.storeSumk_old = param_saved_var.storeSumk_2_old = param_saved_var.storeSumk
 
     volume_km3    = 10^log_volume_km3                 # range of volume in km3
     range_radius  = 1000*(volume_km3/(4*pi/3))^(1/3)  # range of radius in m
     V_0           = 4*pi/3*range_radius^3             # initial volume of the chamber (m^3)
 
     # thermal gradient
-    param.Tb            = T_surface+T_gradient*depth        # background temperature crust (K)
+    param.Tb      = c.T_surface+c.T_gradient*depth        # background temperature crust (K)
 
     # lithostatic pressure
-    P_0           = param.rho_r*grav_acc*depth   # initial chamber pressure (Pa)
-    param.P_lit         = P_0
+    P_0           = param.rho_r*c.grav_acc*depth   # initial chamber pressure (Pa)
+    param.P_lit   = P_0
     param.P_lit_0 = P_0
     if param.single_eruption
         P_0 = P_0 + param.DP_crit

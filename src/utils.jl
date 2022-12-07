@@ -21,6 +21,14 @@ function makeOdeSetting(;reltol=1e-8, abstol=1e-8, first_step=1e5, max_step=1e7)
 
 OdeSetting() = OdeSetting{Float64}(1e-8, 1e-8, 1e5, 1e7)
 
+struct Const{T}
+    T_surface::T   # surface temperature (K)
+    T_gradient::T  # thermal gradient (K/m)
+    grav_acc::T    # gravitational acceleration (m/s2)
+    Const() =  new{Float64}(273.0,
+                            32/1e3,
+                            9.81)
+end
 
 ## Rheology of the crust
 struct RheolComposition{T}
