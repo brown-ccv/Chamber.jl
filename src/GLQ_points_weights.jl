@@ -9,6 +9,6 @@ function GLQ_points_weights_hard(n::Int64, GLQ_points_weights::Dict{Int64, Matri
         return [quadpts, weights]
     else
         @warn("Weight and points not defined for this number.")
-        return [0 0]
+        return [[0.0], [0.0]]
     end
 end
