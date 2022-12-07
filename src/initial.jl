@@ -403,10 +403,10 @@ function crystal_fraction(composition::String, T::Float64, P::Float64, mH2O::Flo
             deps_x_dmh2o_t=dadx*T+dbdx
             deps_x_dP=dadz*T+dbdz
 
-            if eps_x < 0 || eps_x>1
-                eps_x=0.0
-                deps_x_deps_g=0.0
-                deps_x_dT=0.0
+            if eps_x < 0 || eps_x > 1
+                eps_x         = 0.0
+                deps_x_deps_g = 0.0
+                deps_x_dT     = 0.0
             end
         end
         return [eps_x, deps_x_dP, deps_x_dT, deps_x_deps_g, deps_x_dmco2_t, deps_x_dmh2o_t]
