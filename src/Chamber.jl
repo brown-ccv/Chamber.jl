@@ -10,6 +10,7 @@ using Roots
 using SpecialFunctions
 using Sundials
 using TimerOutputs
+using Logging
 include("utils.jl")
 include("./GLQ_points_weights.jl")
 include("./initial-utils.jl")
@@ -21,7 +22,10 @@ include("./boundary_condition.jl")
 include("./runCode-func.jl")
 include("./IC_finder.jl")
 include("./utils-matrix.jl")
-export get_timestamp, OdeSetting, rheol_composition_dict, rheol_dict, 
+include("../scripts/runCode.jl")
+export QNDF, FBDF, Rodas4, Tsit5, KenCarp4, CVODE_BDF, Rosenbrock23,
+       @timeit, SimpleLogger, global_logger, get_timer, SciMLBase, VectorContinuousCallback, ODEProblem, solve,
+       get_timestamp, OdeSetting, rheol_composition_dict, rheol_dict,
        eos_g,
        eos_g_rho_g,
        crystal_fraction,
@@ -55,7 +59,8 @@ export get_timestamp, OdeSetting, rheol_composition_dict, rheol_dict,
        b1_f, b2_f, b3_f, b4_f,
        build_matrix,
        rho_f, drho_dX_f, rc_f, drc_dX_f, build_rho_rc,
-       write_csv, plot_figs
+       write_csv, plot_figs,
+       chamber
 
 # Write your package code here.
 end

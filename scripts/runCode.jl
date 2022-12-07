@@ -1,17 +1,17 @@
 using Chamber
-using CSV
-using DataFrames
-using Dates
-using DifferentialEquations
-using LinearAlgebra
-using Plots
-using Roots
-using SpecialFunctions
-using Sundials
-using TimerOutputs
-using Logging
+# using CSV
+# using DataFrames
+# using Dates
+# using DifferentialEquations
+# using LinearAlgebra
+# using Plots
+# using Roots
+# using SpecialFunctions
+# using Sundials
+# using TimerOutputs
+# using Logging
 include("./solver_methods.jl")
-include("../src/utils.jl")
+# include("../src/utils.jl")
 
 # thermal gradient
 T_surface     = 0+273   # surface temperature (K)
@@ -154,8 +154,8 @@ function chamber(composition::String, end_time::Number, log_volume_km3::Number, 
     param_saved_var.storeTime = Vector{Float64}([0])
     param_saved_var.storeTemp = Vector{Float64}([T_0])
 
-    println(param)
-    println(param_IC_Finder)
+    # println(param)
+    # println(param_IC_Finder)
     @info("sw: $(sw)")
     @info("IC_Finder parameters: $(param_IC_Finder)")
     @info("params: $(param)")
