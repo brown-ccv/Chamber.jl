@@ -1,18 +1,18 @@
-function p_loss(visc_relax::Int8, P::Number, P_lit::Number, eta_r::Number)
+function p_loss(visc_relax::Int8, P::Float64, P_lit::Float64, eta_r::Float64)
     if !(visc_relax in [0, 1])
         error("visc_relax must be 0 or 1.")
     else
         if visc_relax == 1
             P_loss = (P - P_lit)/eta_r 
         elseif visc_relax == 0
-            P_loss = 0
+            P_loss = 0.0
         end
         return P_loss
     end
 end
 
 """
-    boundary_conditions_new(P::Number, T::Number, V::Number, rho_m::Number, rho_x::Number, c::Number, sw::SW, T_in::Number, M_h2o::Number, M_co2::Number, total_Mass::Number, param, param_saved_var)
+    boundary_conditions_new(P::Float64, T::Float64, V::Float64, rho_m::Float64, rho_x::Float64, c::Float64, sw::SW, T_in::Float64, M_h2o::Float64, M_co2::Float64, total_Mass::Float64, param, param_saved_var)
 
 # Arguments
 `P`: Pressure (Pa)
@@ -27,7 +27,7 @@ end
 `M_co2`: total mess of CO2 in the magma
 `total_Mass`: total mess of magma chamber
 """
-function boundary_conditions_new(P::Number, T::Number, V::Number, rho_m::Number, rho_x::Number, c::Number, sw, T_in::Number, M_h2o::Number, M_co2::Number, total_Mass::Number, param, param_saved_var)
+function boundary_conditions_new(P::Float64, T::Float64, V::Float64, rho_m::Float64, rho_x::Float64, c::Float64, sw, T_in::Float64, M_h2o::Float64, M_co2::Float64, total_Mass::Float64, param, param_saved_var)
     P_lit = param.P_lit
     tot_h2o_frac_in = param.tot_h2o_frac_in
     tot_co2_frac_in = param.tot_co2_frac_in
@@ -58,9 +58,9 @@ function boundary_conditions_new(P::Number, T::Number, V::Number, rho_m::Number,
 
     # set outflow conditions
     if sw.eruption == 0
-        Mdot_out   = 0
-        Mdot_v_out = 0
-        Mdot_c_out = 0
+        Mdot_out   = 0.0
+        Mdot_v_out = 0.0
+        Mdot_c_out = 0.0
     elseif sw.eruption == 1
         Mdot_out   = Mdot_out_pass
         Mdot_v_out = M_h2o/total_Mass*Mdot_out_pass
@@ -84,7 +84,7 @@ function boundary_conditions_new(P::Number, T::Number, V::Number, rho_m::Number,
         Q_out = heat_conduction_chamberCH(param.maxn,a,cc,dr,param.kappa,param.rho_r,param.c_r,param.Tb,param_saved_var)
 
     elseif sw.heat_cond == 0
-        Q_out = 0
+        Q_out = 0.0
     else
         println("heat_cond not specified")
     end

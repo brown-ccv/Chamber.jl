@@ -1,5 +1,5 @@
 """
-    eos_g(P::Number, T::Number)
+    eos_g(P::Float64, T::Float64)
 
 parametrization of redlich kwong taken from Huber et al. 2010
 
@@ -7,23 +7,23 @@ parametrization of redlich kwong taken from Huber et al. 2010
 -`P`: Pressure (Pa)
 -`T`: Temperature (K)
 """
-function eos_g(P::Number, T::Number)
+function eos_g(P::Float64, T::Float64)
     eos_g = EosG(P, T)
     return eos_g
 end
 
 """
-    eos_g_rho_g(P::Number, T::Number)::Float64
+    eos_g_rho_g(P::Float64, T::Float64)::Float64
 
 Spetialized version of eos_g that computes `rho_g` only.
 """
-function eos_g_rho_g(P::Number, T::Number)::Float64
+function eos_g_rho_g(P::Float64, T::Float64)::Float64
     ρ = EosG_RhoG(P, T).rho_g
     return ρ
 end
 
 """
-    exsolve(composition::String, P::Number, T::Number, X_co2::Number)
+    exsolve(composition::String, P::Float64, T::Float64, X_co2::Float64)
 
 This script uses Liu et al. (2006) to calculate the solubility of water
 
@@ -32,7 +32,7 @@ This script uses Liu et al. (2006) to calculate the solubility of water
 -`T`: represents the temperature in some units
 -`X_co2`: mole fraction of CO2 in gas.
 """
-function exsolve(composition::String, P::Number, T::Number, X_co2::Number)
+function exsolve(composition::String, P::Float64, T::Float64, X_co2::Float64)
     if !(composition in ["silicic", "mafic"])
         @error("composition must be \"silicic\" or \"mafic\".")
     else
@@ -53,7 +53,7 @@ function exsolve(composition::String, P::Number, T::Number, X_co2::Number)
 end
 
 """
-    exsolve_meq(composition::String, P::Number, T::Number, X_co2::Number)
+    exsolve_meq(composition::String, P::Float64, T::Float64, X_co2::Float64)
 
 This script uses Liu et al. (2006) to calculate the solubility of water
 
@@ -62,7 +62,7 @@ This script uses Liu et al. (2006) to calculate the solubility of water
 -`T`: represents the temperature in some units
 -`X_co2`: mole fraction of CO2 in gas.
 """
-function exsolve_meq(composition::String, P::Number, T::Number, X_co2::Number)
+function exsolve_meq(composition::String, P::Float64, T::Float64, X_co2::Float64)
     if !(composition in ["silicic", "mafic"])
         @error("composition must be \"silicic\" or \"mafic\".")
     else
@@ -81,7 +81,7 @@ function exsolve_meq(composition::String, P::Number, T::Number, X_co2::Number)
 end
 
 """
-    exsolve3_silicic(P::Number, T::Number, m_eq::Number)
+    exsolve3_silicic(P::Float64, T::Float64, m_eq::Float64)
 
 Takes pressure, temperature, and amount of water to solve for the concentration of CO2 and X_CO2 (basically, goes the other direction compared to exsolve.m) using a Newton Raphson scheme
 
@@ -90,7 +90,7 @@ Takes pressure, temperature, and amount of water to solve for the concentration 
 -`T`: temperature (K)
 -`m_eq`: amount of water
 """
-function exsolve3_silicic(P::Number, T::Number, m_eq::Number)
+function exsolve3_silicic(P::Float64, T::Float64, m_eq::Float64)
     # convert to MPa and Celsius
     P = P/1e6
     m_eq = m_eq*1e2
@@ -107,7 +107,7 @@ function exsolve3_silicic(P::Number, T::Number, m_eq::Number)
     # P,T and inital guesses/values
     Xc_initial = 0.01
     Xc_guess = Xc_initial
-    Xc_prev = 0
+    Xc_prev = 0.0
     count = 0
     W = m_eq
     while abs(Xc_prev-Xc_guess) > errorTol && count < 100
@@ -118,7 +118,7 @@ function exsolve3_silicic(P::Number, T::Number, m_eq::Number)
     if abs(Xc_prev-Xc_guess) > errorTol && count >= 100
         Xc_initial = 1e-4
         Xc_guess = Xc_initial
-        Xc_prev = 0
+        Xc_prev = 0.0
         count = 0
         W = m_eq
         while abs(Xc_prev-Xc_guess) > errorTol && count < 100
@@ -129,7 +129,7 @@ function exsolve3_silicic(P::Number, T::Number, m_eq::Number)
     end
     while ~isreal(Xc_guess) && Xc_initial<=1
         Xc_initial=Xc_initial+0.01
-        Xc_prev=0
+        Xc_prev=0.0
         while abs(Xc_prev-Xc_guess) > errorTol
             count=count+1
             Xc_prev=Xc_guess
@@ -157,14 +157,14 @@ function exsolve3_silicic(P::Number, T::Number, m_eq::Number)
 end
 
 """
-    exsolve3_mafic(P::Number, T::Number, m_eq::Number)
+    exsolve3_mafic(P::Float64, T::Float64, m_eq::Float64)
 
 # Arguments
 -`P`: pressure (Pa)
 -`T`: temperature (K)
 -`m_eq`: amount of water
 """
-function exsolve3_mafic(P::Number, T::Number, m_eq::Number)
+function exsolve3_mafic(P::Float64, T::Float64, m_eq::Float64)
     # convert to MPa and Celsius
     P = P/1e6
     T = T-273.15
@@ -192,7 +192,7 @@ function exsolve3_mafic(P::Number, T::Number, m_eq::Number)
     # P,T and inital guesses/values
     Xc_initial=1e-2
     Xc_guess=Xc_initial
-    Xc_prev=0
+    Xc_prev=0.0
     count=0
     W=m_eq
     while abs(Xc_prev-Xc_guess)>errorTol && count < 100
@@ -203,7 +203,7 @@ function exsolve3_mafic(P::Number, T::Number, m_eq::Number)
     if abs(Xc_prev-Xc_guess) > errorTol && count >= 100
         Xc_initial=1e-4
         Xc_guess=Xc_initial
-        Xc_prev=0
+        Xc_prev=0.0
         count=0
         W=m_eq
         while abs(Xc_prev-Xc_guess) > errorTol && count < 100
@@ -214,7 +214,7 @@ function exsolve3_mafic(P::Number, T::Number, m_eq::Number)
     end
     while ~isreal(Xc_guess) && Xc_initial<=1
         Xc_initial=Xc_initial+0.01
-        Xc_prev=0
+        Xc_prev=0.0
         while abs(Xc_prev-Xc_guess)>errorTol
             count=count+1
             Xc_prev=Xc_guess
@@ -245,14 +245,14 @@ function exsolve3_mafic(P::Number, T::Number, m_eq::Number)
 end
 
 """
-    parameters_melting_curve_silicic(mH2O::Number, mCO2::Number, P::Number)
+    parameters_melting_curve_silicic(mH2O::Float64, mCO2::Float64, P::Float64)
 
 # Arguments
 -`mH2O`: Weight fration of the H2O in magma.
 -`mCO2`: Weight fration of the CO2 in magma.
 -`P`: Pressure (Pa)
 """
-function parameters_melting_curve_silicic(mH2O::Number, mCO2::Number, P::Number)
+function parameters_melting_curve_silicic(mH2O::Float64, mCO2::Float64, P::Float64)
     x = mH2O
     y = mCO2
     z = P/1e6
@@ -284,14 +284,14 @@ function parameters_melting_curve_silicic(mH2O::Number, mCO2::Number, P::Number)
 end
 
 """
-    parameters_melting_curve_mafic(mH2O::Number, mCO2::Number, P::Number)
+    parameters_melting_curve_mafic(mH2O::Float64, mCO2::Float64, P::Float64)
 
 # Arguments
 -`mH2O`: Weight fration of the H2O in magma.
 -`mCO2`: Weight fration of the CO2 in magma.
 -`P`: Pressure (Pa)
 """
-function parameters_melting_curve_mafic(mH2O::Number, mCO2::Number, P::Number)
+function parameters_melting_curve_mafic(mH2O::Float64, mCO2::Float64, P::Float64)
     x=mH2O
     y=mCO2
     z=P/1e6
@@ -339,7 +339,7 @@ function parameters_melting_curve_mafic(mH2O::Number, mCO2::Number, P::Number)
 end
 
 """
-    find_liq(composition::String, water::Number, co2::Number, P::Number, ini_eps_x::Number)
+    find_liq(composition::String, water::Float64, co2::Float64, P::Float64, ini_eps_x::Float64)
 
 # Arguments
 -`composition`: "silicic" or "mafic"
@@ -348,7 +348,7 @@ end
 -`P`: Pressure (Pa)
 -`ini_eps_x`: The starting volumn fraction of crystal.
 """
-function find_liq(composition::String, water::Number, co2::Number, P::Number, ini_eps_x::Number)
+function find_liq(composition::String, water::Float64, co2::Float64, P::Float64, ini_eps_x::Float64)
     if !(composition in ["silicic", "mafic"])
         error("composition must be \"silicic\" or \"mafic\".")
     else
@@ -367,7 +367,7 @@ function find_liq(composition::String, water::Number, co2::Number, P::Number, in
 end
 
 """
-    crystal_fraction(composition::String, T::Number, P::Number, mH2O::Number, mCO2::Number)
+    crystal_fraction(composition::String, T::Float64, P::Float64, mH2O::Float64, mCO2::Float64)
 
 # Arguments
 -`composition`: "silicic" or "mafic"
@@ -413,20 +413,20 @@ function crystal_fraction(composition::String, T::Float64, P::Float64, mH2O::Flo
     end
 end
 
-function crystal_fraction_eps_x(composition::String, T::Number, P::Number, mH2O::Number, mCO2::Number)
+function crystal_fraction_eps_x(composition::String, T::Float64, P::Float64, mH2O::Float64, mCO2::Float64)
     if !(composition in ["silicic", "mafic"])
         error("composition must be \"silicic\" or \"mafic\".")
     else
         if composition == "silicic"
-            T = T-273
+            T = T-273.0
             a,dadx,dady,dadz,b,dbdx,dbdy,dbdz,c,dcdx,dcdy,dcdz = parameters_melting_curve_silicic(100*mH2O,100*mCO2,P)
             eps_x=a*erfc(b*(T-c))
         elseif composition == "mafic"
-            T = T-273
+            T = T-273.0
             a,dadx,dady,dadz,b,dbdx,dbdy,dbdz = parameters_melting_curve_mafic(100*mH2O,100*mCO2,P)
             eps_x = a*T+b
             if eps_x < 0 || eps_x>1
-                eps_x=0
+                eps_x=0.0
             end
         end
         return eps_x

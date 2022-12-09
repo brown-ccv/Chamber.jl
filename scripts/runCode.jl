@@ -111,7 +111,7 @@ function chamber(composition::String, end_time::Number, log_volume_km3::Number, 
 
     # update solubility
     if phase == 2
-        X_co20 = 0
+        X_co20 = 0.0
     end
 
     # Calculate the water content (concentration) for inflowing magma contents
@@ -166,8 +166,8 @@ function chamber(composition::String, end_time::Number, log_volume_km3::Number, 
         P_lit = P_lit_0 + dP_lit_dt_0*t
         if P_lit < P_lit_0-P_lit_drop_max
             P_lit = P_lit_0-P_lit_drop_max
-            dP_lit_dt = 0
-            param.dP_lit_dt = 0
+            dP_lit_dt = 0.0
+            param.dP_lit_dt = 0.0
         end
         P = P_lit + P0plusDP - P_lit_0
         # effective gas molar mass
@@ -236,7 +236,7 @@ function chamber(composition::String, end_time::Number, log_volume_km3::Number, 
             dDP_dt, dT_dt, deps_g_dt, dX_co2_dt = A\b
         elseif phase == 2
             dDP_dt, dT_dt = A\b
-            deps_g_dt, dX_co2_dt = 0, 0
+            deps_g_dt, dX_co2_dt = 0.0, 0.0
         end
         dP_dt          = dDP_dt + dP_lit_dt
 
@@ -278,7 +278,7 @@ function chamber(composition::String, end_time::Number, log_volume_km3::Number, 
         m_co2 = tot_c/tot_m
 
         eps_x = crystal_fraction_eps_x(param.composition,T,P,m_h20,m_co2)
-        m_eq_max = exsolve_meq(param.composition, P, T, 0)
+        m_eq_max = exsolve_meq(param.composition, P, T, 0.0)
 
         # MT's new stuff
         eps_m0 = 1 - eps_x
@@ -318,7 +318,7 @@ function chamber(composition::String, end_time::Number, log_volume_km3::Number, 
         param_saved_var.storeTemp = storeTemp
 
         if param.dP_lit_dt_0 == 0
-            temp_P_lit = 0
+            temp_P_lit = 0.0
         else
             if int.t <= abs(param.P_lit_drop_max/param.dP_lit_dt_0)
                 temp_P_lit = param.dP_lit_dt_0*int.t
@@ -392,7 +392,7 @@ function chamber(composition::String, end_time::Number, log_volume_km3::Number, 
                         int.u[7] = X_co2_temp
                         C_co2 = C_co2_temp
                     else
-                        println("3rd try in IC Finder not successful")
+                        @warn("3rd try in IC Finder not successful")
                     end
                 end
             end
@@ -422,8 +422,9 @@ function chamber(composition::String, end_time::Number, log_volume_km3::Number, 
     cb = VectorContinuousCallback(stopChamber_MT, affect!, 8, rootfind=SciMLBase.RightRootFind)
     prob = ODEProblem(odeChamber,IC,tspan,param)
     sol = solve(prob, methods[method], callback=cb, reltol=odesetting.reltol, abstol=odesetting.abstol, dt=odesetting.first_step, dtmax=odesetting.max_step)
-
     end
+    typeofsol = typeof(sol)
+    println("type of sol: $typeofsol")
     println(to)
     @info(to)
     close(io)
