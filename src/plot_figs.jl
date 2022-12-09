@@ -1,4 +1,4 @@
-function plot_figs(csv_file, path)
+function plot_figs(csv_file::String, path::String)::Nothing
     ENV["GKSwstype"] = "100"  # magic environmental variable for Plots
     df  = CSV.File(csv_file) |> DataFrame
     p1 = plot(df[!,1], df[!,2], xaxis="Time", yaxis="P+dP", label="Julia", linewidth=2, marker=(:x,3,Plots.stroke(2)))
@@ -14,4 +14,5 @@ function plot_figs(csv_file, path)
     savefig(p4, "$path/4_V.png")
     savefig(p5, "$path/5_X_CO2.png")
     savefig(p6, "$path/6_tot_Mass.png")
+    nothing
 end

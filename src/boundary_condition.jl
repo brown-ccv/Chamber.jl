@@ -1,4 +1,4 @@
-function p_loss(visc_relax::Int8, P::Float64, P_lit::Float64, eta_r::Float64)
+function p_loss(visc_relax::Int8, P::Float64, P_lit::Float64, eta_r::Float64)::Float64
     if !(visc_relax in [0, 1])
         error("visc_relax must be 0 or 1.")
     else
@@ -12,7 +12,7 @@ function p_loss(visc_relax::Int8, P::Float64, P_lit::Float64, eta_r::Float64)
 end
 
 """
-    boundary_conditions_new(P::Float64, T::Float64, V::Float64, rho_m::Float64, rho_x::Float64, c::Float64, sw::SW, T_in::Float64, M_h2o::Float64, M_co2::Float64, total_Mass::Float64, param, param_saved_var)
+    boundary_conditions_new(P::Float64, T::Float64, V::Float64, rho_m::Float64, rho_x::Float64, c::Float64, sw::SW{Int8}, T_in::Float64, M_h2o::Float64, M_co2::Float64, total_Mass::Float64, param::Param{Float64}, param_saved_var::ParamSaved{Float64})
 
 # Arguments
 `P`: Pressure (Pa)
@@ -27,7 +27,7 @@ end
 `M_co2`: total mess of CO2 in the magma
 `total_Mass`: total mess of magma chamber
 """
-function boundary_conditions_new(P::Float64, T::Float64, V::Float64, rho_m::Float64, rho_x::Float64, c::Float64, sw, T_in::Float64, M_h2o::Float64, M_co2::Float64, total_Mass::Float64, param, param_saved_var)
+function boundary_conditions_new(P::Float64, T::Float64, V::Float64, rho_m::Float64, rho_x::Float64, c::Float64, sw::SW{Int8}, T_in::Float64, M_h2o::Float64, M_co2::Float64, total_Mass::Float64, param::Param{Float64}, param_saved_var::ParamSaved{Float64})::Vector{Float64}
     P_lit = param.P_lit
     tot_h2o_frac_in = param.tot_h2o_frac_in
     tot_co2_frac_in = param.tot_co2_frac_in
