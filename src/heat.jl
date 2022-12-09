@@ -26,7 +26,7 @@ function gas_heat_capacity(X_co2::Float64)::Float64
 end
 
 """
-    heat_conduction_chamberCH(maxn::Int64, a::Float64, c::Float64, dr::Float64, kappa::Float64, rho::Float64, cp::Float64, Tb::Float64, param_sv)::Float64
+    heat_conduction_chamberCH(maxn::Int64, a::Float64, c::Float64, dr::Float64, kappa::Float64, rho::Float64, cp::Float64, Tb::Float64, param_sv::ParamSaved{Float64})::Float64
 
 # Arguments
 `maxn`: number of terms
@@ -221,7 +221,7 @@ function heat_conduction_chamberCH(maxn::Int64, a::Float64, c::Float64, dr::Floa
 end
 
 """
-    heat_conduction_chamber_profileCH(maxn::Int64, a::Float64, c::Float64, r::Float64, kappa::Float64, Tb::Float64, param_sv)::Float64
+    heat_conduction_chamber_profileCH(maxn::Int64, a::Float64, c::Float64, r::Float64, kappa::Float64, Tb::Float64, param_sv::ParamSaved{Float64})::Float64
 
 # Arguments
 `maxn`: number of terms
