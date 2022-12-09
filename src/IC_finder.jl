@@ -1,27 +1,13 @@
 # Functions for initial condition
 """
-    mco2_dissolved_sat_silicic(X::Float64, P::Float64, T::Float64)
+    mco2_dissolved_sat_silicic(X::Float64, P::Float64, T::Float64)::Float64
 
 # Arguments
 `X`: mole fraction of CO2 in gas
 `P`: Pressure (Pa)
 `T`: Temperature (K)
 """
-function mco2_dissolved_sat_silicic(X::Float64, P::Float64, T::Float64)
-    P_MPa = P/1e6
-    # function & coefficients from Liu et al 2005
-    Pc = P_MPa*X
-    Pw = P_MPa*(1-X)
-    c1 = 5668
-    c2 = -55.99
-    c3 = 0.4133
-    c4 = 2.041e-3
-    sol = real(Pc*(c1+c2*Pw)/T+Pc*(c3*Complex(Pw)^0.5+c4*Complex(Pw)^1.5))
-    sol = sol/1e6
-    return sol
-end
-
-function mco2_dissolved_sat_mafic(X::Float64, P::Float64, T::Float64)
+function mco2_dissolved_sat_silicic(X::Float64, P::Float64, T::Float64)::Float64
     P_MPa = P/1e6
     # function & coefficients from Liu et al 2005
     Pc = P_MPa*X
@@ -36,14 +22,36 @@ function mco2_dissolved_sat_mafic(X::Float64, P::Float64, T::Float64)
 end
 
 """
-    meq_water_silicic(X::Float64, P::Float64, T::Float64)
+    mco2_dissolved_sat_mafic(X::Float64, P::Float64, T::Float64)::Float64
+
+# Arguments
+`X`: mole fraction of CO2 in gas
+`P`: Pressure (Pa)
+`T`: Temperature (K)
+"""
+function mco2_dissolved_sat_mafic(X::Float64, P::Float64, T::Float64)::Float64
+    P_MPa = P/1e6
+    # function & coefficients from Liu et al 2005
+    Pc = P_MPa*X
+    Pw = P_MPa*(1-X)
+    c1 = 5668
+    c2 = -55.99
+    c3 = 0.4133
+    c4 = 2.041e-3
+    sol = real(Pc*(c1+c2*Pw)/T+Pc*(c3*Complex(Pw)^0.5+c4*Complex(Pw)^1.5))
+    sol = sol/1e6
+    return sol
+end
+
+"""
+    meq_water_silicic(X::Float64, P::Float64, T::Float64)::Float64
 
 # Arguments
 `X`: mole fration of H2O in gas
 `P`: Pressure (Pa)
 `T`: Temperature (K)
 """
-function meq_water_silicic(X::Float64, P::Float64, T::Float64)
+function meq_water_silicic(X::Float64, P::Float64, T::Float64)::Float64
     P = P/1e6
     Pw = (1-X)*P
     Pc = X*P
@@ -60,14 +68,14 @@ function meq_water_silicic(X::Float64, P::Float64, T::Float64)
 end
 
 """
-    meq_water_mafic(X::Float64, P::Float64, T::Float64)
+    meq_water_mafic(X::Float64, P::Float64, T::Float64)::Float64
 
 # Arguments
 `X`: mole fration of H2O in gas
 `P`: Pressure (Pa)
 `T`: Temperature (K)
 """
-function meq_water_mafic(X::Float64, P::Float64, T::Float64)
+function meq_water_mafic(X::Float64, P::Float64, T::Float64)::Float64
     P = P/1e6
     T_C = T-273.15
     b1 = 2.99622526644026
@@ -86,7 +94,7 @@ function meq_water_mafic(X::Float64, P::Float64, T::Float64)
 end
 
 """
-    IC_Finder_silicic(M_h2o::Float64, M_co2::Float64, M_tot::Float64, P::Float64, T::Float64, V::Float64, rho_m::Float64, mm_co2::Float64, mm_h2o::Float64, param_IC)
+    IC_Finder_silicic(M_h2o::Float64, M_co2::Float64, M_tot::Float64, P::Float64, T::Float64, V::Float64, rho_m::Float64, mm_co2::Float64, mm_h2o::Float64, param_IC::ParamICFinder{Float64})::Dict{String, Real}
 
 # Arguments
 `M_h2o`: total mass of water in magma
@@ -99,7 +107,7 @@ end
 `mm_co2`: molecular mass of CO2
 `mm_h2o`: molecular mass of H2O
 """
-function IC_Finder_silicic(M_h2o::Float64, M_co2::Float64, M_tot::Float64, P::Float64, T::Float64, V::Float64, rho_m::Float64, mm_co2::Float64, mm_h2o::Float64, param_IC)
+function IC_Finder_silicic(M_h2o::Float64, M_co2::Float64, M_tot::Float64, P::Float64, T::Float64, V::Float64, rho_m::Float64, mm_co2::Float64, mm_h2o::Float64, param_IC::ParamICFinder{Float64})::Dict{String, Real}
     ## IC Finder parameters
     max_count = param_IC.max_count
     Tol = param_IC.Tol
@@ -218,7 +226,7 @@ function IC_Finder_silicic(M_h2o::Float64, M_co2::Float64, M_tot::Float64, P::Fl
 end
 
 """
-    IC_Finder_mafic(M_h2o_0::Float64, M_co2_0::Float64, M_tot::Float64, P_0::Float64, T_0::Float64, V_0::Float64, rho_m0::Float64, mm_co2::Float64, mm_h2o::Float64, param_IC)
+    IC_Finder_mafic(M_h2o_0::Float64, M_co2_0::Float64, M_tot::Float64, P_0::Float64, T_0::Float64, V_0::Float64, rho_m0::Float64, mm_co2::Float64, mm_h2o::Float64, param_IC::ParamICFinder{Float64})::Dict{String, Real}
 
 # Arguments
 `M_h2o_0`: total mass of water in magma
@@ -231,7 +239,7 @@ end
 `mm_co2`: molecular mass of CO2
 `mm_h2o`: molecular mass of H2O
 """
-function IC_Finder_mafic(M_h2o_0::Float64, M_co2_0::Float64, M_tot::Float64, P_0::Float64, T_0::Float64, V_0::Float64, rho_m0::Float64, mm_co2::Float64, mm_h2o::Float64, param_IC)
+function IC_Finder_mafic(M_h2o_0::Float64, M_co2_0::Float64, M_tot::Float64, P_0::Float64, T_0::Float64, V_0::Float64, rho_m0::Float64, mm_co2::Float64, mm_h2o::Float64, param_IC::ParamICFinder{Float64})::Dict{String, Real}
     ## IC Finder parameters
     max_count = param_IC.max_count
     Tol = param_IC.Tol

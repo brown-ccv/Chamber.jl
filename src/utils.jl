@@ -229,7 +229,7 @@ function build_mdot_in(fluxing::Bool, rho_m0::Float64, log_vfr::Float64, P_0::Fl
     return mdot_in
 end
 
-function compute_dXdP_dXdT(u::Float64, param::Param, var::String)
+function compute_dXdP_dXdT(u::Float64, param::Param, var::String)::Tuple{Float64, Float64, Float64}
     α, β = "alpha_$var", "beta_$var"
     return (u, u / getproperty(param, Symbol(β)), - u * getproperty(param, Symbol(α)))
 end

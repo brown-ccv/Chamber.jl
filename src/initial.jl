@@ -1,5 +1,5 @@
 """
-    eos_g(P::Float64, T::Float64)
+    eos_g(P::Float64, T::Float64)::EosG{Float64}
 
 parametrization of redlich kwong taken from Huber et al. 2010
 
@@ -7,7 +7,7 @@ parametrization of redlich kwong taken from Huber et al. 2010
 -`P`: Pressure (Pa)
 -`T`: Temperature (K)
 """
-function eos_g(P::Float64, T::Float64)
+function eos_g(P::Float64, T::Float64)::EosG{Float64}
     eos_g = EosG(P, T)
     return eos_g
 end
@@ -32,7 +32,7 @@ This script uses Liu et al. (2006) to calculate the solubility of water
 -`T`: represents the temperature in some units
 -`X_co2`: mole fraction of CO2 in gas.
 """
-function exsolve(composition::String, P::Float64, T::Float64, X_co2::Float64)
+function exsolve(composition::String, P::Float64, T::Float64, X_co2::Float64)::Vector{Float64}
     if !(composition in ["silicic", "mafic"])
         @error("composition must be \"silicic\" or \"mafic\".")
     else
@@ -53,7 +53,7 @@ function exsolve(composition::String, P::Float64, T::Float64, X_co2::Float64)
 end
 
 """
-    exsolve_meq(composition::String, P::Float64, T::Float64, X_co2::Float64)
+    exsolve_meq(composition::String, P::Float64, T::Float64, X_co2::Float64)::Float64
 
 This script uses Liu et al. (2006) to calculate the solubility of water
 
@@ -62,7 +62,7 @@ This script uses Liu et al. (2006) to calculate the solubility of water
 -`T`: represents the temperature in some units
 -`X_co2`: mole fraction of CO2 in gas.
 """
-function exsolve_meq(composition::String, P::Float64, T::Float64, X_co2::Float64)
+function exsolve_meq(composition::String, P::Float64, T::Float64, X_co2::Float64)::Float64
     if !(composition in ["silicic", "mafic"])
         @error("composition must be \"silicic\" or \"mafic\".")
     else
@@ -81,7 +81,7 @@ function exsolve_meq(composition::String, P::Float64, T::Float64, X_co2::Float64
 end
 
 """
-    exsolve3_silicic(P::Float64, T::Float64, m_eq::Float64)
+    exsolve3_silicic(P::Float64, T::Float64, m_eq::Float64)::Vector{Float64}
 
 Takes pressure, temperature, and amount of water to solve for the concentration of CO2 and X_CO2 (basically, goes the other direction compared to exsolve.m) using a Newton Raphson scheme
 
@@ -90,7 +90,7 @@ Takes pressure, temperature, and amount of water to solve for the concentration 
 -`T`: temperature (K)
 -`m_eq`: amount of water
 """
-function exsolve3_silicic(P::Float64, T::Float64, m_eq::Float64)
+function exsolve3_silicic(P::Float64, T::Float64, m_eq::Float64)::Vector{Float64}
     # convert to MPa and Celsius
     P = P/1e6
     m_eq = m_eq*1e2
@@ -140,7 +140,7 @@ function exsolve3_silicic(P::Float64, T::Float64, m_eq::Float64)
     X_co2 = Xc_guess
     # MT adding this b/c some super CO2-rich cases make Xc_guess greater than 1
     if X_co2 > 1
-        X_co2 = 1
+        X_co2 = 1.0
     end
     # partial pressures of CO2 and Water
     Pc = P*X_co2
@@ -157,14 +157,14 @@ function exsolve3_silicic(P::Float64, T::Float64, m_eq::Float64)
 end
 
 """
-    exsolve3_mafic(P::Float64, T::Float64, m_eq::Float64)
+    exsolve3_mafic(P::Float64, T::Float64, m_eq::Float64)::Vector{Float64}
 
 # Arguments
 -`P`: pressure (Pa)
 -`T`: temperature (K)
 -`m_eq`: amount of water
 """
-function exsolve3_mafic(P::Float64, T::Float64, m_eq::Float64)
+function exsolve3_mafic(P::Float64, T::Float64, m_eq::Float64)::Vector{Float64}
     # convert to MPa and Celsius
     P = P/1e6
     T = T-273.15
@@ -225,7 +225,7 @@ function exsolve3_mafic(P::Float64, T::Float64, m_eq::Float64)
 
     # MT adding this b/c some super CO2-rich cases make Xc_guess greater than 1
     if X_co2 > 1
-        X_co2=1
+        X_co2=1.0
     end
 
     # partial pressures of CO2 and Water
@@ -245,14 +245,14 @@ function exsolve3_mafic(P::Float64, T::Float64, m_eq::Float64)
 end
 
 """
-    parameters_melting_curve_silicic(mH2O::Float64, mCO2::Float64, P::Float64)
+    parameters_melting_curve_silicic(mH2O::Float64, mCO2::Float64, P::Float64)::Vector{Float64}
 
 # Arguments
 -`mH2O`: Weight fration of the H2O in magma.
 -`mCO2`: Weight fration of the CO2 in magma.
 -`P`: Pressure (Pa)
 """
-function parameters_melting_curve_silicic(mH2O::Float64, mCO2::Float64, P::Float64)
+function parameters_melting_curve_silicic(mH2O::Float64, mCO2::Float64, P::Float64)::Vector{Float64}
     x = mH2O
     y = mCO2
     z = P/1e6
@@ -284,14 +284,14 @@ function parameters_melting_curve_silicic(mH2O::Float64, mCO2::Float64, P::Float
 end
 
 """
-    parameters_melting_curve_mafic(mH2O::Float64, mCO2::Float64, P::Float64)
+    parameters_melting_curve_mafic(mH2O::Float64, mCO2::Float64, P::Float64)::Vector{Float64}
 
 # Arguments
 -`mH2O`: Weight fration of the H2O in magma.
 -`mCO2`: Weight fration of the CO2 in magma.
 -`P`: Pressure (Pa)
 """
-function parameters_melting_curve_mafic(mH2O::Float64, mCO2::Float64, P::Float64)
+function parameters_melting_curve_mafic(mH2O::Float64, mCO2::Float64, P::Float64)::Vector{Float64}
     x=mH2O
     y=mCO2
     z=P/1e6
@@ -339,7 +339,7 @@ function parameters_melting_curve_mafic(mH2O::Float64, mCO2::Float64, P::Float64
 end
 
 """
-    find_liq(composition::String, water::Float64, co2::Float64, P::Float64, ini_eps_x::Float64)
+    find_liq(composition::String, water::Float64, co2::Float64, P::Float64, ini_eps_x::Float64)::Float64
 
 # Arguments
 -`composition`: "silicic" or "mafic"
@@ -348,7 +348,7 @@ end
 -`P`: Pressure (Pa)
 -`ini_eps_x`: The starting volumn fraction of crystal.
 """
-function find_liq(composition::String, water::Float64, co2::Float64, P::Float64, ini_eps_x::Float64)
+function find_liq(composition::String, water::Float64, co2::Float64, P::Float64, ini_eps_x::Float64)::Float64
     if !(composition in ["silicic", "mafic"])
         error("composition must be \"silicic\" or \"mafic\".")
     else
@@ -367,7 +367,7 @@ function find_liq(composition::String, water::Float64, co2::Float64, P::Float64,
 end
 
 """
-    crystal_fraction(composition::String, T::Float64, P::Float64, mH2O::Float64, mCO2::Float64)
+    crystal_fraction(composition::String, T::Float64, P::Float64, mH2O::Float64, mCO2::Float64)::Vector{Float64}
 
 # Arguments
 -`composition`: "silicic" or "mafic"
@@ -413,7 +413,7 @@ function crystal_fraction(composition::String, T::Float64, P::Float64, mH2O::Flo
     end
 end
 
-function crystal_fraction_eps_x(composition::String, T::Float64, P::Float64, mH2O::Float64, mCO2::Float64)
+function crystal_fraction_eps_x(composition::String, T::Float64, P::Float64, mH2O::Float64, mCO2::Float64)::Float64
     if !(composition in ["silicic", "mafic"])
         error("composition must be \"silicic\" or \"mafic\".")
     else

@@ -4,7 +4,7 @@
 # Arguments
 `X_co2`: mole fraction of CO2 in the gas.
 """
-function gas_heat_capacity(X_co2::Float64)
+function gas_heat_capacity(X_co2::Float64)::Float64
     if X_co2 == 0
         c_g = 0.0
         return c_g
@@ -26,7 +26,7 @@ function gas_heat_capacity(X_co2::Float64)
 end
 
 """
-    heat_conduction_chamberCH(maxn::Int64, a::Float64, c::Float64, dr::Float64, kappa::Float64, rho::Float64, cp::Float64, Tb::Float64, param_sv)
+    heat_conduction_chamberCH(maxn::Int64, a::Float64, c::Float64, dr::Float64, kappa::Float64, rho::Float64, cp::Float64, Tb::Float64, param_sv)::Float64
 
 # Arguments
 `maxn`: number of terms
@@ -38,7 +38,7 @@ end
 `cp`: specific heat of magma
 `Tb`: boundary temperature of the outer shell
 """
-function heat_conduction_chamberCH(maxn::Int64, a::Float64, c::Float64, dr::Float64, kappa::Float64, rho::Float64, cp::Float64, Tb::Float64, param_sv)
+function heat_conduction_chamberCH(maxn::Int64, a::Float64, c::Float64, dr::Float64, kappa::Float64, rho::Float64, cp::Float64, Tb::Float64, param_sv::ParamSaved{Float64})::Float64
     storeTime = param_sv.storeTime
     maxTime = param_sv.maxTime
     storeTemp = param_sv.storeTemp
@@ -221,7 +221,7 @@ function heat_conduction_chamberCH(maxn::Int64, a::Float64, c::Float64, dr::Floa
 end
 
 """
-    heat_conduction_chamber_profileCH(maxn::Int64, a::Float64, c::Float64, r::Float64, kappa::Float64, Tb::Float64, param_sv)
+    heat_conduction_chamber_profileCH(maxn::Int64, a::Float64, c::Float64, r::Float64, kappa::Float64, Tb::Float64, param_sv)::Float64
 
 # Arguments
 `maxn`: number of terms
@@ -231,7 +231,7 @@ end
 `kappa`: thermal diffusivity of host rocks
 `Tb`: boundary temperature of the outer shell
 """
-function heat_conduction_chamber_profileCH(maxn::Int64, a::Float64, c::Float64, r::Vector{Float64}, kappa::Float64, Tb::Float64, param_sv)
+function heat_conduction_chamber_profileCH(maxn::Int64, a::Float64, c::Float64, r::Vector{Float64}, kappa::Float64, Tb::Float64, param_sv::ParamSaved{Float64})::Float64
     storeTime = param_sv.storeTime
     storeTemp = param_sv.storeTemp
     lengthTime = param_sv.lengthTime

@@ -1,7 +1,7 @@
 
 include("./Data/GLQ_points_weights.jl")
 
-function GLQ_points_weights_hard(n::Int64, GLQ_points_weights::Dict{Int64, Matrix{Float64}}=GLQ_points_weights)
+function GLQ_points_weights_hard(n::Int64, GLQ_points_weights::Dict{Int64, Matrix{Float64}}=GLQ_points_weights)::Vector{Vector{Float64}}
     if haskey(GLQ_points_weights, n)
         A = GLQ_points_weights[n]
         quadpts = A[:,3]

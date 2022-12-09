@@ -423,8 +423,6 @@ function chamber(composition::String, end_time::Number, log_volume_km3::Number, 
     prob = ODEProblem(odeChamber,IC,tspan,param)
     sol = solve(prob, methods[method], callback=cb, reltol=odesetting.reltol, abstol=odesetting.abstol, dt=odesetting.first_step, dtmax=odesetting.max_step)
     end
-    typeofsol = typeof(sol)
-    println("type of sol: $typeofsol")
     println(to)
     @info(to)
     close(io)
