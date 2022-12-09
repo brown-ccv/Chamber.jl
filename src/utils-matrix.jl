@@ -157,7 +157,7 @@ function build_matrix(phase::Int8, rho::Float64, drho_dP::Float64, V::Float64, d
         rho_x::Float64, deps_x_dP::Float64, L_e::Float64, dm_eq_dP::Float64, rho_m::Float64, eps_m::Float64, m_eq::Float64, drho_m_dP::Float64, drc_dT::Float64, drho_x_dT::Float64, deps_x_dT::Float64, dm_eq_dT::Float64, 
         drho_m_dT::Float64, Mdot_in::Float64, Mdot_out::Float64, P_loss::Float64, deps_x_dmh2o_t::Float64, m_h2o::Float64, m_co2::Float64, deps_x_dmco2_t::Float64, dP_lit_dt::Float64, 
         Hdot_in::Float64, Hdot_out::Float64, c_x::Float64, c_m::Float64, drho_deps_g::Float64, X_co2::Float64, m_g::Float64, eps_g::Float64, mm_h2o::Float64, drho_g_dP::Float64, rho_g::Float64, drho_g_dT::Float64, dm_eq_dX_co2::Float64, 
-        mm_co2::Float64, c_g::Float64, dC_co2_dP::Float64, C_co2::Float64, dC_co2_dT::Float64, dC_co2_dX_co2::Float64, Mdot_v_in::Float64, Mdot_v_out::Float64, Mdot_c_in::Float64, Mdot_c_out::Float64)
+        mm_co2::Float64, c_g::Float64, dC_co2_dP::Float64, C_co2::Float64, dC_co2_dT::Float64, dC_co2_dX_co2::Float64, Mdot_v_in::Float64, Mdot_v_out::Float64, Mdot_c_in::Float64, Mdot_c_out::Float64)::Vector{Array{Float64}}
 
     a11 = a1x_f(rho, drho_dP, V, dV_dP)
     a12 = a1x_f(rho, drho_dT, V, dV_dT)
