@@ -151,7 +151,7 @@ function build_matrix(phase::Int8, rho::Float64, drho_dP::Float64, V::Float64, d
         return [A, b]
     elseif phase == 3
         a13 = a13_f(rho, drho_deps_g)
-        a14 = 0
+        a14 = 0.0
         a21 = a21_f(eps_m, dm_eq_dP, m_eq, deps_x_dP, dV_dP, V, drho_m_dP, rho_m, X_co2, m_g, eps_g, mm_h2o, drho_g_dP, rho_g)
         a22 = a22_f(eps_m, dm_eq_dT, m_eq, deps_x_dT, dV_dT, V, drho_m_dT, rho_m, X_co2, m_g, eps_g, mm_h2o, drho_g_dT, rho_g)
         a23 = a23_f(m_eq, X_co2, m_g, rho_g, mm_h2o, rho_m)
