@@ -376,7 +376,7 @@ end
 -`mH2O`: Weight fration of the H2O in magma.
 -`mCO2`: Weight fration of the CO2 in magma.
 """
-function crystal_fraction(composition::String, T::Number, P::Number, mH2O::Number, mCO2::Number)
+function crystal_fraction(composition::String, T::Float64, P::Float64, mH2O::Float64, mCO2::Float64)::Vector{Float64}
     if !(composition in ["silicic", "mafic"])
         @error("composition must be \"silicic\" or \"mafic\".")
     else
@@ -386,7 +386,7 @@ function crystal_fraction(composition::String, T::Number, P::Number, mH2O::Numbe
             a,dadx,dady,dadz,b,dbdx,dbdy,dbdz,c,dcdx,dcdy,dcdz = parameters_melting_curve_silicic(100*mH2O,100*mCO2,P)
             eps_x=a*erfc(b*(T-c))
             # derivatives
-            deps_x_deps_g = -1
+            deps_x_deps_g = -1.0
             deps_x_dT = -2*a*b*exp(-b^2*(T-c)^2)/sqrt(pi)
             deps_x_dP = dadz*erfc(b*(T-c))-2*a*(T-c)/sqrt(pi)*exp(-b^2*(T-c)^2)*dbdz+2*a*b/sqrt(pi)*exp(-b^2*(T-c)^2)*dcdz
             deps_x_dmco2_t = dady*erfc(b*(T-c))-2*a*(T-c)/sqrt(pi)*exp(-b^2*(T-c)^2)*dbdy+2*a*b/sqrt(pi)*exp(-b^2*(T-c)^2)*dcdy
@@ -396,17 +396,17 @@ function crystal_fraction(composition::String, T::Number, P::Number, mH2O::Numbe
             a,dadx,dady,dadz,b,dbdx,dbdy,dbdz = parameters_melting_curve_mafic(100*mH2O,100*mCO2,P)
             eps_x = a*T+b
             # derivatives
-            deps_x_deps_g = -1
+            deps_x_deps_g = -1.0
             deps_x_dT = a
 
             deps_x_dmco2_t=dady*T+dbdy
             deps_x_dmh2o_t=dadx*T+dbdx
             deps_x_dP=dadz*T+dbdz
 
-            if eps_x < 0 || eps_x>1
-                eps_x=0
-                deps_x_deps_g=0
-                deps_x_dT=0
+            if eps_x < 0 || eps_x > 1
+                eps_x         = 0.0
+                deps_x_deps_g = 0.0
+                deps_x_dT     = 0.0
             end
         end
         return [eps_x, deps_x_dP, deps_x_dT, deps_x_deps_g, deps_x_dmco2_t, deps_x_dmh2o_t]

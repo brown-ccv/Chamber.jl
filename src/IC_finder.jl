@@ -86,7 +86,7 @@ function meq_water_mafic(X::Number, P::Number, T::Number)
 end
 
 """
-    IC_Finder_silicic(M_h2o::Number, M_co2::Number, M_tot::Number, P::Number, T::Number, V::Number, rho_m::Number, mm_co2::Number, mm_h2o::Number, param_IC::Dict)
+    IC_Finder_silicic(M_h2o::Number, M_co2::Number, M_tot::Number, P::Number, T::Number, V::Number, rho_m::Number, mm_co2::Number, mm_h2o::Number, param_IC)
 
 # Arguments
 `M_h2o`: total mass of water in magma
@@ -99,15 +99,15 @@ end
 `mm_co2`: molecular mass of CO2
 `mm_h2o`: molecular mass of H2O
 """
-function IC_Finder_silicic(M_h2o::Number, M_co2::Number, M_tot::Number, P::Number, T::Number, V::Number, rho_m::Number, mm_co2::Number, mm_h2o::Number, param_IC::Dict)
+function IC_Finder_silicic(M_h2o::Number, M_co2::Number, M_tot::Number, P::Number, T::Number, V::Number, rho_m::Number, mm_co2::Number, mm_h2o::Number, param_IC)
     ## IC Finder parameters
-    max_count = param_IC["max_count"]
-    Tol = param_IC["Tol"]
-    min_eps_g = param_IC["min_eps_g"]
-    eps_g_guess_ini = param_IC["eps_g_guess_ini"]
-    X_co2_guess_ini = param_IC["X_co2_guess_ini"]
-    fraction = param_IC["fraction"]
-    delta_X_co2 = param_IC["delta_X_co2"]
+    max_count = param_IC.max_count
+    Tol = param_IC.Tol
+    min_eps_g = param_IC.min_eps_g
+    eps_g_guess_ini = param_IC.eps_g_guess_ini
+    X_co2_guess_ini = param_IC.X_co2_guess_ini
+    fraction = param_IC.fraction
+    delta_X_co2 = param_IC.delta_X_co2
     ## ------------------------------
 
     rho_g = eos_g_rho_g(P, T)
@@ -214,11 +214,11 @@ function IC_Finder_silicic(M_h2o::Number, M_co2::Number, M_tot::Number, P::Numbe
         end
         eps_g0 = real(eps_g0)
     end
-    return [eps_g0, X_co20, mco2_diss, phase]
+    return Dict("eps_g"=>eps_g0, "X_co2"=>X_co20, "mco2_diss"=>mco2_diss, "phase"=>phase)
 end
 
 """
-    IC_Finder_mafic(M_h2o_0::Number, M_co2_0::Number, M_tot::Number, P_0::Number, T_0::Number, V_0::Number, rho_m0::Number, mm_co2::Number, mm_h2o::Number, param_IC::Dict)
+    IC_Finder_mafic(M_h2o_0::Number, M_co2_0::Number, M_tot::Number, P_0::Number, T_0::Number, V_0::Number, rho_m0::Number, mm_co2::Number, mm_h2o::Number, param_IC)
 
 # Arguments
 `M_h2o_0`: total mass of water in magma
@@ -231,15 +231,15 @@ end
 `mm_co2`: molecular mass of CO2
 `mm_h2o`: molecular mass of H2O
 """
-function IC_Finder_mafic(M_h2o_0::Number, M_co2_0::Number, M_tot::Number, P_0::Number, T_0::Number, V_0::Number, rho_m0::Number, mm_co2::Number, mm_h2o::Number, param_IC::Dict)
+function IC_Finder_mafic(M_h2o_0::Number, M_co2_0::Number, M_tot::Number, P_0::Number, T_0::Number, V_0::Number, rho_m0::Number, mm_co2::Number, mm_h2o::Number, param_IC)
     ## IC Finder parameters
-    max_count = param_IC["max_count"]
-    Tol = param_IC["Tol"]
-    min_eps_g = param_IC["min_eps_g"]
-    eps_g_guess_ini = param_IC["eps_g_guess_ini"]
-    X_co2_guess_ini = param_IC["X_co2_guess_ini"]
-    fraction = param_IC["fraction"]
-    delta_X_co2 = param_IC["delta_X_co2"]
+    max_count = param_IC.max_count
+    Tol = param_IC.Tol
+    min_eps_g = param_IC.min_eps_g
+    eps_g_guess_ini = param_IC.eps_g_guess_ini
+    X_co2_guess_ini = param_IC.X_co2_guess_ini
+    fraction = param_IC.fraction
+    delta_X_co2 = param_IC.delta_X_co2
     ## ------------------------------
     count_fzeros = 0
     rho_g0 = eos_g_rho_g(P_0, T_0)
@@ -378,5 +378,5 @@ function IC_Finder_mafic(M_h2o_0::Number, M_co2_0::Number, M_tot::Number, P_0::N
         eps_g0 = 0
         phase = 2
     end
-    return [eps_g0, X_co20, mco2_diss, phase]
+    return Dict("eps_g"=>eps_g0, "X_co2"=>X_co20, "mco2_diss"=>mco2_diss, "phase"=>phase)
 end

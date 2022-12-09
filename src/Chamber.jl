@@ -10,8 +10,8 @@ using Roots
 using SpecialFunctions
 using Sundials
 using TimerOutputs
+using Logging
 include("utils.jl")
-include("./Data/parameters.jl")
 include("./GLQ_points_weights.jl")
 include("./initial-utils.jl")
 include("./initial.jl")
@@ -22,9 +22,13 @@ include("./boundary_condition.jl")
 include("./runCode-func.jl")
 include("./IC_finder.jl")
 include("./utils-matrix.jl")
-export get_timestamp, OdeSetting, rheol_composition_dict, rheol_dict, 
+include("../scripts/runCode.jl")
+export QNDF, FBDF, Rodas4, Tsit5, KenCarp4, CVODE_BDF, Rosenbrock23,
+       @timeit, SimpleLogger, global_logger, get_timer, SciMLBase, VectorContinuousCallback, ODEProblem, solve,
+       get_timestamp, OdeSetting, rheol_composition_dict, rheol_dict,
        eos_g,
        eos_g_rho_g,
+       parameters_melting_curve_silicic, parameters_melting_curve_mafic,
        crystal_fraction,
        crystal_fraction_eps_x,
        exsolve,
@@ -38,14 +42,11 @@ export get_timestamp, OdeSetting, rheol_composition_dict, rheol_dict,
        exsolve3_silicic,
        exsolve3_mafic,
        GLQ_points_weights_hard,
+       compute_dXdP_dXdT,
        odeChamber,
        stopChamber_MT,
        affect!,
-       make_param,
-       make_param_saved_var,
-       make_sw,
-       make_param_IC_Finder,
-       SW,
+       Const, Param, ParamSaved, ParamICFinder, SW,
        rho_f, drho_dX_f, rc_f, drc_dX_f, build_rho_rc, rho_0_f,
        build_mdot_in,
        meq_silicic, dmeqdT_silicic, dmeqdP_silicic, dmeqdXco2_silicic,
@@ -56,7 +57,8 @@ export get_timestamp, OdeSetting, rheol_composition_dict, rheol_dict,
        b1_f, b2_f, b3_f, b4_f,
        build_matrix,
        rho_f, drho_dX_f, rc_f, drc_dX_f, build_rho_rc,
-       write_csv, plot_figs
+       write_csv, plot_figs,
+       chamber
 
 # Write your package code here.
 end

@@ -26,7 +26,6 @@ end
 end
 
 @testset "export functions Chamber" begin
-    @test !isnothing(Chamber.make_param)
     @test !isnothing(Chamber.GLQ_points_weights_hard)
 end
 
@@ -34,5 +33,6 @@ include("test-utils.jl")
 include("test-matrix.jl")
 include("test-rho_rc.jl")
 include("test-exsolve.jl")
+include("test-sol.jl")
 
 end

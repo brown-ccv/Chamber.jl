@@ -6,7 +6,7 @@
 """
 function gas_heat_capacity(X_co2::Number)
     if X_co2 == 0
-        c_g = 0
+        c_g = 0.0
         return c_g
     end
 
@@ -26,7 +26,7 @@ function gas_heat_capacity(X_co2::Number)
 end
 
 """
-    heat_conduction_chamberCH(maxn::Number, a::Number, c::Number, dr::Number, kappa::Number, rho::Number, cp::Number, Tb::Number, param_sv::Dict)
+    heat_conduction_chamberCH(maxn::Number, a::Number, c::Number, dr::Number, kappa::Number, rho::Number, cp::Number, Tb::Number, param_sv)
 
 # Arguments
 `maxn`: number of terms
@@ -38,16 +38,16 @@ end
 `cp`: specific heat of magma
 `Tb`: boundary temperature of the outer shell
 """
-function heat_conduction_chamberCH(maxn::Number, a::Number, c::Number, dr::Number, kappa::Number, rho::Number, cp::Number, Tb::Number, param_sv::Dict)
-    storeTime = param_sv["storeTime"]
-    maxTime = param_sv["maxTime"]
-    storeTemp = param_sv["storeTemp"]
-    lengthTime = param_sv["lengthTime"]
-    switch_Tprofile = param_sv["switch_Tprofile"]
-    storeSumk = param_sv["storeSumk"]
-    storeSumk_old = param_sv["storeSumk_old"]
-    storeSumk_2 = param_sv["storeSumk_2"]
-    storeSumk_2_old = param_sv["storeSumk_2_old"]
+function heat_conduction_chamberCH(maxn::Number, a::Number, c::Number, dr::Number, kappa::Number, rho::Number, cp::Number, Tb::Number, param_sv)
+    storeTime = param_sv.storeTime
+    maxTime = param_sv.maxTime
+    storeTemp = param_sv.storeTemp
+    lengthTime = param_sv.lengthTime
+    switch_Tprofile = param_sv.switch_Tprofile
+    storeSumk = param_sv.storeSumk
+    storeSumk_old = param_sv.storeSumk_old
+    storeSumk_2 = param_sv.storeSumk_2
+    storeSumk_2_old = param_sv.storeSumk_2_old
     # geometry
     r     = a + dr # radial coordinate (m)
 
@@ -103,7 +103,7 @@ function heat_conduction_chamberCH(maxn::Number, a::Number, c::Number, dr::Numbe
         end
         term2 = -4*pi*kappa*(a+c)/(2*kappa*pi^2*r)*Tb*(1)*sumn
         lengthTime = 2
-        param_sv["lengthTime"] = lengthTime
+        param_sv.lengthTime = lengthTime
 
     elseif time_index > 2 && time_index > lengthTime
         sumn = 0
@@ -121,7 +121,7 @@ function heat_conduction_chamberCH(maxn::Number, a::Number, c::Number, dr::Numbe
             termn = n*sin(n*pi*(r-a)/c)*sumk
             sumn  = sumn + termn
         end
-        param_sv["storeSumk_old"] = copy(storeSumk_old)
+        param_sv.storeSumk_old = copy(storeSumk_old)
         term1 = -4*pi*kappa*a/(2*r*c^2)*(-1)*sumn
 
         # second sum over n
@@ -139,8 +139,8 @@ function heat_conduction_chamberCH(maxn::Number, a::Number, c::Number, dr::Numbe
         end
         term2 = -4*pi*kappa*(a+c)/(2*kappa*pi^2*r)*Tb*(1)*sumn
         switch_Tprofile = 0
-        param_sv["storeSumk_2_old"] = copy(storeSumk_2_old)
-        param_sv["switch_Tprofile"] = switch_Tprofile
+        param_sv.storeSumk_2_old = copy(storeSumk_2_old)
+        param_sv.switch_Tprofile = switch_Tprofile
 
     elseif time_index > 2 && time_index == lengthTime
         sumn = 0
@@ -183,7 +183,7 @@ function heat_conduction_chamberCH(maxn::Number, a::Number, c::Number, dr::Numbe
     elseif time_index > 2 && time_index < lengthTime
         sumn = 0
         switch_Tprofile = 1
-        param_sv["switch_Tprofile"] = switch_Tprofile
+        param_sv.switch_Tprofile = switch_Tprofile
         for n=1:maxn
             termn = n*sin(n*pi*(r-a)/c)*storeSumk_old[n]
             sumn  = sumn + termn
@@ -212,16 +212,16 @@ function heat_conduction_chamberCH(maxn::Number, a::Number, c::Number, dr::Numbe
     term3 = 2/(r*c)*sumn
     Trt = term1 + term2 + term3
     lengthTime = time_index
-    param_sv["lengthTime"] = lengthTime
+    param_sv.lengthTime = lengthTime
     small_q = -kappa*rho*cp*(Trt-Tr0[end])/dr
     surface_area_chamber = 4*pi*a^2
     Q = small_q*surface_area_chamber
-    param_sv["maxTime"] = maxTime
+    param_sv.maxTime = maxTime
     return Q
 end
 
 """
-    heat_conduction_chamber_profileCH(maxn::Number, a::Number, c::Number, r::Number, kappa::Number, Tb::Number, param_sv::Dict)
+    heat_conduction_chamber_profileCH(maxn::Number, a::Number, c::Number, r::Number, kappa::Number, Tb::Number, param_sv)
 
 # Arguments
 `maxn`: number of terms
@@ -231,15 +231,15 @@ end
 `kappa`: thermal diffusivity of host rocks
 `Tb`: boundary temperature of the outer shell
 """
-function heat_conduction_chamber_profileCH(maxn::Number, a::Number, c::Number, r::Vector{Float64}, kappa::Number, Tb::Number, param_sv::Dict)
-    storeTime = param_sv["storeTime"]
-    storeTemp = param_sv["storeTemp"]
-    lengthTime = param_sv["lengthTime"]
-    switch_Tprofile = param_sv["switch_Tprofile"]
-    storeSumk = param_sv["storeSumk"]
-    storeSumk_old = param_sv["storeSumk_old"]
-    storeSumk_2 = param_sv["storeSumk_2"]
-    storeSumk_2_old = param_sv["storeSumk_2_old"]
+function heat_conduction_chamber_profileCH(maxn::Number, a::Number, c::Number, r::Vector{Float64}, kappa::Number, Tb::Number, param_sv)
+    storeTime = param_sv.storeTime
+    storeTemp = param_sv.storeTemp
+    lengthTime = param_sv.lengthTime
+    switch_Tprofile = param_sv.switch_Tprofile
+    storeSumk = param_sv.storeSumk
+    storeSumk_old = param_sv.storeSumk_old
+    storeSumk_2 = param_sv.storeSumk_2
+    storeSumk_2_old = param_sv.storeSumk_2_old
 
     # temperature history
     time = storeTime
@@ -314,7 +314,7 @@ function heat_conduction_chamber_profileCH(maxn::Number, a::Number, c::Number, r
         end
         term2 = -4*pi*kappa*(a+c)/(2*kappa*pi^2*r)*Tb*(1)*sumn
         switch_Tprofile = 0
-        param_sv["switch_Tprofile"] = switch_Tprofile
+        param_sv.switch_Tprofile = switch_Tprofile
 
     elseif time_index > 2 && time_index == lengthTime
         sumn = 0
@@ -356,7 +356,7 @@ function heat_conduction_chamber_profileCH(maxn::Number, a::Number, c::Number, r
     elseif time_index > 2 && time_index < lengthTime
         sumn = 0
         switch_Tprofile = 1
-        param_sv["switch_Tprofile"] = switch_Tprofile
+        param_sv.switch_Tprofile = switch_Tprofile
         sumn = 0
         for n=1:maxn
             termn = n*sin.(n*pi*(r.-a)/c)*storeSumk_old[n]
