@@ -153,7 +153,7 @@ mutable struct ParamSaved{T}
     maxTime::Number
     lengthTime::Int64
     switch_Tprofile::Int8
-    phase::Int8
+    phase::T
     storeTime::Vector{T}
     storeTemp::Vector{T}
     storeSumk::Vector{T}
