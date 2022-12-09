@@ -94,7 +94,7 @@ function meq_water_mafic(X::Float64, P::Float64, T::Float64)::Float64
 end
 
 """
-    IC_Finder_silicic(M_h2o::Float64, M_co2::Float64, M_tot::Float64, P::Float64, T::Float64, V::Float64, rho_m::Float64, mm_co2::Float64, mm_h2o::Float64, param_IC::ParamICFinder{Float64})::Dict{String, Float64}
+    IC_Finder_silicic(M_h2o::Float64, M_co2::Float64, M_tot::Float64, P::Float64, T::Float64, V::Float64, rho_m::Float64, mm_co2::Float64, mm_h2o::Float64, param_IC::ParamICFinder{Float64})::Vector{Float64}
 
 # Arguments
 `M_h2o`: total mass of water in magma
@@ -107,7 +107,7 @@ end
 `mm_co2`: molecular mass of CO2
 `mm_h2o`: molecular mass of H2O
 """
-function IC_Finder_silicic(M_h2o::Float64, M_co2::Float64, M_tot::Float64, P::Float64, T::Float64, V::Float64, rho_m::Float64, mm_co2::Float64, mm_h2o::Float64, param_IC::ParamICFinder{Float64})::Dict{String, Float64}
+function IC_Finder_silicic(M_h2o::Float64, M_co2::Float64, M_tot::Float64, P::Float64, T::Float64, V::Float64, rho_m::Float64, mm_co2::Float64, mm_h2o::Float64, param_IC::ParamICFinder{Float64})::Vector{Float64}
     ## IC Finder parameters
     max_count = param_IC.max_count
     Tol = param_IC.Tol
@@ -222,11 +222,11 @@ function IC_Finder_silicic(M_h2o::Float64, M_co2::Float64, M_tot::Float64, P::Fl
         end
         eps_g0 = real(eps_g0)
     end
-    return Dict("eps_g"=>eps_g0, "X_co2"=>X_co20, "mco2_diss"=>mco2_diss, "phase"=>phase)
+    return [eps_g0, X_co20, mco2_diss, phase]
 end
 
 """
-    IC_Finder_mafic(M_h2o_0::Float64, M_co2_0::Float64, M_tot::Float64, P_0::Float64, T_0::Float64, V_0::Float64, rho_m0::Float64, mm_co2::Float64, mm_h2o::Float64, param_IC::ParamICFinder{Float64})::Dict{String, Float64}
+    IC_Finder_mafic(M_h2o_0::Float64, M_co2_0::Float64, M_tot::Float64, P_0::Float64, T_0::Float64, V_0::Float64, rho_m0::Float64, mm_co2::Float64, mm_h2o::Float64, param_IC::ParamICFinder{Float64})::Vector{Float64}
 
 # Arguments
 `M_h2o_0`: total mass of water in magma
@@ -239,7 +239,7 @@ end
 `mm_co2`: molecular mass of CO2
 `mm_h2o`: molecular mass of H2O
 """
-function IC_Finder_mafic(M_h2o_0::Float64, M_co2_0::Float64, M_tot::Float64, P_0::Float64, T_0::Float64, V_0::Float64, rho_m0::Float64, mm_co2::Float64, mm_h2o::Float64, param_IC::ParamICFinder{Float64})::Dict{String, Float64}
+function IC_Finder_mafic(M_h2o_0::Float64, M_co2_0::Float64, M_tot::Float64, P_0::Float64, T_0::Float64, V_0::Float64, rho_m0::Float64, mm_co2::Float64, mm_h2o::Float64, param_IC::ParamICFinder{Float64})::Vector{Float64}
     ## IC Finder parameters
     max_count = param_IC.max_count
     Tol = param_IC.Tol
@@ -386,5 +386,5 @@ function IC_Finder_mafic(M_h2o_0::Float64, M_co2_0::Float64, M_tot::Float64, P_0
         eps_g0 = 0.0
         phase = 2
     end
-    return Dict("eps_g"=>eps_g0, "X_co2"=>X_co20, "mco2_diss"=>mco2_diss, "phase"=>phase)
+    return [eps_g0, X_co20, mco2_diss, phase]
 end

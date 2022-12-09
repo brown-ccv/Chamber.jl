@@ -95,11 +95,10 @@ function chamber(composition::String, end_time::Number, log_volume_km3::Number, 
     param_IC_Finder.Tol = if composition == "silicic" 1e-9 else 1e-8 end
 
     if composition == "silicic"
-        ic = IC_Finder_silicic(M_h2o_0, M_co2_0, M_tot, P_0, T_0, V_0, rc.rho_m0, param.mm_co2, param.mm_h2o, param_IC_Finder)
+        eps_g0, X_co20, C_co2, phase = IC_Finder_silicic(M_h2o_0, M_co2_0, M_tot, P_0, T_0, V_0, rc.rho_m0, param.mm_co2, param.mm_h2o, param_IC_Finder)
     elseif composition == "mafic"
-        ic = IC_Finder_mafic(M_h2o_0, M_co2_0, M_tot, P_0, T_0, V_0, rc.rho_m0, param.mm_co2, param.mm_h2o, param_IC_Finder)
+        eps_g0, X_co20, C_co2, phase = IC_Finder_mafic(M_h2o_0, M_co2_0, M_tot, P_0, T_0, V_0, rc.rho_m0, param.mm_co2, param.mm_h2o, param_IC_Finder)
     end
-    eps_g0, X_co20, C_co2, phase = ic["eps_g"], ic["X_co2"], ic["mco2_diss"], ic["phase"]
 
     println("IC_Finder done: [eps_g0, X_co20, C_co2] = [$eps_g0, $X_co20, $C_co2]")
     println("phase: ", phase)
@@ -343,11 +342,10 @@ function chamber(composition::String, end_time::Number, log_volume_km3::Number, 
             phase_here = param_saved_var.phase
             println("starting ic finder for conversion of phase,  time: $(int.t), phase_here: $phase_here")
             if param.composition == "silicic"
-                ic = IC_Finder_silicic(int.u[9], int.u[10], int.u[8], P_0, int.u[2], int.u[4], int.u[5], param.mm_co2, param.mm_h2o, param_IC_Finder)
+                eps_g_temp, X_co2_temp, C_co2_temp, phase = IC_Finder_silicic(int.u[9], int.u[10], int.u[8], P_0, int.u[2], int.u[4], int.u[5], param.mm_co2, param.mm_h2o, param_IC_Finder)
             elseif param.composition == "mafic"
-                ic = IC_Finder_mafic(int.u[9], int.u[10], int.u[8], P_0, int.u[2], int.u[4], int.u[5], param.mm_co2, param.mm_h2o, param_IC_Finder)
+                eps_g_temp, X_co2_temp, C_co2_temp, phase = IC_Finder_mafic(int.u[9], int.u[10], int.u[8], P_0, int.u[2], int.u[4], int.u[5], param.mm_co2, param.mm_h2o, param_IC_Finder)
             end
-            eps_g_temp, X_co2_temp, C_co2_temp, phase = ic["eps_g"], ic["X_co2"], ic["mco2_diss"], ic["phase"]
 
             param_saved_var.phase = phase
             if phase_here != phase
@@ -360,11 +358,10 @@ function chamber(composition::String, end_time::Number, log_volume_km3::Number, 
                 param_IC_Finder.max_count = 150
 
                 if param.composition == "silicic"
-                    ic = IC_Finder_silicic(int.u[9], int.u[10], int.u[8], P_0, int.u[2], int.u[4], int.u[5], param.mm_co2, param.mm_h2o, param_IC_Finder)
+                    eps_g_temp, X_co2_temp, C_co2_temp, phase = IC_Finder_silicic(int.u[9], int.u[10], int.u[8], P_0, int.u[2], int.u[4], int.u[5], param.mm_co2, param.mm_h2o, param_IC_Finder)
                 elseif param.composition == "mafic"
-                    ic = IC_Finder_mafic(int.u[9], int.u[10], int.u[8], P_0, int.u[2], int.u[4], int.u[5], param.mm_co2, param.mm_h2o, param_IC_Finder)
+                    eps_g_temp, X_co2_temp, C_co2_temp, phase = IC_Finder_mafic(int.u[9], int.u[10], int.u[8], P_0, int.u[2], int.u[4], int.u[5], param.mm_co2, param.mm_h2o, param_IC_Finder)
                 end
-                eps_g_temp, X_co2_temp, C_co2_temp, phase = ic["eps_g"], ic["X_co2"], ic["mco2_diss"], ic["phase"]
                 param_saved_var.phase = phase
                 ## change back to initial max_count
                 param_IC_Finder.max_count = 100
@@ -378,11 +375,10 @@ function chamber(composition::String, end_time::Number, log_volume_km3::Number, 
                     param_IC_Finder.max_count = 100
                     param_IC_Finder.Tol = param_IC_Finder.Tol*0.1
                     if param.composition == "silicic"
-                        ic = IC_Finder_silicic(int.u[9], int.u[10], int.u[8], P_0, int.u[2], int.u[4], int.u[5], param.mm_co2, param.mm_h2o, param_IC_Finder)
+                        eps_g_temp, X_co2_temp, C_co2_temp, phase = IC_Finder_silicic(int.u[9], int.u[10], int.u[8], P_0, int.u[2], int.u[4], int.u[5], param.mm_co2, param.mm_h2o, param_IC_Finder)
                     elseif param.composition == "mafic"
-                        ic = IC_Finder_mafic(int.u[9], int.u[10], int.u[8], P_0, int.u[2], int.u[4], int.u[5], param.mm_co2, param.mm_h2o, param_IC_Finder)
+                        eps_g_temp, X_co2_temp, C_co2_temp, phase = IC_Finder_mafic(int.u[9], int.u[10], int.u[8], P_0, int.u[2], int.u[4], int.u[5], param.mm_co2, param.mm_h2o, param_IC_Finder)
                     end
-                    eps_g_temp, X_co2_temp, C_co2_temp, phase = ic["eps_g"], ic["X_co2"], ic["mco2_diss"], ic["phase"]
                     param_saved_var.phase = phase
                     ## change back to initial Tol
                     param_IC_Finder.Tol = param_IC_Finder.Tol*10
