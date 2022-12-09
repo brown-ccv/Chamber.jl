@@ -153,20 +153,20 @@ function b4_f(Mdot_c_in::T, Mdot_c_out::T, rho_m::T, V::T, C_co2::T, deps_x_dmh2
     a41*dP_lit_dt
 end
 
-function build_matrix(phase::Int8, rho::Float64, drho_dP::Float64, V::Float64, dV_dP::Float64, drho_dT::Float64, dV_dT::Float64, drc_dP::Float64, rc::Float64, L_m::Float64, eps_x::Float64, drho_x_dP::Float64, T::Float64, 
-        rho_x::Float64, deps_x_dP::Float64, L_e::Float64, dm_eq_dP::Float64, rho_m::Float64, eps_m::Float64, m_eq::Float64, drho_m_dP::Float64, drc_dT::Float64, drho_x_dT::Float64, deps_x_dT::Float64, dm_eq_dT::Float64, 
-        drho_m_dT::Float64, Mdot_in::Float64, Mdot_out::Float64, P_loss::Float64, deps_x_dmh2o_t::Float64, m_h2o::Float64, m_co2::Float64, deps_x_dmco2_t::Float64, dP_lit_dt::Float64, 
-        Hdot_in::Float64, Hdot_out::Float64, c_x::Float64, c_m::Float64, drho_deps_g::Float64, X_co2::Float64, m_g::Float64, eps_g::Float64, mm_h2o::Float64, drho_g_dP::Float64, rho_g::Float64, drho_g_dT::Float64, dm_eq_dX_co2::Float64, 
-        mm_co2::Float64, c_g::Float64, dC_co2_dP::Float64, C_co2::Float64, dC_co2_dT::Float64, dC_co2_dX_co2::Float64, Mdot_v_in::Float64, Mdot_v_out::Float64, Mdot_c_in::Float64, Mdot_c_out::Float64)::Vector{Array{Float64}}
+function build_matrix(phase::T, rho::T, drho_dP::T, V::T, dV_dP::T, drho_dT::T, dV_dT::T, drc_dP::T, rc::T, L_m::T, eps_x::T, drho_x_dP::T, temp::T, 
+        rho_x::T, deps_x_dP::T, L_e::T, dm_eq_dP::T, rho_m::T, eps_m::T, m_eq::T, drho_m_dP::T, drc_dT::T, drho_x_dT::T, deps_x_dT::T, dm_eq_dT::T, 
+        drho_m_dT::T, Mdot_in::T, Mdot_out::T, P_loss::T, deps_x_dmh2o_t::T, m_h2o::T, m_co2::T, deps_x_dmco2_t::T, dP_lit_dt::T, 
+        Hdot_in::T, Hdot_out::T, c_x::T, c_m::T, drho_deps_g::T, X_co2::T, m_g::T, eps_g::T, mm_h2o::T, drho_g_dP::T, rho_g::T, drho_g_dT::T, dm_eq_dX_co2::T, 
+        mm_co2::T, c_g::T, dC_co2_dP::T, C_co2::T, dC_co2_dT::T, dC_co2_dX_co2::T, Mdot_v_in::T, Mdot_v_out::T, Mdot_c_in::T, Mdot_c_out::T)::Vector{Array{T}} where T<:Float64
 
     a11 = a1x_f(rho, drho_dP, V, dV_dP)
     a12 = a1x_f(rho, drho_dT, V, dV_dT)
-    a31 = a31_f(drc_dP, rc, dV_dP, V, L_m, eps_x, drho_x_dP, T, rho_x, deps_x_dP, L_e, dm_eq_dP, rho_m, eps_m, m_eq, drho_m_dP)
-    a32 = a32_f(drc_dT, rc, T, dV_dT, V, L_m, eps_x, drho_x_dT, rho_x, deps_x_dT, L_e, dm_eq_dT, rho_m, eps_m, m_eq, drho_m_dT)
+    a31 = a31_f(drc_dP, rc, dV_dP, V, L_m, eps_x, drho_x_dP, temp, rho_x, deps_x_dP, L_e, dm_eq_dP, rho_m, eps_m, m_eq, drho_m_dP)
+    a32 = a32_f(drc_dT, rc, temp, dV_dT, V, L_m, eps_x, drho_x_dT, rho_x, deps_x_dT, L_e, dm_eq_dT, rho_m, eps_m, m_eq, drho_m_dT)
     dM_h2o_t_dt = dM_X_t_dt_f(rho, V, Mdot_v_in, Mdot_v_out, m_h2o, Mdot_in, Mdot_out)
     dM_co2_t_dt = dM_X_t_dt_f(rho, V, Mdot_c_in, Mdot_c_out, m_co2, Mdot_in, Mdot_out)
     b1 = b1_f(Mdot_in, Mdot_out, rho, V, P_loss, rho_x, rho_m, deps_x_dmh2o_t, dM_h2o_t_dt, deps_x_dmco2_t, dM_co2_t_dt, a11, dP_lit_dt)
-    b3 = b3_f(Hdot_in, Hdot_out, rc, T, V, rho_x, c_x, rho_m, c_m, deps_x_dmh2o_t, dM_h2o_t_dt, deps_x_dmco2_t, dM_co2_t_dt, L_m, L_e, m_eq, P_loss, eps_x, eps_m, a31, dP_lit_dt)
+    b3 = b3_f(Hdot_in, Hdot_out, rc, temp, V, rho_x, c_x, rho_m, c_m, deps_x_dmh2o_t, dM_h2o_t_dt, deps_x_dmco2_t, dM_co2_t_dt, L_m, L_e, m_eq, P_loss, eps_x, eps_m, a31, dP_lit_dt)
     if phase != 3
         A = [a11 a12; a31 a32]
         b = [b1, b3]
@@ -178,8 +178,8 @@ function build_matrix(phase::Int8, rho::Float64, drho_dP::Float64, V::Float64, d
         a22 = a22_f(eps_m, dm_eq_dT, m_eq, deps_x_dT, dV_dT, V, drho_m_dT, rho_m, X_co2, m_g, eps_g, mm_h2o, drho_g_dT, rho_g)
         a23 = a23_f(m_eq, X_co2, m_g, rho_g, mm_h2o, rho_m)
         a24 = a24_f(eps_m, dm_eq_dX_co2, m_g, eps_g, rho_g, mm_h2o, rho_m, X_co2, mm_co2)
-        a33 = a33_f(rho_g, c_g, rho_m, c_m, rc, L_e, m_eq, T)
-        a34 = a34_f(L_e, rho_m, eps_m, dm_eq_dX_co2, rc, T)
+        a33 = a33_f(rho_g, c_g, rho_m, c_m, rc, L_e, m_eq, temp)
+        a34 = a34_f(L_e, rho_m, eps_m, dm_eq_dX_co2, rc, temp)
         a41 = a41_f(eps_m, dC_co2_dP, C_co2, deps_x_dP, dV_dP, V, drho_m_dP, rho_m, X_co2, m_g, eps_g, mm_co2, drho_g_dP, rho_g)
         a42 = a42_f(eps_m, dC_co2_dT, C_co2, deps_x_dT, dV_dT, V, drho_m_dT, rho_m, X_co2, m_g, eps_g, mm_co2, drho_g_dT, rho_g)
         a43 = a43_f(C_co2, X_co2, m_g, rho_g, mm_co2, rho_m)
