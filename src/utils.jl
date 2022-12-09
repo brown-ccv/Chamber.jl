@@ -3,7 +3,7 @@ using Parameters
 struct Silicic end
 struct Mafic end
 
-function get_timestamp()
+function get_timestamp()::String
     return Dates.format(now(), "YYmmddHHMM")
 end
 
@@ -15,7 +15,7 @@ struct OdeSetting{T}
     max_step::T   # Maximum allowed step size
     end
 
-function makeOdeSetting(;reltol=1e-8, abstol=1e-8, first_step=1e5, max_step=1e7)
+function makeOdeSetting(;reltol=1e-8::Float64, abstol=1e-8::Float64, first_step=1e5::Float64, max_step=1e7::Float64)::OdeSetting{Float64}
     return OdeSetting(reltol, abstol, first_step, max_step)
     end
 
@@ -229,7 +229,7 @@ function build_mdot_in(fluxing::Bool, rho_m0::Float64, log_vfr::Float64, P_0::Fl
     return mdot_in
 end
 
-function compute_dXdP_dXdT(u::Float64, param::Param, var::String)
+function compute_dXdP_dXdT(u::Float64, param::Param, var::String)::Tuple{Float64, Float64, Float64}
     α, β = "alpha_$var", "beta_$var"
     return (u, u / getproperty(param, Symbol(β)), - u * getproperty(param, Symbol(α)))
 end
