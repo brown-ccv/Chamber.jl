@@ -25,7 +25,7 @@ include("./utils-matrix.jl")
 include("../scripts/runCode.jl")
 export QNDF, FBDF, Rodas4, Tsit5, KenCarp4, CVODE_BDF, Rosenbrock23,
        @timeit, SimpleLogger, global_logger, get_timer, SciMLBase, VectorContinuousCallback, ODEProblem, solve,
-       get_timestamp, OdeSetting, rheol_composition_dict, rheol_dict,
+       get_timestamp, OdeSetting, rheol_composition_dict, rheol_dict, DataFrame,
        eos_g,
        eos_g_rho_g,
        parameters_melting_curve_silicic, parameters_melting_curve_mafic,
