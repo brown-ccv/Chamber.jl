@@ -2,13 +2,13 @@ using Chamber
 include("./solver_methods.jl")
 
 """
-    chamber(composition::String, end_time::Int64, log_volume_km3::Number, InitialConc_H2O::Float64, InitialConc_CO2::Float64, log_vfr::Float64, depth::Number)
+    chamber(composition::, end_time::Int64, log_volume_km3::Number, InitialConc_H2O::Float64, InitialConc_CO2::Float64, log_vfr::Float64, depth::Number)
 
 The volcano eruption simulation
 
 # Arguments
 
-- `composition`: "silicic" or "mafic"
+- `composition`: "Silicic()" or "Mafic()"
 - `end_time`: simulation period. ex. 3e9
 - `log_volume_km3`: Estimate volume of volcano chamber in log scale.
 - `InitialConc_H2O`: water content
@@ -16,15 +16,12 @@ The volcano eruption simulation
 - `log_vfr`: 
 - `depth`: Estimate depth of volcano chamber
 """
-function chamber(composition::String, end_time::Number, log_volume_km3::Number, InitialConc_H2O::Float64, InitialConc_CO2::Float64, 
-    log_vfr::Float64, depth::Number, methods::Dict=methods, method::String="Tsit5", odesetting=OdeSetting(), ini_eps_x::Float64=0.15, rheol::String="old") # ("silicic", 1e9, 0.2, 0.04, 0.001, -3.3, 8e3)
-    if !(composition in ["silicic", "mafic"])
-        @error("composition should be \"silicic\" or \"mafic\", not \"$composition\"")
-        return "Stop"
-    end
+function chamber(composition::Union{Silicic, Mafic}, end_time::Number, log_volume_km3::Number, InitialConc_H2O::Float64, InitialConc_CO2::Float64, 
+    log_vfr::Float64, depth::Number, methods::Dict=methods, method::String="Tsit5", odesetting=OdeSetting(), ini_eps_x::Float64=0.15, rheol::String="old")
 
     datetime = get_timestamp()
-    path = joinpath(pwd(), "$(datetime)_$composition")
+    composition_str = string(typeof(composition))
+    path = joinpath(pwd(), "$(datetime)_$composition_str")
     mkdir(path)
     io = open("$path/$datetime.log", "w+")
     logger = SimpleLogger(io)
@@ -33,7 +30,7 @@ function chamber(composition::String, end_time::Number, log_volume_km3::Number, 
     to = get_timer("share")
     @timeit to "chamber" begin
 
-    rc = rheol_composition_dict[composition]
+    rc = rheol_composition_dict[composition_str]
     param =  Param{Float64}(composition=composition,
                             rheol=rheol,
                             rho_m0=rc.rho_m0,
@@ -92,13 +89,9 @@ function chamber(composition::String, end_time::Number, log_volume_km3::Number, 
     M_h2o_0 = InitialConc_H2O*V_0*rho   # Total mass of H2O, initial
 
     # IC Finder parameters
-    param_IC_Finder.Tol = if composition == "silicic" 1e-9 else 1e-8 end
+    param_IC_Finder.Tol = if composition == Silicic() 1e-9 else 1e-8 end
 
-    if composition == "silicic"
-        eps_g0, X_co20, C_co2, phase = IC_Finder_silicic(M_h2o_0, M_co2_0, M_tot, P_0, T_0, V_0, rc.rho_m0, param.mm_co2, param.mm_h2o, param_IC_Finder)
-    elseif composition == "mafic"
-        eps_g0, X_co20, C_co2, phase = IC_Finder_mafic(M_h2o_0, M_co2_0, M_tot, P_0, T_0, V_0, rc.rho_m0, param.mm_co2, param.mm_h2o, param_IC_Finder)
-    end
+    eps_g0, X_co20, C_co2, phase = IC_Finder(composition, M_h2o_0, M_co2_0, M_tot, P_0, T_0, V_0, rc.rho_m0, param.mm_co2, param.mm_h2o, param_IC_Finder)
 
     println("IC_Finder done: [eps_g0, X_co20, C_co2] = [$eps_g0, $X_co20, $C_co2]")
     println("phase: ", phase)
@@ -260,6 +253,7 @@ function chamber(composition::String, end_time::Number, log_volume_km3::Number, 
     Define the stopping criteria for ODE solver. 
     """
     function stopChamber_MT(out, u, t, int)
+        composition = param.composition
         P_lit = param.P_lit
         DP_crit = param.DP_crit
         P0plusDP = u[1]
@@ -276,8 +270,8 @@ function chamber(composition::String, end_time::Number, log_volume_km3::Number, 
         m_h20 = tot_w/tot_m
         m_co2 = tot_c/tot_m
 
-        eps_x = crystal_fraction_eps_x(param.composition,T,P,m_h20,m_co2)
-        m_eq_max = exsolve_meq(param.composition, P, T, 0.0)
+        eps_x = crystal_fraction_eps_x(composition,T,P,m_h20,m_co2)
+        m_eq_max = exsolve_meq(composition, P, T, 0.0)
 
         # MT's new stuff
         eps_m0 = 1 - eps_x
@@ -285,11 +279,7 @@ function chamber(composition::String, end_time::Number, log_volume_km3::Number, 
         m_h2o_melt = tot_w/(V*rho_m*eps_m0)
         m_co2_melt = tot_c/(V*rho_m*eps_m0)
 
-        if param.composition == "silicic"
-            C_co2_sat = exsolve3_silicic(P,T, m_h2o_melt)[1]
-        elseif param.composition == "mafic"
-            C_co2_sat = exsolve3_mafic(P,T, m_h2o_melt)[1]
-        end
+        C_co2_sat = exsolve3(composition, P,T, m_h2o_melt)[1]
 
         out[1] = eps_x
         out[2] = eps_x/(1-eps_g)-0.8
@@ -309,6 +299,7 @@ function chamber(composition::String, end_time::Number, log_volume_km3::Number, 
     """
     function affect!(int, idx)
         println("*event idx: ", idx)
+        composition = param.composition
         storeTime = param_saved_var.storeTime
         storeTemp = param_saved_var.storeTemp
         storeTemp = storeTemp[storeTime.<int.t]
@@ -330,7 +321,7 @@ function chamber(composition::String, end_time::Number, log_volume_km3::Number, 
         m_h2o = int.u[9]/int.u[8]
         m_co2 = int.u[10]/int.u[8]
 
-        eps_x0 =  crystal_fraction_eps_x(param.composition, int.u[2], P_0, m_h2o, m_co2)
+        eps_x0 =  crystal_fraction_eps_x(composition, int.u[2], P_0, m_h2o, m_co2)
 
         if idx == 3 && eps_x0 < 0.5
             sw.eruption = 1
@@ -341,11 +332,7 @@ function chamber(composition::String, end_time::Number, log_volume_km3::Number, 
         elseif idx == 6 || idx == 8
             phase_here = param_saved_var.phase
             println("starting ic finder for conversion of phase,  time: $(int.t), phase_here: $phase_here")
-            if param.composition == "silicic"
-                eps_g_temp, X_co2_temp, C_co2_temp, phase = IC_Finder_silicic(int.u[9], int.u[10], int.u[8], P_0, int.u[2], int.u[4], int.u[5], param.mm_co2, param.mm_h2o, param_IC_Finder)
-            elseif param.composition == "mafic"
-                eps_g_temp, X_co2_temp, C_co2_temp, phase = IC_Finder_mafic(int.u[9], int.u[10], int.u[8], P_0, int.u[2], int.u[4], int.u[5], param.mm_co2, param.mm_h2o, param_IC_Finder)
-            end
+            eps_g_temp, X_co2_temp, C_co2_temp, phase = IC_Finder(composition, int.u[9], int.u[10], int.u[8], P_0, int.u[2], int.u[4], int.u[5], param.mm_co2, param.mm_h2o, param_IC_Finder)
 
             param_saved_var.phase = phase
             if phase_here != phase
@@ -356,12 +343,7 @@ function chamber(composition::String, end_time::Number, log_volume_km3::Number, 
             else
                 println("trying new IC parameters...")
                 param_IC_Finder.max_count = 150
-
-                if param.composition == "silicic"
-                    eps_g_temp, X_co2_temp, C_co2_temp, phase = IC_Finder_silicic(int.u[9], int.u[10], int.u[8], P_0, int.u[2], int.u[4], int.u[5], param.mm_co2, param.mm_h2o, param_IC_Finder)
-                elseif param.composition == "mafic"
-                    eps_g_temp, X_co2_temp, C_co2_temp, phase = IC_Finder_mafic(int.u[9], int.u[10], int.u[8], P_0, int.u[2], int.u[4], int.u[5], param.mm_co2, param.mm_h2o, param_IC_Finder)
-                end
+                eps_g_temp, X_co2_temp, C_co2_temp, phase = IC_Finder(composition, int.u[9], int.u[10], int.u[8], P_0, int.u[2], int.u[4], int.u[5], param.mm_co2, param.mm_h2o, param_IC_Finder)
                 param_saved_var.phase = phase
                 ## change back to initial max_count
                 param_IC_Finder.max_count = 100
@@ -374,11 +356,7 @@ function chamber(composition::String, end_time::Number, log_volume_km3::Number, 
                     println("2nd try in IC Finder not successful, trying new IC parameters...")
                     param_IC_Finder.max_count = 100
                     param_IC_Finder.Tol = param_IC_Finder.Tol*0.1
-                    if param.composition == "silicic"
-                        eps_g_temp, X_co2_temp, C_co2_temp, phase = IC_Finder_silicic(int.u[9], int.u[10], int.u[8], P_0, int.u[2], int.u[4], int.u[5], param.mm_co2, param.mm_h2o, param_IC_Finder)
-                    elseif param.composition == "mafic"
-                        eps_g_temp, X_co2_temp, C_co2_temp, phase = IC_Finder_mafic(int.u[9], int.u[10], int.u[8], P_0, int.u[2], int.u[4], int.u[5], param.mm_co2, param.mm_h2o, param_IC_Finder)
-                    end
+                    eps_g_temp, X_co2_temp, C_co2_temp, phase = IC_Finder(composition, int.u[9], int.u[10], int.u[8], P_0, int.u[2], int.u[4], int.u[5], param.mm_co2, param.mm_h2o, param_IC_Finder)
                     param_saved_var.phase = phase
                     ## change back to initial Tol
                     param_IC_Finder.Tol = param_IC_Finder.Tol*10

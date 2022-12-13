@@ -94,7 +94,7 @@ function meq_water_mafic(X::Float64, P::Float64, T::Float64)::Float64
 end
 
 """
-    IC_Finder_silicic(M_h2o::Float64, M_co2::Float64, M_tot::Float64, P::Float64, T::Float64, V::Float64, rho_m::Float64, mm_co2::Float64, mm_h2o::Float64, param_IC::ParamICFinder{Float64})::Vector{Float64}
+    IC_Finder(composition::Silicic, M_h2o::Float64, M_co2::Float64, M_tot::Float64, P::Float64, T::Float64, V::Float64, rho_m::Float64, mm_co2::Float64, mm_h2o::Float64, param_IC::ParamICFinder{Float64})::Vector{Float64}
 
 # Arguments
 `M_h2o`: total mass of water in magma
@@ -107,7 +107,7 @@ end
 `mm_co2`: molecular mass of CO2
 `mm_h2o`: molecular mass of H2O
 """
-function IC_Finder_silicic(M_h2o::Float64, M_co2::Float64, M_tot::Float64, P::Float64, T::Float64, V::Float64, rho_m::Float64, mm_co2::Float64, mm_h2o::Float64, param_IC::ParamICFinder{Float64})::Vector{Float64}
+function IC_Finder(composition::Silicic, M_h2o::Float64, M_co2::Float64, M_tot::Float64, P::Float64, T::Float64, V::Float64, rho_m::Float64, mm_co2::Float64, mm_h2o::Float64, param_IC::ParamICFinder{Float64})::Vector{Float64}
     ## IC Finder parameters
     max_count = param_IC.max_count
     Tol = param_IC.Tol
@@ -121,7 +121,7 @@ function IC_Finder_silicic(M_h2o::Float64, M_co2::Float64, M_tot::Float64, P::Fl
     rho_g = eos_g_rho_g(P, T)
     m_h2o_tot = M_h2o/M_tot
     m_co2_tot = M_co2/M_tot
-    eps_x0 = crystal_fraction_eps_x("silicic", T, P, m_h2o_tot, m_co2_tot)
+    eps_x0 = crystal_fraction_eps_x(composition, T, P, m_h2o_tot, m_co2_tot)
 
     # Fixing total mass of volatiles set in MainChamber in real model
     eps_m0 = 1 - eps_x0
@@ -129,12 +129,12 @@ function IC_Finder_silicic(M_h2o::Float64, M_co2::Float64, M_tot::Float64, P::Fl
     m_co2_melt = M_co2/(V*rho_m*eps_m0)
 
     # CHECK IF SATURATED
-    m_eq_max = exsolve_meq("silicic", P, T, 0.0)
+    m_eq_max = exsolve_meq(composition, P, T, 0.0)
 
     if m_h2o_melt > m_eq_max
         phase = 3
     else
-        C_co2_sat = exsolve3_silicic(P, T, m_h2o_melt)[1]
+        C_co2_sat = exsolve3(composition, P, T, m_h2o_melt)[1]
         if m_co2_melt > C_co2_sat  ###
             phase = 3
         else
@@ -158,7 +158,7 @@ function IC_Finder_silicic(M_h2o::Float64, M_co2::Float64, M_tot::Float64, P::Fl
         count = 0
 
         while ((abs((X_co20-X_co2_prev)/X_co2_prev)>Tol || abs((eps_g0-eps_g_prev)/eps_g_prev)>Tol) && count<max_count)
-            eps_x0 = crystal_fraction_eps_x("silicic", T, P, m_h2o_tot, m_co2_tot)
+            eps_x0 = crystal_fraction_eps_x(composition, T, P, m_h2o_tot, m_co2_tot)
             fun(x) = real(mco2_dissolved_sat_silicic(x, P, T)*(1-eps_g0-eps_x0)*V*rho_m+eps_g0*rho_g*V*x*mm_co2/(x*mm_co2+(1-x)*mm_h2o)-M_co2)
             X_co2_prev = X_co20
             fx = ZeroProblem(fun, X_co2_prev)
@@ -192,7 +192,7 @@ function IC_Finder_silicic(M_h2o::Float64, M_co2::Float64, M_tot::Float64, P::Fl
                 X_co20 = X_co2_guess
                 count = 0
                 while (abs((X_co20-X_co2_prev)/X_co2_prev)>Tol || abs((eps_g0-eps_g_prev)/eps_g_prev)>Tol) && count<max_count || X_co20 > 1
-                    eps_x0 = crystal_fraction_eps_x("silicic", T, P, m_h2o_tot, m_co2_tot)
+                    eps_x0 = crystal_fraction_eps_x(composition, T, P, m_h2o_tot, m_co2_tot)
                     fun(x) = real(mco2_dissolved_sat_silicic(x, P, T)*(1-eps_g0-eps_x0)*V*rho_m+eps_g0*rho_g*V*x*mm_co2/(x*mm_co2+(1-x)*mm_h2o)-M_co2)
                     X_co2_prev = X_co20
                     fx = ZeroProblem(fun, X_co2_prev)
@@ -226,7 +226,7 @@ function IC_Finder_silicic(M_h2o::Float64, M_co2::Float64, M_tot::Float64, P::Fl
 end
 
 """
-    IC_Finder_mafic(M_h2o_0::Float64, M_co2_0::Float64, M_tot::Float64, P_0::Float64, T_0::Float64, V_0::Float64, rho_m0::Float64, mm_co2::Float64, mm_h2o::Float64, param_IC::ParamICFinder{Float64})::Vector{Float64}
+    IC_Finder(composition::Mafic, M_h2o_0::Float64, M_co2_0::Float64, M_tot::Float64, P_0::Float64, T_0::Float64, V_0::Float64, rho_m0::Float64, mm_co2::Float64, mm_h2o::Float64, param_IC::ParamICFinder{Float64})::Vector{Float64}
 
 # Arguments
 `M_h2o_0`: total mass of water in magma
@@ -239,7 +239,7 @@ end
 `mm_co2`: molecular mass of CO2
 `mm_h2o`: molecular mass of H2O
 """
-function IC_Finder_mafic(M_h2o_0::Float64, M_co2_0::Float64, M_tot::Float64, P_0::Float64, T_0::Float64, V_0::Float64, rho_m0::Float64, mm_co2::Float64, mm_h2o::Float64, param_IC::ParamICFinder{Float64})::Vector{Float64}
+function IC_Finder(composition::Mafic, M_h2o_0::Float64, M_co2_0::Float64, M_tot::Float64, P_0::Float64, T_0::Float64, V_0::Float64, rho_m0::Float64, mm_co2::Float64, mm_h2o::Float64, param_IC::ParamICFinder{Float64})::Vector{Float64}
     ## IC Finder parameters
     max_count = param_IC.max_count
     Tol = param_IC.Tol
@@ -254,7 +254,7 @@ function IC_Finder_mafic(M_h2o_0::Float64, M_co2_0::Float64, M_tot::Float64, P_0
 
     mH2O = M_h2o_0/M_tot
     mCO2 = M_co2_0/M_tot
-    eps_x0 = crystal_fraction_eps_x("mafic", T_0, P_0, mH2O, mCO2)
+    eps_x0 = crystal_fraction_eps_x(composition, T_0, P_0, mH2O, mCO2)
 
     eps_m0 = 1 - eps_x0
 
@@ -262,12 +262,12 @@ function IC_Finder_mafic(M_h2o_0::Float64, M_co2_0::Float64, M_tot::Float64, P_0
     Conc_co2 = M_co2_0/(V_0*rho_m0*eps_m0)
 
     # CHECK IF SATURATED
-    m_eq_max = exsolve_meq("mafic", P_0, T_0, 0.0)
+    m_eq_max = exsolve_meq(composition, P_0, T_0, 0.0)
 
     if Conc_Water > m_eq_max
         phase = 3
     else
-        C_co2_sat = exsolve3_mafic(P_0, T_0, Conc_Water)[1]
+        C_co2_sat = exsolve3(composition, P_0, T_0, Conc_Water)[1]
         if Conc_co2 >  C_co2_sat
             phase = 3
         else
@@ -290,7 +290,7 @@ function IC_Finder_mafic(M_h2o_0::Float64, M_co2_0::Float64, M_tot::Float64, P_0
         count = 0
 
         while ((abs((X_co20-X_co2_prev)/X_co2_prev)>Tol || abs((eps_g0-eps_g_prev)/eps_g_prev)>Tol) && count<max_count)
-            eps_x0 = crystal_fraction_eps_x("mafic", T_0, P_0, mH2O, mCO2)
+            eps_x0 = crystal_fraction_eps_x(composition, T_0, P_0, mH2O, mCO2)
             fun(x) = real(mco2_dissolved_sat_mafic(x, P_0, T_0)*(1-eps_g0-eps_x0)*V_0*rho_m0+eps_g0*rho_g0*V_0*x*mm_co2/(x*mm_co2+(1-x)*mm_h2o)-M_co2_0)
             if ~isreal(X_co20) || isnan(X_co20)
                 X_co2_prev = 0.0
@@ -327,7 +327,7 @@ function IC_Finder_mafic(M_h2o_0::Float64, M_co2_0::Float64, M_tot::Float64, P_0
                 count_loop = 0
                 while (abs((X_co20-X_co2_prev)/X_co2_prev)>Tol || abs((eps_g0-eps_g_prev)/eps_g_prev)>Tol) && count<max_count && X_co20<=1
                     count_loop = count_loop+1
-                    eps_x0 = crystal_fraction_eps_x("mafic", T_0, P_0, mH2O, mCO2)
+                    eps_x0 = crystal_fraction_eps_x(composition, T_0, P_0, mH2O, mCO2)
                     fun(x) = real(mco2_dissolved_sat_mafic(x, P_0, T_0)*(1-eps_g0-eps_x0)*V_0*rho_m0+eps_g0*rho_g0*V_0*x*mm_co2/(x*mm_co2+(1-x)*mm_h2o)-M_co2_0)
 
                     if ~isreal(X_co20) || isnan(X_co20) || ~isreal(eps_g0) || isnan(eps_g0)
