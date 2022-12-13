@@ -1,6 +1,5 @@
 function plot_figs(df::DataFrame, path::String)::Nothing
     ENV["GKSwstype"] = "100"  # magic environmental variable for Plots
-    # df  = CSV.File(csv_file) |> DataFrame
     p1 = plot(df[!,1], df[!,2], xaxis="Time", yaxis="P+dP", label="Julia", linewidth=2, marker=(:x,3,Plots.stroke(2)))
     p2 = plot(df[!,1], df[!,3], xaxis="Time", yaxis="T", label="Julia", linewidth=2, marker=(:x,3,Plots.stroke(2)))
     p3 = plot(df[!,1], df[!,4], xaxis="Time", yaxis="eps_g", label="Julia", linewidth=2, marker=(:x,3,Plots.stroke(2)))
