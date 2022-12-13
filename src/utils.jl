@@ -43,8 +43,12 @@ struct RheolComposition{T}
 end
 silicic = RheolComposition{Float64}(2400, 2600, 1200, 1200, 290e3)
 
-mafic = RheolComposition{Float64}(2420, 2900, 1142, 1160, 470e3)
-rheol_composition_dict = Dict("silicic" => silicic, "mafic" => mafic)
+mafic =   RheolComposition{Float64}(2420,
+                                    2900,
+                                    1142,
+                                    1160,
+                                    470e3)
+rheol_composition_dict = Dict("Silicic" => silicic, "Mafic"  => mafic)
 
 struct RheolNew{T}
     A::T  # material-dependent constant for viscosity law (Pa s)
@@ -63,7 +67,7 @@ rheol_dict = Dict("new" => new, "old" => old)
 
 ## Parameters
 @with_kw mutable struct Param{T}
-    composition::String
+    composition::Union{Silicic, Mafic}
     rheol::String
     fluxing::Bool = false
     single_eruption::Bool = false
