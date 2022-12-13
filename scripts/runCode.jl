@@ -657,11 +657,12 @@ function chamber(
     println(to)
     @info(to)
     close(io)
-    write_csv(sol, path)
+    df = DataFrame(sol)
+    write_csv(df, path)
     plot_figs("$path/out.csv", path)
 
     println(".. Done!")
-    return sol
+    return df
 end
 
 # chamber("silicic", 1e9, 0.2, 0.04, 0.001, -3.3, 8e3)

@@ -1,7 +1,6 @@
-function write_csv(data, path)
-    number_of_data = length(data)
+function write_csv(df::DataFrame, path::String)::Nothing
+    number_of_data = size(df, 1)
     println("number_of_data: $number_of_data")
-    df = DataFrame(data)
     names = [
         "P+dP",
         "T",
@@ -15,5 +14,6 @@ function write_csv(data, path)
         "total_mass_CO2",
     ]
     rename!(df, ["value$i" => names[i] for i in 1:10])
-    return CSV.write("$path/out.csv", df)
+    CSV.write("$path/out.csv", df)
+    nothing
 end
