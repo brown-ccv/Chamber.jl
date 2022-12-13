@@ -2,7 +2,7 @@ using Chamber
 include("./solver_methods.jl")
 
 """
-    chamber(composition::, end_time::Int64, log_volume_km3::Number, InitialConc_H2O::Float64, InitialConc_CO2::Float64, log_vfr::Float64, depth::Number)
+    chamber(composition::Union{Silicic, Mafic}, end_time::Int64, log_volume_km3::Number, InitialConc_H2O::Float64, InitialConc_CO2::Float64, log_vfr::Float64, depth::Number)
 
 The volcano eruption simulation
 
