@@ -424,7 +424,7 @@ function chamber(composition::String, end_time::Number, log_volume_km3::Number, 
     close(io)
     df = DataFrame(sol)
     write_csv(df, path)
-    plot_figs("$path/out.csv", path)
+    plot_figs(df, path)
 
     println(".. Done!")
     return df
