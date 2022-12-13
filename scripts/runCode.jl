@@ -93,7 +93,8 @@ function chamber(composition::Union{Silicic, Mafic}, end_time::Number, log_volum
 
     eps_g0, X_co20, C_co2, phase = IC_Finder(composition, M_h2o_0, M_co2_0, M_tot, P_0, T_0, V_0, rc.rho_m0, param.mm_co2, param.mm_h2o, param_IC_Finder)
 
-    println("IC_Finder done: [eps_g0, X_co20, C_co2] = [$eps_g0, $X_co20, $C_co2]")
+    println("IC_Finder done")
+    @show eps_g0 X_co20 C_co2
     println("phase: ", phase)
     @info("IC_Finder done: $eps_g0, $X_co20, $C_co2, $phase")
     param_saved_var.phase = phase
