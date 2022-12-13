@@ -1,4 +1,4 @@
-function plot_figs(csv_file::String, path::String)::Nothing
+function plot_figs(df::DataFrame, path::String)::Nothing
     ENV["GKSwstype"] = "100"  # magic environmental variable for Plots
     df = DataFrame(CSV.File(csv_file))
     p1 = plot(

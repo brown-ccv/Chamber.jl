@@ -659,7 +659,7 @@ function chamber(
     close(io)
     df = DataFrame(sol)
     write_csv(df, path)
-    plot_figs("$path/out.csv", path)
+    plot_figs(df, path)
 
     println(".. Done!")
     return df
