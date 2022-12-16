@@ -1,22 +1,22 @@
 """
-    gas_heat_capacity(X_co2::Number)
+    gas_heat_capacity(X_co2::Float64)
 
 # Arguments
 `X_co2`: mole fraction of CO2 in the gas.
 """
-function gas_heat_capacity(X_co2::Number)
+function gas_heat_capacity(X_co2::Float64)::Float64
     if X_co2 == 0
-        c_g = 0
+        c_g = 0.0
         return c_g
     end
 
     # Properties of CO2
     m_co2 = 44.01e-3
-    c_co2 = 1200
+    c_co2 = 1200.0
 
     # Properties of H2O
     m_h2o = 18.02e-3
-    c_h2o = 3880
+    c_h2o = 3880.0
 
     # effective molar mass
     m_g = m_h2o*(1-X_co2)+m_co2*X_co2
@@ -26,7 +26,7 @@ function gas_heat_capacity(X_co2::Number)
 end
 
 """
-    heat_conduction_chamberCH(maxn::Number, a::Number, c::Number, dr::Number, kappa::Number, rho::Number, cp::Number, Tb::Number, param_sv::Dict)
+    heat_conduction_chamberCH(maxn::Int64, a::Float64, c::Float64, dr::Float64, kappa::Float64, rho::Float64, cp::Float64, Tb::Float64, param_sv::ParamSaved{Float64})::Float64
 
 # Arguments
 `maxn`: number of terms
@@ -38,16 +38,16 @@ end
 `cp`: specific heat of magma
 `Tb`: boundary temperature of the outer shell
 """
-function heat_conduction_chamberCH(maxn::Number, a::Number, c::Number, dr::Number, kappa::Number, rho::Number, cp::Number, Tb::Number, param_sv::Dict)
-    storeTime = param_sv["storeTime"]
-    maxTime = param_sv["maxTime"]
-    storeTemp = param_sv["storeTemp"]
-    lengthTime = param_sv["lengthTime"]
-    switch_Tprofile = param_sv["switch_Tprofile"]
-    storeSumk = param_sv["storeSumk"]
-    storeSumk_old = param_sv["storeSumk_old"]
-    storeSumk_2 = param_sv["storeSumk_2"]
-    storeSumk_2_old = param_sv["storeSumk_2_old"]
+function heat_conduction_chamberCH(maxn::Int64, a::Float64, c::Float64, dr::Float64, kappa::Float64, rho::Float64, cp::Float64, Tb::Float64, param_sv::ParamSaved{Float64})::Float64
+    storeTime = param_sv.storeTime
+    maxTime = param_sv.maxTime
+    storeTemp = param_sv.storeTemp
+    lengthTime = param_sv.lengthTime
+    switch_Tprofile = param_sv.switch_Tprofile
+    storeSumk = param_sv.storeSumk
+    storeSumk_old = param_sv.storeSumk_old
+    storeSumk_2 = param_sv.storeSumk_2
+    storeSumk_2_old = param_sv.storeSumk_2_old
     # geometry
     r     = a + dr # radial coordinate (m)
 
@@ -68,10 +68,10 @@ function heat_conduction_chamberCH(maxn::Number, a::Number, c::Number, dr::Numbe
 
     if time_index == 2
         # first sum over n
-        sumn = 0
+        sumn = 0.0
         for n=1:maxn
             # sum over k within first sum over n
-            sumk = 0
+            sumk = 0.0
             for k=1:time_index-1
                 past_time       = time[k]
                 past_time_delta = time[k+1]
@@ -87,10 +87,10 @@ function heat_conduction_chamberCH(maxn::Number, a::Number, c::Number, dr::Numbe
         term1 = -4*pi*kappa*a/(2*r*c^2)*(-1)*sumn
 
         # second sum over n
-        sumn = 0
+        sumn = 0.0
         for n=1:maxn
             # sum over k within second sum over n
-            sumk = 0
+            sumk = 0.0
             for k=1:time_index-1
                 past_time       = time[k]
                 past_time_delta = time[k+1]
@@ -103,10 +103,10 @@ function heat_conduction_chamberCH(maxn::Number, a::Number, c::Number, dr::Numbe
         end
         term2 = -4*pi*kappa*(a+c)/(2*kappa*pi^2*r)*Tb*(1)*sumn
         lengthTime = 2
-        param_sv["lengthTime"] = lengthTime
+        param_sv.lengthTime = lengthTime
 
     elseif time_index > 2 && time_index > lengthTime
-        sumn = 0
+        sumn = 0.0
         for n=1:maxn
             # sum over k within first sum over n
             temp = storeSumk[n]*exp(-kappa*(n*pi/c)^2*(current_time-time[time_index-1]))
@@ -121,11 +121,11 @@ function heat_conduction_chamberCH(maxn::Number, a::Number, c::Number, dr::Numbe
             termn = n*sin(n*pi*(r-a)/c)*sumk
             sumn  = sumn + termn
         end
-        param_sv["storeSumk_old"] = copy(storeSumk_old)
+        param_sv.storeSumk_old = copy(storeSumk_old)
         term1 = -4*pi*kappa*a/(2*r*c^2)*(-1)*sumn
 
         # second sum over n
-        sumn = 0
+        sumn = 0.0
         for n=1:maxn
             temp = storeSumk_2[n]*exp(-kappa*(n*pi/c)^2*(current_time-time[time_index-1]))
             past_time       = time[time_index-1]
@@ -139,11 +139,11 @@ function heat_conduction_chamberCH(maxn::Number, a::Number, c::Number, dr::Numbe
         end
         term2 = -4*pi*kappa*(a+c)/(2*kappa*pi^2*r)*Tb*(1)*sumn
         switch_Tprofile = 0
-        param_sv["storeSumk_2_old"] = copy(storeSumk_2_old)
-        param_sv["switch_Tprofile"] = switch_Tprofile
+        param_sv.storeSumk_2_old = copy(storeSumk_2_old)
+        param_sv.switch_Tprofile = switch_Tprofile
 
     elseif time_index > 2 && time_index == lengthTime
-        sumn = 0
+        sumn = 0.0
         for n=1:maxn
             # sum over k within first sum over n
             if switch_Tprofile == 0
@@ -164,7 +164,7 @@ function heat_conduction_chamberCH(maxn::Number, a::Number, c::Number, dr::Numbe
         term1 = -4*pi*kappa*a/(2*r*c^2)*(-1)*sumn
 
         # second sum over n
-        sumn = 0
+        sumn = 0.0
         for n=1:maxn
             if switch_Tprofile == 0
                 temp = storeSumk_2_old[n]*exp(-kappa*(n*pi/c)^2*(current_time-time[end-1]))
@@ -181,29 +181,29 @@ function heat_conduction_chamberCH(maxn::Number, a::Number, c::Number, dr::Numbe
         end
         term2 = -4*pi*kappa*(a+c)/(2*kappa*pi^2*r)*Tb*(1)*sumn
     elseif time_index > 2 && time_index < lengthTime
-        sumn = 0
+        sumn = 0.0
         switch_Tprofile = 1
-        param_sv["switch_Tprofile"] = switch_Tprofile
+        param_sv.switch_Tprofile = switch_Tprofile
         for n=1:maxn
             termn = n*sin(n*pi*(r-a)/c)*storeSumk_old[n]
             sumn  = sumn + termn
         end
         term1 = -4*pi*kappa*a/(2*r*c^2)*(-1)*sumn
         # second sum over n
-        sumn = 0
+        sumn = 0.0
         for n=1:maxn
             termn = 1/n*sin(n*pi*(r-a)/c)*cos(n*pi)*storeSumk_2_old[n]
             sumn  = sumn + termn
         end
         term2 = -4*pi*kappa*(a+c)/(2*kappa*pi^2*r)*Tb*(1)*sumn
     elseif time_index < 2
-        term1 = 0
-        term2 = 0
+        term1 = 0.0
+        term2 = 0.0
     end
 
     # third sum over n
     Ta = Tr0[end]
-    sumn = 0
+    sumn = 0.0
     for n=1:maxn
         termn = sin(n*pi*(r-a)/c)*exp(-kappa*(n*pi/c)^2*current_time)*((a*(a+c)*Ta - a*(a+c)*Tb)/(n*pi)*(1-cos(n*pi)) + ((a+c)*Tb-a*Ta)/(n*pi)*(-(a+c)*cos(n*pi) + a))
         sumn = sumn + termn
@@ -212,16 +212,16 @@ function heat_conduction_chamberCH(maxn::Number, a::Number, c::Number, dr::Numbe
     term3 = 2/(r*c)*sumn
     Trt = term1 + term2 + term3
     lengthTime = time_index
-    param_sv["lengthTime"] = lengthTime
+    param_sv.lengthTime = lengthTime
     small_q = -kappa*rho*cp*(Trt-Tr0[end])/dr
     surface_area_chamber = 4*pi*a^2
     Q = small_q*surface_area_chamber
-    param_sv["maxTime"] = maxTime
+    param_sv.maxTime = maxTime
     return Q
 end
 
 """
-    heat_conduction_chamber_profileCH(maxn::Number, a::Number, c::Number, r::Number, kappa::Number, Tb::Number, param_sv::Dict)
+    heat_conduction_chamber_profileCH(maxn::Int64, a::Float64, c::Float64, r::Float64, kappa::Float64, Tb::Float64, param_sv::ParamSaved{Float64})::Float64
 
 # Arguments
 `maxn`: number of terms
@@ -231,15 +231,15 @@ end
 `kappa`: thermal diffusivity of host rocks
 `Tb`: boundary temperature of the outer shell
 """
-function heat_conduction_chamber_profileCH(maxn::Number, a::Number, c::Number, r::Vector{Float64}, kappa::Number, Tb::Number, param_sv::Dict)
-    storeTime = param_sv["storeTime"]
-    storeTemp = param_sv["storeTemp"]
-    lengthTime = param_sv["lengthTime"]
-    switch_Tprofile = param_sv["switch_Tprofile"]
-    storeSumk = param_sv["storeSumk"]
-    storeSumk_old = param_sv["storeSumk_old"]
-    storeSumk_2 = param_sv["storeSumk_2"]
-    storeSumk_2_old = param_sv["storeSumk_2_old"]
+function heat_conduction_chamber_profileCH(maxn::Int64, a::Float64, c::Float64, r::Vector{Float64}, kappa::Float64, Tb::Float64, param_sv::ParamSaved{Float64})::Float64
+    storeTime = param_sv.storeTime
+    storeTemp = param_sv.storeTemp
+    lengthTime = param_sv.lengthTime
+    switch_Tprofile = param_sv.switch_Tprofile
+    storeSumk = param_sv.storeSumk
+    storeSumk_old = param_sv.storeSumk_old
+    storeSumk_2 = param_sv.storeSumk_2
+    storeSumk_2_old = param_sv.storeSumk_2_old
 
     # temperature history
     time = storeTime
@@ -251,10 +251,10 @@ function heat_conduction_chamber_profileCH(maxn::Number, a::Number, c::Number, r
 
     if time_index == 2
         # first sum over n
-        sumn = 0
+        sumn = 0.0
         for n=1:maxn
             # sum over k within first sum over n
-            sumk = 0
+            sumk = 0.0
             for k=1:time_index-1
                 past_time       = time[k]
                 past_time_delta = time[k+1]
@@ -269,10 +269,10 @@ function heat_conduction_chamber_profileCH(maxn::Number, a::Number, c::Number, r
         term1 = -4*pi*kappa*a/(2*r*c^2)*(-1)*sumn
 
         #% second sum over n
-        sumn = 0
+        sumn = 0.0
         for n=1:maxn
             #% sum over k within second sum over n
-            sumk = 0
+            sumk = 0.0
             for k=1:time_index-1
                 past_time       = time[k]
                 past_time_delta = time[k+1]
@@ -286,7 +286,7 @@ function heat_conduction_chamber_profileCH(maxn::Number, a::Number, c::Number, r
 
     elseif time_index > 2 && time_index > lengthTime
         # first sum over n
-        sumn = 0
+        sumn = 0.0
         for n=1:maxn
             # sum over k within first sum over n
             temp = storeSumk[n]*exp(-kappa*(n*pi/c)^2*(current_time-time[time_index-1]))
@@ -302,7 +302,7 @@ function heat_conduction_chamber_profileCH(maxn::Number, a::Number, c::Number, r
         term1 = -4*pi*kappa*a/(2*r*c^2)*(-1)*sumn
 
         # second sum over n
-        sumn = 0
+        sumn = 0.0
         for n=1:maxn
             temp=storeSumk_2[n]*exp(-kappa*(n*pi/c)^2*(current_time-time[time_index-1]))
             past_time       = time[time_index-1]
@@ -314,10 +314,10 @@ function heat_conduction_chamber_profileCH(maxn::Number, a::Number, c::Number, r
         end
         term2 = -4*pi*kappa*(a+c)/(2*kappa*pi^2*r)*Tb*(1)*sumn
         switch_Tprofile = 0
-        param_sv["switch_Tprofile"] = switch_Tprofile
+        param_sv.switch_Tprofile = switch_Tprofile
 
     elseif time_index > 2 && time_index == lengthTime
-        sumn = 0
+        sumn = 0.0
         for n=1:maxn
             # sum over k within first sum over n
             if switch_Tprofile == 0
@@ -337,7 +337,7 @@ function heat_conduction_chamber_profileCH(maxn::Number, a::Number, c::Number, r
         term1 = -4*pi*kappa*a/(2*r*c^2)*(-1)*sumn
 
         # second sum over n
-        sumn = 0
+        sumn = 0.0
         for n=1:maxn
             if switch_Tprofile == 0
                 temp=storeSumk_2_old[n]*exp(-kappa*(n*pi/c)^2*(current_time-time[end-1]))
@@ -354,10 +354,10 @@ function heat_conduction_chamber_profileCH(maxn::Number, a::Number, c::Number, r
         term2 = -4*pi*kappa*(a+c)/(2*kappa*pi^2*r)*Tb*(1)*sumn
 
     elseif time_index > 2 && time_index < lengthTime
-        sumn = 0
+        sumn = 0.0
         switch_Tprofile = 1
-        param_sv["switch_Tprofile"] = switch_Tprofile
-        sumn = 0
+        param_sv.switch_Tprofile = switch_Tprofile
+        sumn = 0.0
         for n=1:maxn
             termn = n*sin.(n*pi*(r.-a)/c)*storeSumk_old[n]
             sumn  = sumn .+ termn
@@ -365,7 +365,7 @@ function heat_conduction_chamber_profileCH(maxn::Number, a::Number, c::Number, r
         term1 = -4*pi*kappa*a/(2*r*c^2)*(-1)*sumn
 
         # second sum over n
-        sumn = 0
+        sumn = 0.0
         for n=1:maxn
             termn = 1/n*sin.(n*pi*(r.-a)/c)*cos(n*pi)*storeSumk_2_old[n]
             sumn  = sumn .+ termn
@@ -373,13 +373,13 @@ function heat_conduction_chamber_profileCH(maxn::Number, a::Number, c::Number, r
         term2 = -4*pi*kappa*(a+c)/(2*kappa*pi^2*r)*Tb*(1)*sumn
 
     elseif time_index < 2
-        term1 = 0
-        term2 = 0
+        term1 = 0.0
+        term2 = 0.0
     end
 
     # third sum over n
     Ta = Tr0[time_index]
-    sumn = 0
+    sumn = 0.0
     for n=1:maxn
         termn =  sin.(n*pi*(r.-a)/c)*exp(-kappa*(n*pi/c)^2*current_time)*((a*(a+c)*Ta - a*(a+c)*Tb)/(n*pi)*(1-cos(n*pi))+((a+c)*Tb -a*Ta)/(n*pi)*(-(a+c)*cos(n*pi) + a))
         sumn = sumn .+ termn
