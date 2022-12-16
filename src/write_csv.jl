@@ -15,5 +15,5 @@ function write_csv(df::DataFrame, path::String)::Nothing
     ]
     rename!(df, ["value$i" => names[i] for i in 1:10])
     CSV.write("$path/out.csv", df)
-    nothing
+    return nothing
 end
