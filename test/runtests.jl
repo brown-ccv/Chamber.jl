@@ -2,7 +2,7 @@ using Chamber
 using Test
 include("matrix-a-data.jl")
 
-# @testset verbose=true "Chamber.jl tests" begin
+@testset verbose=true "Chamber.jl tests" begin
 
 @testset "GLQ_points_weights test" begin
     @test Chamber.GLQ_points_weights_hard(5) == [0 0]
@@ -35,4 +35,4 @@ include("test-matrix.jl")
 include("test-rho_rc.jl")
 include("test-exsolve.jl")
 
-# end
+end
