@@ -2,7 +2,7 @@ using Chamber
 include("./solver_methods.jl")
 
 """
-    chamber(composition::Union{Silicic, Mafic}, end_time::Int64, log_volume_km3::Number, InitialConc_H2O::Float64, InitialConc_CO2::Float64, log_vfr::Float64, depth::Number)
+    chamber(composition::Union{Silicic,Mafic}, end_time::Float64, log_volume_km3::Float64, InitialConc_H2O::Float64, InitialConc_CO2::Float64, log_vfr::Float64, depth::Float64, methods::Dict=methods, method::String="Tsit5", odesetting=OdeSetting(), ini_eps_x::Float64=0.15, rheol::String="old")
 
 The volcano eruption simulation
 
@@ -18,12 +18,12 @@ The volcano eruption simulation
 """
 function chamber(
     composition::Union{Silicic,Mafic},
-    end_time::Number,
-    log_volume_km3::Number,
+    end_time::Float64,
+    log_volume_km3::Float64,
     InitialConc_H2O::Float64,
     InitialConc_CO2::Float64,
     log_vfr::Float64,
-    depth::Number,
+    depth::Float64,
     methods::Dict=methods,
     method::String="Tsit5",
     odesetting=OdeSetting(),
@@ -68,9 +68,9 @@ function chamber(
         param_saved_var.storeSumk_old = zeros(param.maxn)
         param_saved_var.storeSumk_2_old = zeros(param.maxn)
 
-        volume_km3 = 10^log_volume_km3                 # range of volume in km3
+        volume_km3 = 10^log_volume_km3                             # range of volume in km3
         range_radius = 1000 * (volume_km3 / (4 * pi / 3))^(1 / 3)  # range of radius in m
-        V_0 = 4 * pi / 3 * range_radius^3             # initial volume of the chamber (m^3)
+        V_0 = 4 * pi / 3 * range_radius^3                          # initial volume of the chamber (m^3)
 
         # thermal gradient
         param.Tb = c.T_surface + c.T_gradient * depth        # background temperature crust (K)
@@ -204,8 +204,6 @@ function chamber(
             elseif t != 0
                 storeTime = [storeTime; t]
                 storeTemp = [storeTemp; T]
-                # push!(storeTime, t)
-                # push!(storeTemp, T)
             end
 
             cross = findfirst(!=(0), diff(sign.(diff(storeTime))))
