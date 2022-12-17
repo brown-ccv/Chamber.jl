@@ -205,36 +205,41 @@ dC_co2dXco2_f(
         (0.5 * c3 * Complex(Pw)^(-0.5) * dPwdXco2 + 1.5 * c4 * Complex(Pw)^0.5 * dPwdXco2),
     )
 
+# for function exsolve
 function build_meq_silicic(
     Pw::T, Pc::T, Temp::T, dPwdP::T, dPcdP::T, dPwdXco2::T, dPcdXco2::T
-)::Vector{T} where {T<:Float64}
+)::NamedTuple{(:meq, :dmeqdT, :dmeqdP, :dmeqdXco2),NTuple{4,T}} where {T<:Float64}
     @unpack b1, b2, b3, b4, b5, b6 = ExsolveSilicic()
     meq = meq_silicic(Pw, Pc, Temp, b1, b2, b3, b4, b5, b6)
     dmeqdT = dmeqdT_silicic(Pw, Temp, b1, b2, b3)
     dmeqdP = dmeqdP_silicic(Pw, dPwdP, Pc, dPcdP, Temp, b1, b2, b3, b4, b5, b6)
     dmeqdXco2 = dmeqdXco2_silicic(Pw, dPwdXco2, Pc, dPcdXco2, Temp, b1, b2, b3, b4, b5, b6)
-    return [meq, dmeqdT, dmeqdP, dmeqdXco2]
+    return (; meq, dmeqdT, dmeqdP, dmeqdXco2)
 end
 
-function build_meq_mafic(P::T, Temp::T, X_co2::T)::Vector{T} where {T<:Float64}
+# for function exsolve
+function build_meq_mafic(
+    P::T, Temp::T, X_co2::T
+)::NamedTuple{(:meq, :dmeqdT, :dmeqdP, :dmeqdXco2),NTuple{4,T}} where {T<:Float64}
     T_C = Temp - 273.15
     @unpack b1, b2, b3, b4, b5, b6, b7, b8, b9, b10 = ExsolveMafic()
     meq = meq_mafic(P, T_C, X_co2, b1, b2, b3, b4, b5, b6, b7, b8, b9, b10)
     dmeqdT = dmeqdT_mafic(P, T_C, X_co2, b2, b5, b6, b8)
     dmeqdP = dmeqdP_mafic(P, T_C, X_co2, b4, b6, b7, b10)
     dmeqdXco2 = dmeqdXco2_mafic(P, T_C, X_co2, b3, b5, b7, b9)
-    return [meq, dmeqdT, dmeqdP, dmeqdXco2]
+    return (; meq, dmeqdT, dmeqdP, dmeqdXco2)
 end
 
+# for function exsolve
 function build_co2(
     Pw::T, Pc::T, Temp::T, dPwdP::T, dPcdP::T, dPwdXco2::T, dPcdXco2::T
-)::Vector{T} where {T<:Float64}
+)::NamedTuple{(:C_co2, :dC_co2dT, :dC_co2dP, :dC_co2dXco2),NTuple{4,T}} where {T<:Float64}
     @unpack c1, c2, c3, c4 = Co2PartitionCoeff()
     C_co2 = C_co2_f(Pw, Pc, Temp, c1, c2, c3, c4)
     dC_co2dT = dC_co2dT_f(Pw, Pc, Temp, c1, c2)
     dC_co2dP = dC_co2dP_f(Pw, Pc, Temp, dPwdP, dPcdP, c1, c2, c3, c4)
     dC_co2dXco2 = dC_co2dXco2_f(Pw, Pc, Temp, dPwdXco2, dPcdXco2, c1, c2, c3, c4)
-    return [C_co2, dC_co2dT, dC_co2dP, dC_co2dXco2]
+    return (; C_co2, dC_co2dT, dC_co2dP, dC_co2dXco2)
 end
 
 # For function eos_g
@@ -269,3 +274,120 @@ struct EosG_RhoG{T}
     rho_g::T
 end
 EosG_RhoG(P, T) = EosG_RhoG{typeof(P)}(rho_g(P, T))
+
+# for function exsolve3
+@with_kw struct Exsolve3Silicic{T}
+    h1::T = 354.94
+    h2::T = 9.623
+    h3::T = -1.5223
+    h4::T = 0.0012439
+    h5::T = -1.084e-4
+    h6::T = -1.362e-5
+end
+
+@with_kw struct Exsolve3Mafic{T}
+    h1::T = 2.99622526644026
+    h2::T = 0.00322422830627781
+    h3::T = -9.1389095360385
+    h4::T = 0.0336065247530767
+    h5::T = 0.00747236662935722
+    h6::T = -0.0000150329805347769
+    h7::T = -0.01233608521548
+    h8::T = -4.14842647942619e-6
+    h9::T = -0.655454303068124
+    h10::T = -7.35270395041104e-6
+end
+
+# Water Paritioning Function
+function water(
+    composition::Silicic, p::Float64, t::Float64, x::Float64, c::Float64
+)::Float64
+    @unpack h1, h2, h3, h4, h5, h6 = Exsolve3Silicic()
+    return real(
+        (
+            h1 * Complex(p * (1 - x))^0.5 +
+            h2 * (p * (1 - x)) +
+            h3 * Complex(p * (1 - x))^1.5
+        ) / t +
+        h4 * Complex(p * (1 - x))^1.5 +
+        p * x * (h5 * Complex(p * (1 - x))^0.5 + h6 * (p * (1 - x))) - c,
+    )
+end
+
+function water(composition::Mafic, p::Float64, t::Float64, x::Float64, c::Float64)::Float64
+    @unpack h1, h2, h3, h4, h5, h6, h7, h8, h9, h10 = Exsolve3Mafic()
+    return real(
+        h1 +
+        h2 * t +
+        h3 * x +
+        h4 * p +
+        h5 * t * x +
+        h6 * t * p +
+        h7 * x * p +
+        h8 * Complex(t)^2 +
+        h9 * x^2 +
+        h10 * Complex(p)^2 - c,
+    )
+end
+
+# Derivative of Water wrt Xco2
+function dwater_dx(composition::Silicic, p::Float64, t::Float64, x::Float64)::Float64
+    @unpack h1, h2, h3, h4, h5, h6 = Exsolve3Silicic()
+    return real(
+        -p * (
+            (1 / t) * (
+                0.5 * h1 * Complex(p * (1 - x))^(-0.5) +
+                h2 +
+                1.5 * h3 * Complex(p * (1 - x))^0.5
+            ) +
+            1.5 * h4 * Complex(p * (1 - x))^0.5 +
+            (p * x) * (0.5 * h5 * Complex(p * (1 - x))^(-0.5) + h6)
+        ) + p * (h5 * Complex(p * (1 - x))^0.5 + h6 * (p * (1 - x))),
+    )
+end
+
+function dwater_dx(composition::Mafic, p::Float64, t::Float64, x::Float64)::Float64
+    @unpack h3, h5, h7, h9 = Exsolve3Mafic()
+    return h3 + h5 * t + h7 * p + 2 * h9 * x
+end
+
+# for function exsolve3, finding X_CO2
+function solve_NR(
+    f, f_prime, errorTol::Float64, count_max::Float64, Xc_initial::Float64
+)::Float64
+    # P,T and inital guesses/values
+    Xc_guess = Xc_initial
+    Xc_prev = 0.0
+    count = 0
+    while abs(Xc_prev - Xc_guess) > errorTol && count < count_max
+        count = count + 1
+        Xc_prev = Xc_guess
+        Xc_guess = Xc_prev - (f(Xc_prev) / f_prime(Xc_prev))
+    end
+    if abs(Xc_prev - Xc_guess) > errorTol && count >= count_max
+        Xc_initial = 1e-4
+        Xc_guess = Xc_initial
+        Xc_prev = 0.0
+        count = 0
+        while abs(Xc_prev - Xc_guess) > errorTol && count < count_max
+            count = count + 1
+            Xc_prev = Xc_guess
+            Xc_guess = Xc_prev - (f(Xc_prev) / f_prime(Xc_prev))
+        end
+    end
+    while ~isreal(Xc_guess) && Xc_initial <= 1
+        Xc_initial = Xc_initial + 0.01
+        Xc_prev = 0.0
+        while abs(Xc_prev - Xc_guess) > errorTol
+            count = count + 1
+            Xc_prev = Xc_guess
+            Xc_guess = Xc_prev - (f(Xc_prev) / f_prime(Xc_prev))
+        end
+    end
+    X_co2 = Xc_guess
+    # MT adding this b/c some super CO2-rich cases make Xc_guess greater than 1
+    if X_co2 > 1
+        X_co2 = 1.0
+    end
+    return X_co2
+end

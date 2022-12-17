@@ -12,10 +12,7 @@ function mco2_dissolved_sat_silicic(X::Float64, P::Float64, T::Float64)::Float64
     # function & coefficients from Liu et al 2005
     Pc = P_MPa * X
     Pw = P_MPa * (1 - X)
-    c1 = 5668
-    c2 = -55.99
-    c3 = 0.4133
-    c4 = 2.041e-3
+    @unpack c1, c2, c3, c4 = Co2PartitionCoeff()
     sol = real(Pc * (c1 + c2 * Pw) / T + Pc * (c3 * Complex(Pw)^0.5 + c4 * Complex(Pw)^1.5))
     sol = sol / 1e6
     return sol
@@ -34,10 +31,7 @@ function mco2_dissolved_sat_mafic(X::Float64, P::Float64, T::Float64)::Float64
     # function & coefficients from Liu et al 2005
     Pc = P_MPa * X
     Pw = P_MPa * (1 - X)
-    c1 = 5668
-    c2 = -55.99
-    c3 = 0.4133
-    c4 = 2.041e-3
+    @unpack c1, c2, c3, c4 = Co2PartitionCoeff()
     sol = real(Pc * (c1 + c2 * Pw) / T + Pc * (c3 * Complex(Pw)^0.5 + c4 * Complex(Pw)^1.5))
     sol = sol / 1e6
     return sol
