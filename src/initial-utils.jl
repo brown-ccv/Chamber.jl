@@ -206,8 +206,15 @@ dC_co2dXco2_f(
     )
 
 # for function exsolve
-function build_meq_silicic(
-    Pw::T, Pc::T, Temp::T, dPwdP::T, dPcdP::T, dPwdXco2::T, dPcdXco2::T
+function build_meq(
+    composition::Silicic,
+    Pw::T,
+    Pc::T,
+    Temp::T,
+    dPwdP::T,
+    dPcdP::T,
+    dPwdXco2::T,
+    dPcdXco2::T,
 )::NamedTuple{(:meq, :dmeqdT, :dmeqdP, :dmeqdXco2),NTuple{4,T}} where {T<:Float64}
     @unpack b1, b2, b3, b4, b5, b6 = ExsolveSilicic()
     meq = meq_silicic(Pw, Pc, Temp, b1, b2, b3, b4, b5, b6)
@@ -217,9 +224,8 @@ function build_meq_silicic(
     return (; meq, dmeqdT, dmeqdP, dmeqdXco2)
 end
 
-# for function exsolve
-function build_meq_mafic(
-    P::T, Temp::T, X_co2::T
+function build_meq(
+    composition::Mafic, P::T, Temp::T, X_co2::T
 )::NamedTuple{(:meq, :dmeqdT, :dmeqdP, :dmeqdXco2),NTuple{4,T}} where {T<:Float64}
     T_C = Temp - 273.15
     @unpack b1, b2, b3, b4, b5, b6, b7, b8, b9, b10 = ExsolveMafic()

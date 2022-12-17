@@ -43,8 +43,8 @@ function exsolve(
     P = P / 1e6
     Pc, dPcdP, dPcdXco2 = P * X_co2, X_co2, P
     Pw, dPwdP, dPwdXco2 = P * (1 - X_co2), 1 - X_co2, -P
-    meq, dmeqdT, dmeqdP, dmeqdXco2 = build_meq_silicic(
-        Pw, Pc, T, dPwdP, dPcdP, dPwdXco2, dPcdXco2
+    meq, dmeqdT, dmeqdP, dmeqdXco2 = build_meq(
+        composition, Pw, Pc, T, dPwdP, dPcdP, dPwdXco2, dPcdXco2
     )
     # coefficients for CO2 partitioning
     C_co2, dC_co2dT, dC_co2dP, dC_co2dXco2 = build_co2(
@@ -74,7 +74,7 @@ function exsolve(
     P = P / 1e6
     Pc, dPcdP, dPcdXco2 = P * X_co2, X_co2, P
     Pw, dPwdP, dPwdXco2 = P * (1 - X_co2), 1 - X_co2, -P
-    meq, dmeqdT, dmeqdP, dmeqdXco2 = build_meq_mafic(P, T, X_co2)
+    meq, dmeqdT, dmeqdP, dmeqdXco2 = build_meq(composition, P, T, X_co2)
     # coefficients for CO2 partitioning
     C_co2, dC_co2dT, dC_co2dP, dC_co2dXco2 = build_co2(
         Pw, Pc, T, dPwdP, dPcdP, dPwdXco2, dPcdXco2
@@ -187,15 +187,15 @@ function exsolve3(
 end
 
 """
-    parameters_melting_curve_silicic(mH2O::Float64, mCO2::Float64, P::Float64)::NamedTuple{(:a, :dadx, :dady, :dadz, :b, :dbdx, :dbdy, :dbdz, :c, :dcdx, :dcdy, :dcdz), NTuple{12, Float64}}
+    parameters_melting_curve(composition::Silicic, mH2O::Float64, mCO2::Float64, P::Float64)::NamedTuple{(:a, :dadx, :dady, :dadz, :b, :dbdx, :dbdy, :dbdz, :c, :dcdx, :dcdy, :dcdz), NTuple{12, Float64}}
 
 # Arguments
 -`mH2O`: Weight fration of the H2O in magma.
 -`mCO2`: Weight fration of the CO2 in magma.
 -`P`: Pressure (Pa)
 """
-function parameters_melting_curve_silicic(
-    mH2O::Float64, mCO2::Float64, P::Float64
+function parameters_melting_curve(
+    composition::Silicic, mH2O::Float64, mCO2::Float64, P::Float64
 )::NamedTuple{
     (:a, :dadx, :dady, :dadz, :b, :dbdx, :dbdy, :dbdz, :c, :dcdx, :dcdy, :dcdz),
     NTuple{12,Float64},
@@ -233,15 +233,15 @@ function parameters_melting_curve_silicic(
 end
 
 """
-    parameters_melting_curve_mafic(mH2O::Float64, mCO2::Float64, P::Float64)::NamedTuple{(:a, :dadx, :dady, :dadz, :b, :dbdx, :dbdy, :dbdz), NTuple{8, Float64}}
+    parameters_melting_curve(composition::Mafic, mH2O::Float64, mCO2::Float64, P::Float64)::NamedTuple{(:a, :dadx, :dady, :dadz, :b, :dbdx, :dbdy, :dbdz), NTuple{8, Float64}}
 
 # Arguments
 -`mH2O`: Weight fration of the H2O in magma.
 -`mCO2`: Weight fration of the CO2 in magma.
 -`P`: Pressure (Pa)
 """
-function parameters_melting_curve_mafic(
-    mH2O::Float64, mCO2::Float64, P::Float64
+function parameters_melting_curve(
+    composition::Mafic, mH2O::Float64, mCO2::Float64, P::Float64
 )::NamedTuple{(:a, :dadx, :dady, :dadz, :b, :dbdx, :dbdy, :dbdz),NTuple{8,Float64}}
     x = mH2O
     y = mCO2
@@ -314,7 +314,7 @@ end
 function find_liq(
     composition::Silicic, water::Float64, co2::Float64, P::Float64, ini_eps_x::Float64
 )::Float64
-    nt = parameters_melting_curve_silicic(100 * water, 100 * co2, P)
+    nt = parameters_melting_curve(composition, 100 * water, 100 * co2, P)
     f(x) = nt.a * erfc(nt.b * (x - nt.c)) - ini_eps_x
     x0 = 1000
     Tl = fzero(f, (0, x0); maxevals=100)
@@ -333,7 +333,7 @@ end
 function find_liq(
     composition::Mafic, water::Float64, co2::Float64, P::Float64, ini_eps_x::Float64
 )::Float64
-    nt = parameters_melting_curve_mafic(100 * water, 100 * co2, P)
+    nt = parameters_melting_curve(composition, 100 * water, 100 * co2, P)
     Tl = (ini_eps_x - nt.b) / nt.a
     return Tl + 273.15
 end
@@ -355,8 +355,8 @@ function crystal_fraction(
 }
     # NEW VERSION WITH SAGE's PARAMETERIZATION
     T = T - 273
-    a, dadx, dady, dadz, b, dbdx, dbdy, dbdz, c, dcdx, dcdy, dcdz = parameters_melting_curve_silicic(
-        100 * mH2O, 100 * mCO2, P
+    a, dadx, dady, dadz, b, dbdx, dbdy, dbdz, c, dcdx, dcdy, dcdz = parameters_melting_curve(
+        composition, 100 * mH2O, 100 * mCO2, P
     )
     eps_x = a * erfc(b * (T - c))
     # derivatives
@@ -394,8 +394,8 @@ function crystal_fraction(
 }
     # NEW VERSION WITH SAGE's PARAMETERIZATION
     T = T - 273
-    a, dadx, dady, dadz, b, dbdx, dbdy, dbdz = parameters_melting_curve_mafic(
-        100 * mH2O, 100 * mCO2, P
+    a, dadx, dady, dadz, b, dbdx, dbdy, dbdz = parameters_melting_curve(
+        composition, 100 * mH2O, 100 * mCO2, P
     )
     eps_x = a * T + b
     # derivatives
@@ -418,7 +418,7 @@ function crystal_fraction_eps_x(
     composition::Silicic, T::Float64, P::Float64, mH2O::Float64, mCO2::Float64
 )::Float64
     T = T - 273.0
-    nt = parameters_melting_curve_silicic(100 * mH2O, 100 * mCO2, P)
+    nt = parameters_melting_curve(composition, 100 * mH2O, 100 * mCO2, P)
     eps_x = nt.a * erfc(nt.b * (T - nt.c))
     return eps_x
 end
@@ -427,7 +427,7 @@ function crystal_fraction_eps_x(
     composition::Mafic, T::Float64, P::Float64, mH2O::Float64, mCO2::Float64
 )::Float64
     T = T - 273.0
-    nt = parameters_melting_curve_mafic(100 * mH2O, 100 * mCO2, P)
+    nt = parameters_melting_curve(composition, 100 * mH2O, 100 * mCO2, P)
     eps_x = nt.a * T + nt.b
     if eps_x < 0 || eps_x > 1
         eps_x = 0.0
