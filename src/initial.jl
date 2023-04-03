@@ -196,39 +196,12 @@ end
 """
 function parameters_melting_curve(
     composition::Silicic, mH2O::Float64, mCO2::Float64, P::Float64
-)::NamedTuple{
-    (:a, :dadx, :dady, :dadz, :b, :dbdx, :dbdy, :dbdz, :c, :dcdx, :dcdy, :dcdz),
-    NTuple{12,Float64},
-}
-    x = mH2O
-    y = mCO2
-    z = P / 1e6
-
-    a =
-        0.36 - 0.02 * x - 0.06 * y +
-        8.6E-04 * z +
-        0.0024 * x * y +
-        6.27E-05 * x * z +
-        3.57E-05 * y * z - 0.0026 * x^2 + 0.003 * y^2 - 1.16E-06 * z^2
-    dadx = 100 * (-0.02 + 0.0024 * y + 6.27E-05 * z - 2 * 0.0026 * x)
-    dady = 100 * (-0.06 + 0.0024 * x + 3.57E-05 * z + 2 * 0.003 * y)
-    dadz = 1e-6 * (8.6E-04 + 6.27E-05 * x + 3.57E-05 * y - 2 * 1.16E-06 * z)
-
-    b =
-        0.0071 + 0.0049 * x + 0.0043 * y - 4.08E-05 * z - 7.85E-04 * x * y -
-        1.3E-05 * x * z +
-        3.97E-06 * y * z +
-        6.29E-04 * x^2 - 0.0025 * y^2 + 8.51E-08 * z^2
-    dbdx = 100 * (0.0049 - 7.85E-04 * y - 1.3E-05 * z + 2 * 6.29E-04 * x)
-    dbdy = 100 * (0.0043 - 7.85E-04 * x + 3.97E-06 * z - 2 * 0.0025 * y)
-    dbdz = 1e-6 * (-4.08E-05 - 1.3E-05 * x + 3.97E-06 * y + 2 * 8.51E-08 * z)
-
-    c =
-        863.09 - 36.9 * x + 48.81 * y - 0.17 * z - 1.52 * x * y - 0.04 * x * z -
-        0.04 * y * z + 4.57 * x^2 - 7.79 * y^2 + 4.65E-04 * z^2
-    dcdx = 100 * (-36.9 - 1.52 * y - 0.04 * z + 2 * 4.57 * x)
-    dcdy = 100 * (48.81 - 1.52 * x - 0.04 * z - 2 * 7.79 * y)
-    dcdz = 1e-6 * (-0.17 - 0.04 * x - 0.04 * y + 2 * 4.65E-04 * z)
+)::NamedTuple{(:a, :dadx, :dady, :dadz, :b, :dbdx, :dbdy, :dbdz, :c, :dcdx, :dcdy, :dcdz), NTuple{12, Float64}}
+    x, y, z = mH2O, mCO2, P / 1e6
+    a, b, c = a_f(x, y, z), b_f(x, y, z), c_f(x, y, z)
+    dadx, dady, dadz = dadx_f(x, y, z), dady_f(x, y, z), dadz_f(x, y, z)
+    dbdx, dbdy, dbdz = dbdx_f(x, y, z), dbdy_f(x, y, z), dbdz_f(x, y, z)
+    dcdx, dcdy, dcdz = dcdx_f(x, y, z), dcdy_f(x, y, z), dcdz_f(x, y, z)
     return (; a, dadx, dady, dadz, b, dbdx, dbdy, dbdz, c, dcdx, dcdy, dcdz)
 end
 
@@ -247,58 +220,17 @@ function parameters_melting_curve(
     y = mCO2
     z = P / 1e6
 
-    intercept = -0.0106007180771044
-    H2Ocoeff = 0.00642879427079997
-    CO2coeff = -0.000362698886591479
-    Pcoeff = 6.33762356329763e-06
-    H2OxCO2coeff = -0.0000409319695736593
-    H2OxPcoeff = -0.0000020971242285322
-    CO2xPcoeff = 3.66354014084072e-07
-    H2Osquarecoeff = -0.00127225661031757
-    CO2squarecoeff = 0.000219802992993448
-    Psquarecoeff = -1.4241625041626E-09
+    @unpack c1,c2,c3,c4,c5,c6,c7,c8,c9,c10 = MeltingCurveMaficA()
+    a = c1 + c2*x + c3*y + c4*z + c5*x*y + c6*x*z + c7*y*z + c8*x^2 + c9*y^2 + c10*z^2
+    dadx = 100 * (c2 + c5 * y + c6 * z + 2 * c8 * x)
+    dady = 100 * (c3 + c5 * x + c7 * z + 2 * c9 * y)
+    dadz = 1e-6 * (c4 + c6 * x + c7 * y + 2 * c10 * z)
 
-    a =
-        intercept +
-        H2Ocoeff * x +
-        CO2coeff * y +
-        Pcoeff * z +
-        H2OxCO2coeff * x * y +
-        H2OxPcoeff * x * z +
-        CO2xPcoeff * y * z +
-        H2Osquarecoeff * x^2 +
-        CO2squarecoeff * y^2 +
-        Psquarecoeff * z^2
-    dadx = 100 * (H2Ocoeff + H2OxCO2coeff * y + H2OxPcoeff * z + 2 * H2Osquarecoeff * x)
-    dady = 100 * (CO2coeff + H2OxCO2coeff * x + CO2xPcoeff * z + 2 * CO2squarecoeff * y)
-    dadz = 1e-6 * (Pcoeff + H2OxPcoeff * x + CO2xPcoeff * y + 2 * Psquarecoeff * z)
-
-    # b value
-    intercept = 12.1982401917454
-    H2Ocoeff = -7.49690626527448
-    CO2coeff = 0.398381500262876
-    Pcoeff = -0.00632911929609247
-    H2OxCO2coeff = 0.0571369994114008
-    H2OxPcoeff = 0.00216190962922558
-    CO2xPcoeff = -0.000409810092770206
-    H2Osquarecoeff = 1.48907741502382
-    CO2squarecoeff = -0.251451720536687
-    Psquarecoeff = 1.36630369630388e-06
-
-    b =
-        intercept +
-        H2Ocoeff * x +
-        CO2coeff * y +
-        Pcoeff * z +
-        H2OxCO2coeff * x * y +
-        H2OxPcoeff * x * z +
-        CO2xPcoeff * y * z +
-        H2Osquarecoeff * x^2 +
-        CO2squarecoeff * y^2 +
-        Psquarecoeff * z^2
-    dbdx = 100 * (H2Ocoeff + H2OxCO2coeff * y + H2OxPcoeff * z + 2 * H2Osquarecoeff * x)
-    dbdy = 100 * (CO2coeff + H2OxCO2coeff * x + CO2xPcoeff * z + 2 * CO2squarecoeff * y)
-    dbdz = 1e-6 * (Pcoeff + H2OxPcoeff * x + CO2xPcoeff * y + 2 * Psquarecoeff * z)
+    @unpack c1,c2,c3,c4,c5,c6,c7,c8,c9,c10 = MeltingCurveMaficB()
+    b = c1 + c2*x + c3*y + c4*z + c5*x*y + c6*x*z + c7*y*z + c8*x^2 + c9*y^2 + c10*z^2
+    dbdx = 100 * (c2 + c5 * y + c6 * z + 2 * c8 * x)
+    dbdy = 100 * (c3 + c5 * x + c7 * z + 2 * c9 * y)
+    dbdz = 1e-6 * (c4 + c6 * x + c7 * y + 2 * c10 * z)
     return (; a, dadx, dady, dadz, b, dbdx, dbdy, dbdz)
 end
 

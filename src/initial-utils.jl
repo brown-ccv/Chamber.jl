@@ -205,7 +205,7 @@ dC_co2dXco2_f(
         (0.5 * c3 * Complex(Pw)^(-0.5) * dPwdXco2 + 1.5 * c4 * Complex(Pw)^0.5 * dPwdXco2),
     )
 
-# for function exsolve
+# For function exsolve
 function build_meq(
     composition::Silicic,
     Pw::T,
@@ -236,7 +236,7 @@ function build_meq(
     return (; meq, dmeqdT, dmeqdP, dmeqdXco2)
 end
 
-# for function exsolve
+# For function exsolve
 function build_co2(
     Pw::T, Pc::T, Temp::T, dPwdP::T, dPcdP::T, dPwdXco2::T, dPcdXco2::T
 )::NamedTuple{(:C_co2, :dC_co2dT, :dC_co2dP, :dC_co2dXco2),NTuple{4,T}} where {T<:Float64}
@@ -281,7 +281,7 @@ struct EosG_RhoG{T}
 end
 EosG_RhoG(P, T) = EosG_RhoG{typeof(P)}(rho_g(P, T))
 
-# for function exsolve3
+# For function exsolve3
 @with_kw struct Exsolve3Silicic{T}
     h1::T = 354.94
     h2::T = 9.623
@@ -357,7 +357,7 @@ function dwater_dx(composition::Mafic, p::Float64, t::Float64, x::Float64)::Floa
     return h3 + h5 * t + h7 * p + 2 * h9 * x
 end
 
-# for function exsolve3, finding X_CO2
+# For function exsolve3, finding X_CO2
 function solve_NR(
     f, f_prime, errorTol::Float64, count_max::Float64, Xc_initial::Float64
 )::Float64
@@ -396,4 +396,47 @@ function solve_NR(
         X_co2 = 1.0
     end
     return X_co2
+end
+
+# For parameters_melting_curve(Silicic())
+a_f(x::Float64, y::Float64, z::Float64)::Float64 = 0.36 - 0.02x - 0.06y + 8.6e-4z + 0.0024x*y + 6.27e-5x*z + 3.57e-5y*z - 0.0026x^2 + 0.003y^2 - 1.16e-6z^2
+dadx_f(x::Float64, y::Float64, z::Float64)::Float64 = 100(-0.02 + 0.0024y + 6.27e-5z - 2*0.0026x)
+dady_f(x::Float64, y::Float64, z::Float64)::Float64 = 100(-0.06 + 0.0024x + 3.57e-5z + 2*0.003y)
+dadz_f(x::Float64, y::Float64, z::Float64)::Float64 = 1e-6(8.6e-4 + 6.27e-5x + 3.57e-5y - 2*1.16e-6z)
+
+b_f(x::Float64, y::Float64, z::Float64)::Float64 = 0.0071 + 0.0049x + 0.0043y - 4.08e-5z - 7.85e-4x*y - 1.3e-5x*z + 3.97e-6y*z + 6.29e-4x^2 - 0.0025y^2 + 8.51e-8z^2
+dbdx_f(x::Float64, y::Float64, z::Float64)::Float64 = 100(0.0049 - 7.85e-4y - 1.3e-5z + 2*6.29e-4x)
+dbdy_f(x::Float64, y::Float64, z::Float64)::Float64 = 100(0.0043 - 7.85e-4x + 3.97e-6z - 2*0.0025y)
+dbdz_f(x::Float64, y::Float64, z::Float64)::Float64 = 1e-6(-4.08e-5 - 1.3e-5x + 3.97e-6y + 2*8.51e-8z)
+
+c_f(x::Float64, y::Float64, z::Float64)::Float64 = 863.09 - 36.9x + 48.81y - 0.17z - 1.52x*y - 0.04x*z - 0.04y*z + 4.57x^2 - 7.79y^2 + 4.65e-4z^2
+dcdx_f(x::Float64, y::Float64, z::Float64)::Float64 = 100(-36.9 - 1.52y - 0.04z + 2*4.57x)
+dcdy_f(x::Float64, y::Float64, z::Float64)::Float64 = 100(48.81 - 1.52x - 0.04z - 2*7.79y)
+dcdz_f(x::Float64, y::Float64, z::Float64)::Float64 = 1e-6(-0.17 - 0.04x - 0.04y + 2*4.65e-4z)
+
+# For parameters_melting_curve(Mafic())
+@with_kw struct MeltingCurveMaficA{T}
+    c1::T = -0.0106007180771044    # intercept
+    c2::T = 0.00642879427079997    # H2Ocoeff
+    c3::T = -0.000362698886591479  # CO2coeff
+    c4::T = 6.33762356329763e-06   # Pcoeff
+    c5::T = -0.0000409319695736593 # H2OxCO2coeff
+    c6::T = -0.0000020971242285322 # H2OxPcoeff
+    c7::T = 3.66354014084072e-07   # CO2xPcoeff
+    c8::T = -0.00127225661031757   # H2Osquarecoeff
+    c9::T = 0.000219802992993448   # CO2squarecoeff
+    c10::T = -1.4241625041626E-09  # Psquarecoeff
+end
+
+@with_kw struct MeltingCurveMaficB{T}
+    c1::T = 12.1982401917454      # intercept
+    c2::T = -7.49690626527448     # H2Ocoeff
+    c3::T = 0.398381500262876     # CO2coeff
+    c4::T = -0.00632911929609247  # Pcoeff
+    c5::T = 0.0571369994114008    # H2OxCO2coeff
+    c6::T = 0.00216190962922558   # H2OxPcoeff
+    c7::T = -0.000409810092770206 # CO2xPcoeff
+    c8::T = 1.48907741502382      # H2Osquarecoeff
+    c9::T = -0.251451720536687    # CO2squarecoeff
+    c10::T = 1.36630369630388e-06 # Psquarecoeff
 end
