@@ -1,114 +1,73 @@
 # Functions for initial condition
 """
-    mco2_dissolved_sat_silicic(X::Float64, P::Float64, T::Float64)::Float64
+    mco2_dissolved_sat(X::Float64, P::Float64, T::Float64)::Float64
 
 # Arguments
 `X`: mole fraction of CO2 in gas
 `P`: Pressure (Pa)
 `T`: Temperature (K)
 """
-function mco2_dissolved_sat_silicic(X::Float64, P::Float64, T::Float64)::Float64
+function mco2_dissolved_sat(X::Float64, P::Float64, T::Float64)::Float64
     P_MPa = P / 1e6
     # function & coefficients from Liu et al 2005
     Pc = P_MPa * X
     Pw = P_MPa * (1 - X)
-    c1 = 5668
-    c2 = -55.99
-    c3 = 0.4133
-    c4 = 2.041e-3
+    @unpack c1, c2, c3, c4 = Co2PartitionCoeff()
     sol = real(Pc * (c1 + c2 * Pw) / T + Pc * (c3 * Complex(Pw)^0.5 + c4 * Complex(Pw)^1.5))
     sol = sol / 1e6
     return sol
 end
 
 """
-    mco2_dissolved_sat_mafic(X::Float64, P::Float64, T::Float64)::Float64
-
-# Arguments
-`X`: mole fraction of CO2 in gas
-`P`: Pressure (Pa)
-`T`: Temperature (K)
-"""
-function mco2_dissolved_sat_mafic(X::Float64, P::Float64, T::Float64)::Float64
-    P_MPa = P / 1e6
-    # function & coefficients from Liu et al 2005
-    Pc = P_MPa * X
-    Pw = P_MPa * (1 - X)
-    c1 = 5668
-    c2 = -55.99
-    c3 = 0.4133
-    c4 = 2.041e-3
-    sol = real(Pc * (c1 + c2 * Pw) / T + Pc * (c3 * Complex(Pw)^0.5 + c4 * Complex(Pw)^1.5))
-    sol = sol / 1e6
-    return sol
-end
-
-"""
-    meq_water_silicic(X::Float64, P::Float64, T::Float64)::Float64
+    meq_water(composition::Silicic, X::Float64, P::Float64, T::Float64)::Float64
 
 # Arguments
 `X`: mole fration of H2O in gas
 `P`: Pressure (Pa)
 `T`: Temperature (K)
 """
-function meq_water_silicic(X::Float64, P::Float64, T::Float64)::Float64
+function meq_water(composition::Silicic, X::Float64, P::Float64, T::Float64)::Float64
     P = P / 1e6
     Pw = (1 - X) * P
     Pc = X * P
-    T_C = T
-    a1 = 354.94
-    a2 = 9.623
-    a3 = -1.5223
-    a4 = 1.2439e-3
-    a5 = -1.084e-4
-    a6 = -1.362e-5
+    @unpack h1, h2, h3, h4, h5, h6 = Exsolve3Silicic()
     sol = real(
-        (a1 * Complex(Pw)^0.5 + a2 * Pw + a3 * Complex(Pw)^1.5) / T_C +
-        a4 * Complex(Pw)^1.5 +
-        Pc * (a5 * Complex(Pw)^0.5 + a6 * Pw),
+        (h1 * Complex(Pw)^0.5 + h2 * Pw + h3 * Complex(Pw)^1.5) / T +
+        h4 * Complex(Pw)^1.5 +
+        Pc * (h5 * Complex(Pw)^0.5 + h6 * Pw),
     )
     sol = sol / 100
     return sol
 end
 
 """
-    meq_water_mafic(X::Float64, P::Float64, T::Float64)::Float64
+    meq_water(composition::Mafic, X::Float64, P::Float64, T::Float64)::Float64
 
 # Arguments
 `X`: mole fration of H2O in gas
 `P`: Pressure (Pa)
 `T`: Temperature (K)
 """
-function meq_water_mafic(X::Float64, P::Float64, T::Float64)::Float64
+function meq_water(composition::Mafic, X::Float64, P::Float64, T::Float64)::Float64
     P = P / 1e6
     T_C = T - 273.15
-    b1 = 2.99622526644026
-    b2 = 0.00322422830627781
-    b3 = -9.1389095360385
-    b4 = 0.0336065247530767
-    b5 = 0.00747236662935722
-    b6 = -0.0000150329805347769
-    b7 = -0.01233608521548
-    b8 = -4.14842647942619e-6
-    b9 = -0.655454303068124
-    b10 = -7.35270395041104e-6
+    @unpack h1, h2, h3, h4, h5, h6, h7, h8, h9, h10 = Exsolve3Mafic()
     sol =
-        b1 +
-        b2 * T_C +
-        b3 * X +
-        b4 * P +
-        b5 * T_C * X +
-        b6 * T_C * P +
-        b7 * X * P +
-        b8 * T_C^2 +
-        b9 * X^2 +
-        b10 * P^2
-    sol = sol / 100
-    return sol
+        h1 +
+        h2 * T_C +
+        h3 * X +
+        h4 * P +
+        h5 * T_C * X +
+        h6 * T_C * P +
+        h7 * X * P +
+        h8 * T_C^2 +
+        h9 * X^2 +
+        h10 * P^2
+    return sol / 100
 end
 
 """
-    IC_Finder(composition::Silicic, M_h2o::Float64, M_co2::Float64, M_tot::Float64, P::Float64, T::Float64, V::Float64, rho_m::Float64, mm_co2::Float64, mm_h2o::Float64, param_IC::ParamICFinder{Float64})::Vector{Float64}
+    IC_Finder(composition::Silicic, M_h2o::Float64, M_co2::Float64, M_tot::Float64, P::Float64, T::Float64, V::Float64, rho_m::Float64, mm_co2::Float64, mm_h2o::Float64, param_IC::ParamICFinder{Float64})::NamedTuple{(:eps_g0, :X_co20, :mco2_diss, :phase),NTuple{4,Float64}}
 
 # Arguments
 `M_h2o`: total mass of water in magma
@@ -133,7 +92,7 @@ function IC_Finder(
     mm_co2::Float64,
     mm_h2o::Float64,
     param_IC::ParamICFinder{Float64},
-)::Vector{Float64}
+)::NamedTuple{(:eps_g0, :X_co20, :mco2_diss, :phase),NTuple{4,Float64}}
     ## IC Finder parameters
     max_count = param_IC.max_count
     Tol = param_IC.Tol
@@ -192,10 +151,7 @@ function IC_Finder(
             eps_x0 = crystal_fraction_eps_x(composition, T, P, m_h2o_tot, m_co2_tot)
             function fun(x)
                 return real(
-                    mco2_dissolved_sat_silicic(x, P, T) *
-                    (1 - eps_g0 - eps_x0) *
-                    V *
-                    rho_m +
+                    mco2_dissolved_sat(x, P, T) * (1 - eps_g0 - eps_x0) * V * rho_m +
                     eps_g0 * rho_g * V * x * mm_co2 / (x * mm_co2 + (1 - x) * mm_h2o) -
                     M_co2,
                 )
@@ -211,8 +167,8 @@ function IC_Finder(
 
             Xmean = (1 - fraction) * X_co2_prev + fraction * X_co20
             X_co20 = Xmean
-            mwater_dissolved = meq_water_silicic(X_co20, P, T)
-            mco2_diss = mco2_dissolved_sat_silicic(X_co20, P, T)
+            mwater_dissolved = meq_water(composition, X_co20, P, T)
+            mco2_diss = mco2_dissolved_sat(X_co20, P, T)
             eps_m = 1 - eps_g0 - eps_x0
             Num =
                 M_co2 - mco2_diss * eps_m * V * rho_m + M_h2o -
@@ -248,7 +204,7 @@ function IC_Finder(
                     eps_x0 = crystal_fraction_eps_x(composition, T, P, m_h2o_tot, m_co2_tot)
                     function fun(x)
                         return real(
-                            mco2_dissolved_sat_silicic(x, P, T) *
+                            mco2_dissolved_sat(x, P, T) *
                             (1 - eps_g0 - eps_x0) *
                             V *
                             rho_m +
@@ -261,8 +217,8 @@ function IC_Finder(
                     X_co20 = solve(fx; xatol=Tol, atol=Tol, maxiters=100)
                     Xmean = (1 - fraction) * X_co2_prev + fraction * X_co20
                     X_co20 = Xmean
-                    mwater_dissolved = meq_water_silicic(X_co20, P, T)
-                    mco2_diss = mco2_dissolved_sat_silicic(X_co20, P, T)
+                    mwater_dissolved = meq_water(composition, X_co20, P, T)
+                    mco2_diss = mco2_dissolved_sat(X_co20, P, T)
                     eps_m = 1 - eps_g0 - eps_x0
                     Num =
                         M_co2 - mco2_diss * eps_m * V * rho_m + M_h2o -
@@ -277,20 +233,19 @@ function IC_Finder(
                 X_co2_guess = X_co2_guess + delta_X_co2
             end
         end
-        println("  IC_Finder  eps_g0: $eps_g0, X_co20: $X_co20, count: $count")
-        if eps_g0 <= 0 || X_co20 < 0 || real(eps_g0) != eps_g0 || real(X_co20) != X_co20  #if complex number
+        if eps_g0 <= 0 || X_co20 < 0 || real(eps_g0) != eps_g0 || real(X_co20) != X_co20  #avoid complex number
             X_co20 = 0.0
             eps_g0 = 0.0
             mco2_diss = m_co2_melt
-            phase = 2
+            phase = 2.0
         end
         eps_g0 = real(eps_g0)
     end
-    return [eps_g0, X_co20, mco2_diss, phase]
+    return (; eps_g0, X_co20, mco2_diss, phase)
 end
 
 """
-    IC_Finder(composition::Mafic, M_h2o_0::Float64, M_co2_0::Float64, M_tot::Float64, P_0::Float64, T_0::Float64, V_0::Float64, rho_m0::Float64, mm_co2::Float64, mm_h2o::Float64, param_IC::ParamICFinder{Float64})::Vector{Float64}
+    IC_Finder(composition::Mafic, M_h2o_0::Float64, M_co2_0::Float64, M_tot::Float64, P_0::Float64, T_0::Float64, V_0::Float64, rho_m0::Float64, mm_co2::Float64, mm_h2o::Float64, param_IC::ParamICFinder{Float64})::NamedTuple{(:eps_g0, :X_co20, :mco2_diss, :phase),NTuple{4,Float64}}
 
 # Arguments
 `M_h2o_0`: total mass of water in magma
@@ -315,7 +270,7 @@ function IC_Finder(
     mm_co2::Float64,
     mm_h2o::Float64,
     param_IC::ParamICFinder{Float64},
-)::Vector{Float64}
+)::NamedTuple{(:eps_g0, :X_co20, :mco2_diss, :phase),NTuple{4,Float64}}
     ## IC Finder parameters
     max_count = param_IC.max_count
     Tol = param_IC.Tol
@@ -374,10 +329,7 @@ function IC_Finder(
             eps_x0 = crystal_fraction_eps_x(composition, T_0, P_0, mH2O, mCO2)
             function fun(x)
                 return real(
-                    mco2_dissolved_sat_mafic(x, P_0, T_0) *
-                    (1 - eps_g0 - eps_x0) *
-                    V_0 *
-                    rho_m0 +
+                    mco2_dissolved_sat(x, P_0, T_0) * (1 - eps_g0 - eps_x0) * V_0 * rho_m0 +
                     eps_g0 * rho_g0 * V_0 * x * mm_co2 / (x * mm_co2 + (1 - x) * mm_h2o) -
                     M_co2_0,
                 )
@@ -392,8 +344,8 @@ function IC_Finder(
             count_fzeros = count_fzeros + 1
             Xmean = (1 - fraction) * X_co2_prev + fraction * X_co20
             X_co20 = Xmean
-            mwater_dissolved = meq_water_mafic(X_co20, P_0, T_0)
-            mco2_diss = mco2_dissolved_sat_mafic(X_co20, P_0, T_0)
+            mwater_dissolved = meq_water(composition, X_co20, P_0, T_0)
+            mco2_diss = mco2_dissolved_sat(X_co20, P_0, T_0)
             eps_m = 1 - eps_g0 - eps_x0
             Num =
                 M_co2_0 - mco2_diss * eps_m * V_0 * rho_m0 + M_h2o_0 -
@@ -442,7 +394,7 @@ function IC_Finder(
                     eps_x0 = crystal_fraction_eps_x(composition, T_0, P_0, mH2O, mCO2)
                     function fun(x)
                         return real(
-                            mco2_dissolved_sat_mafic(x, P_0, T_0) *
+                            mco2_dissolved_sat(x, P_0, T_0) *
                             (1 - eps_g0 - eps_x0) *
                             V_0 *
                             rho_m0 +
@@ -461,8 +413,8 @@ function IC_Finder(
                     count_fzeros = count_fzeros + 1
                     Xmean = (1 - fraction) * X_co2_prev + fraction * X_co20
                     X_co20 = Xmean
-                    mwater_dissolved = meq_water_mafic(X_co20, P_0, T_0)
-                    mco2_diss = mco2_dissolved_sat_mafic(X_co20, P_0, T_0)
+                    mwater_dissolved = meq_water(composition, X_co20, P_0, T_0)
+                    mco2_diss = mco2_dissolved_sat(X_co20, P_0, T_0)
 
                     eps_m = 1 - eps_g0 - eps_x0
                     Num =
@@ -509,5 +461,5 @@ function IC_Finder(
         eps_g0 = 0.0
         phase = 2
     end
-    return [eps_g0, X_co20, mco2_diss, phase]
+    return (; eps_g0, X_co20, mco2_diss, phase)
 end

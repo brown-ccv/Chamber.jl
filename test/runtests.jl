@@ -41,6 +41,8 @@ include("matrix-a-data.jl")
     include("test-utils.jl")
     include("test-matrix.jl")
     include("test-rho_rc.jl")
+    include("test-initial.jl")
     include("test-exsolve.jl")
+    include("test-ic_finder.jl")
     include("test-sol.jl")
 end
