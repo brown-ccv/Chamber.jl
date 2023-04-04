@@ -29,9 +29,23 @@ end
 end
 
 @testset "parameter_melting_curve-silicic" begin
-    @test (a_s, dadx_s, dady_s, dadz_s, b_s, dbdx_s, dbdy_s, dbdz_s, c_s, dcdx_s, dcdy_s, dcdz_s) == values(parameters_melting_curve(Silicic(), h2o, co2, P))
+    @test (
+        a_s,
+        dadx_s,
+        dady_s,
+        dadz_s,
+        b_s,
+        dbdx_s,
+        dbdy_s,
+        dbdz_s,
+        c_s,
+        dcdx_s,
+        dcdy_s,
+        dcdz_s,
+    ) == values(parameters_melting_curve(Silicic(), h2o, co2, P))
 end
 
 @testset "parameter_melting_curve-mafic" begin
-    @test (a_m, dadx_m, dady_m, dadz_m, b_m, dbdx_m, dbdy_m, dbdz_m) == values(parameters_melting_curve(Mafic(), h2o, co2, P))
+    @test (a_m, dadx_m, dady_m, dadz_m, b_m, dbdx_m, dbdy_m, dbdz_m) ==
+        values(parameters_melting_curve(Mafic(), h2o, co2, P))
 end
