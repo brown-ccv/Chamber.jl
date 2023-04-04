@@ -196,12 +196,14 @@ end
 """
 function parameters_melting_curve(
     composition::Silicic, mH2O::Float64, mCO2::Float64, P::Float64
-)::NamedTuple{(:a, :dadx, :dady, :dadz, :b, :dbdx, :dbdy, :dbdz, :c, :dcdx, :dcdy, :dcdz), NTuple{12, Float64}}
+)::NamedTuple{
+    (:a, :dadx, :dady, :dadz, :b, :dbdx, :dbdy, :dbdz, :c, :dcdx, :dcdy, :dcdz),
+    NTuple{12,Float64},
+}
     x, y, z = mH2O, mCO2, P / 1e6
-    a, b, c = a_f(x, y, z), b_f(x, y, z), c_f(x, y, z)
-    dadx, dady, dadz = dadx_f(x, y, z), dady_f(x, y, z), dadz_f(x, y, z)
-    dbdx, dbdy, dbdz = dbdx_f(x, y, z), dbdy_f(x, y, z), dbdz_f(x, y, z)
-    dcdx, dcdy, dcdz = dcdx_f(x, y, z), dcdy_f(x, y, z), dcdz_f(x, y, z)
+    a, dadx, dady, dadz = var_dxdydz(composition, "a", x, y, z)
+    b, dbdx, dbdy, dbdz = var_dxdydz(composition, "b", x, y, z)
+    c, dcdx, dcdy, dcdz = var_dxdydz(composition, "c", x, y, z)
     return (; a, dadx, dady, dadz, b, dbdx, dbdy, dbdz, c, dcdx, dcdy, dcdz)
 end
 
@@ -216,21 +218,9 @@ end
 function parameters_melting_curve(
     composition::Mafic, mH2O::Float64, mCO2::Float64, P::Float64
 )::NamedTuple{(:a, :dadx, :dady, :dadz, :b, :dbdx, :dbdy, :dbdz),NTuple{8,Float64}}
-    x = mH2O
-    y = mCO2
-    z = P / 1e6
-
-    @unpack c1,c2,c3,c4,c5,c6,c7,c8,c9,c10 = MeltingCurveMaficA()
-    a = c1 + c2*x + c3*y + c4*z + c5*x*y + c6*x*z + c7*y*z + c8*x^2 + c9*y^2 + c10*z^2
-    dadx = 100 * (c2 + c5 * y + c6 * z + 2 * c8 * x)
-    dady = 100 * (c3 + c5 * x + c7 * z + 2 * c9 * y)
-    dadz = 1e-6 * (c4 + c6 * x + c7 * y + 2 * c10 * z)
-
-    @unpack c1,c2,c3,c4,c5,c6,c7,c8,c9,c10 = MeltingCurveMaficB()
-    b = c1 + c2*x + c3*y + c4*z + c5*x*y + c6*x*z + c7*y*z + c8*x^2 + c9*y^2 + c10*z^2
-    dbdx = 100 * (c2 + c5 * y + c6 * z + 2 * c8 * x)
-    dbdy = 100 * (c3 + c5 * x + c7 * z + 2 * c9 * y)
-    dbdz = 1e-6 * (c4 + c6 * x + c7 * y + 2 * c10 * z)
+    x, y, z = mH2O, mCO2, P / 1e6
+    a, dadx, dady, dadz = var_dxdydz(composition, "a", x, y, z)
+    b, dbdx, dbdy, dbdz = var_dxdydz(composition, "b", x, y, z)
     return (; a, dadx, dady, dadz, b, dbdx, dbdy, dbdz)
 end
 

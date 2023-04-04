@@ -42,7 +42,6 @@ struct RheolComposition{T}
     L_m::T    # latent heat of melting (J kg^-1) value used by Caricchi and Blundy (2015)
 end
 silicic = RheolComposition{Float64}(2400, 2600, 1200, 1200, 290e3)
-
 mafic = RheolComposition{Float64}(2420, 2900, 1142, 1160, 470e3)
 rheol_composition_dict = Dict("Silicic" => silicic, "Mafic" => mafic)
 

@@ -399,20 +399,44 @@ function solve_NR(
 end
 
 # For parameters_melting_curve(Silicic())
-a_f(x::Float64, y::Float64, z::Float64)::Float64 = 0.36 - 0.02x - 0.06y + 8.6e-4z + 0.0024x*y + 6.27e-5x*z + 3.57e-5y*z - 0.0026x^2 + 0.003y^2 - 1.16e-6z^2
-dadx_f(x::Float64, y::Float64, z::Float64)::Float64 = 100(-0.02 + 0.0024y + 6.27e-5z - 2*0.0026x)
-dady_f(x::Float64, y::Float64, z::Float64)::Float64 = 100(-0.06 + 0.0024x + 3.57e-5z + 2*0.003y)
-dadz_f(x::Float64, y::Float64, z::Float64)::Float64 = 1e-6(8.6e-4 + 6.27e-5x + 3.57e-5y - 2*1.16e-6z)
+@with_kw struct MeltingCurveSilicicA{T}
+    c1::T = 0.36
+    c2::T = -0.02
+    c3::T = -0.06
+    c4::T = 8.6e-4
+    c5::T = 0.0024
+    c6::T = 6.27e-5
+    c7::T = 3.57e-5
+    c8::T = -0.0026
+    c9::T = 0.003
+    c10::T = -1.16e-6
+end
 
-b_f(x::Float64, y::Float64, z::Float64)::Float64 = 0.0071 + 0.0049x + 0.0043y - 4.08e-5z - 7.85e-4x*y - 1.3e-5x*z + 3.97e-6y*z + 6.29e-4x^2 - 0.0025y^2 + 8.51e-8z^2
-dbdx_f(x::Float64, y::Float64, z::Float64)::Float64 = 100(0.0049 - 7.85e-4y - 1.3e-5z + 2*6.29e-4x)
-dbdy_f(x::Float64, y::Float64, z::Float64)::Float64 = 100(0.0043 - 7.85e-4x + 3.97e-6z - 2*0.0025y)
-dbdz_f(x::Float64, y::Float64, z::Float64)::Float64 = 1e-6(-4.08e-5 - 1.3e-5x + 3.97e-6y + 2*8.51e-8z)
+@with_kw struct MeltingCurveSilicicB{T}
+    c1::T = 0.0071
+    c2::T = 0.0049
+    c3::T = 0.0043
+    c4::T = -4.08e-5
+    c5::T = -7.85e-4
+    c6::T = -1.3e-5
+    c7::T = 3.97e-6
+    c8::T = 6.29e-4
+    c9::T = -0.0025
+    c10::T = 8.51e-8
+end
 
-c_f(x::Float64, y::Float64, z::Float64)::Float64 = 863.09 - 36.9x + 48.81y - 0.17z - 1.52x*y - 0.04x*z - 0.04y*z + 4.57x^2 - 7.79y^2 + 4.65e-4z^2
-dcdx_f(x::Float64, y::Float64, z::Float64)::Float64 = 100(-36.9 - 1.52y - 0.04z + 2*4.57x)
-dcdy_f(x::Float64, y::Float64, z::Float64)::Float64 = 100(48.81 - 1.52x - 0.04z - 2*7.79y)
-dcdz_f(x::Float64, y::Float64, z::Float64)::Float64 = 1e-6(-0.17 - 0.04x - 0.04y + 2*4.65e-4z)
+@with_kw struct MeltingCurveSilicicC{T}
+    c1::T = 863.09
+    c2::T = -36.9
+    c3::T = 48.81
+    c4::T = -0.17
+    c5::T = -1.52
+    c6::T = -0.04
+    c7::T = -0.04
+    c8::T = 4.57
+    c9::T = -7.79
+    c10::T = 4.65e-4
+end
 
 # For parameters_melting_curve(Mafic())
 @with_kw struct MeltingCurveMaficA{T}
@@ -439,4 +463,34 @@ end
     c8::T = 1.48907741502382      # H2Osquarecoeff
     c9::T = -0.251451720536687    # CO2squarecoeff
     c10::T = 1.36630369630388e-06 # Psquarecoeff
+end
+
+meltingcurve_dict = Dict(
+    Silicic() => Dict(
+        "a" => MeltingCurveSilicicA(),
+        "b" => MeltingCurveSilicicB(),
+        "c" => MeltingCurveSilicicC(),
+    ),
+    Mafic() => Dict("a" => MeltingCurveMaficA(), "b" => MeltingCurveMaficB()),
+)
+
+function var_dxdydz(
+    composition::Union{Silicic,Mafic}, var::String, x::Float64, y::Float64, z::Float64
+)::NTuple{4,Float64}
+    @unpack c1, c2, c3, c4, c5, c6, c7, c8, c9, c10 = meltingcurve_dict[composition][var]
+    var =
+        c1 +
+        c2 * x +
+        c3 * y +
+        c4 * z +
+        c5 * x * y +
+        c6 * x * z +
+        c7 * y * z +
+        c8 * x^2 +
+        c9 * y^2 +
+        c10 * z^2
+    vardx = 100 * (c2 + c5 * y + c6 * z + 2 * c8 * x)
+    vardy = 100 * (c3 + c5 * x + c7 * z + 2 * c9 * y)
+    vardz = 1e-6 * (c4 + c6 * x + c7 * y + 2 * c10 * z)
+    return (var, vardx, vardy, vardz)
 end
