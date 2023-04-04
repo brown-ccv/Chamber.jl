@@ -475,8 +475,8 @@ meltingcurve_dict = Dict(
 )
 
 function var_dxdydz(
-    composition::Union{Silicic,Mafic}, var::String, x::Float64, y::Float64, z::Float64
-)::NTuple{4,Float64}
+    composition::Union{Silicic,Mafic}, var::String, x::T, y::T, z::T
+)::NamedTuple{(:var, :vardx, :vardy, :vardz),NTuple{4,T}} where {T<:Float64}
     @unpack c1, c2, c3, c4, c5, c6, c7, c8, c9, c10 = meltingcurve_dict[composition][var]
     var =
         c1 +
@@ -492,5 +492,5 @@ function var_dxdydz(
     vardx = 100 * (c2 + c5 * y + c6 * z + 2 * c8 * x)
     vardy = 100 * (c3 + c5 * x + c7 * z + 2 * c9 * y)
     vardz = 1e-6 * (c4 + c6 * x + c7 * y + 2 * c10 * z)
-    return (var, vardx, vardy, vardz)
+    return (; var, vardx, vardy, vardz)
 end
