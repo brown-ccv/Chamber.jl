@@ -438,11 +438,23 @@ meltingcurve_dict = Dict(
     Mafic() => Dict("a" => MeltingCurveMaficA(), "b" => MeltingCurveMaficB()),
 )
 
-function var_dxdydz(
-    composition::Union{Silicic,Mafic}, var::String, x::T, y::T, z::T
-)::NamedTuple{(:var, :vardx, :vardy, :vardz),NTuple{4,T}} where {T<:Float64}
-    @unpack c1, c2, c3, c4, c5, c6, c7, c8, c9, c10 = meltingcurve_dict[composition][var]
-    var =
+"""
+    dX_dxdydz(composition::Union{Silicic,Mafic}, s::String, x::T, y::T, z::T)::NamedTuple{(:X, :dXdx, :dXdy, :dXdz),NTuple{4,T}} where {T<:Float64}
+
+Calculate value from different parameter sets (# of parameter sets: Silicic: 3, Mafic: 2)
+
+# Arguments
+- `composition`: Silicic() or Mafic()
+- `s`: represent different set of parammeters, the Silicic case has "a", "b", "c", and the Mafic has "a", "b".
+- `x`: Water (H2O)
+- `y`: Gas (CO2)
+- `z`: Pressure (P)
+"""
+function dX_dxdydz(
+    composition::Union{Silicic,Mafic}, s::String, x::T, y::T, z::T
+)::NamedTuple{(:X, :dXdx, :dXdy, :dXdz),NTuple{4,T}} where {T<:Float64}
+    @unpack c1, c2, c3, c4, c5, c6, c7, c8, c9, c10 = meltingcurve_dict[composition][s]
+    X =
         c1 +
         c2 * x +
         c3 * y +
@@ -453,8 +465,8 @@ function var_dxdydz(
         c8 * x^2 +
         c9 * y^2 +
         c10 * z^2
-    vardx = 100 * (c2 + c5 * y + c6 * z + 2 * c8 * x)
-    vardy = 100 * (c3 + c5 * x + c7 * z + 2 * c9 * y)
-    vardz = 1e-6 * (c4 + c6 * x + c7 * y + 2 * c10 * z)
-    return (; var, vardx, vardy, vardz)
+    dXdx = 100 * (c2 + c5 * y + c6 * z + 2 * c8 * x)
+    dXdy = 100 * (c3 + c5 * x + c7 * z + 2 * c9 * y)
+    dXdz = 1e-6 * (c4 + c6 * x + c7 * y + 2 * c10 * z)
+    return (; X, dXdx, dXdy, dXdz)
 end
