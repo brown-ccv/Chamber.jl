@@ -44,81 +44,71 @@ struct Co2PartitionCoeff{T}
     Co2PartitionCoeff() = new{Float64}(5668, -55.99, 0.4133, 2.041e-3)
 end
 
-meq_silicic(
-    Pw::Float64,
-    Pc::Float64,
-    Temp::Float64,
-    b1::Float64,
-    b2::Float64,
-    b3::Float64,
-    b4::Float64,
-    b5::Float64,
-    b6::Float64,
-)::Float64 =
-    1e-2 * real(
+function meq_silicic(
+    Pw::T, Pc::T, Temp::T, b1::T, b2::T, b3::T, b4::T, b5::T, b6::T
+)::T where {T<:Float64}
+    return 1e-2 * real(
         (b1 * Complex(Pw)^0.5 + b2 * Pw + b3 * Complex(Pw)^1.5) / Temp +
         b4 * Complex(Pw)^1.5 +
         Pc * (b5 * Complex(Pw)^0.5 + b6 * Pw),
     )
-dmeqdT_silicic(Pw::Float64, Temp::Float64, b1::Float64, b2::Float64, b3::Float64)::Float64 =
-    1e-2 * real(-1 * (b1 * Complex(Pw)^0.5 + b2 * Pw + b3 * Complex(Pw)^1.5) * Temp^(-2))
-dmeqdP_silicic(
-    Pw::Float64,
-    dPwdP::Float64,
-    Pc::Float64,
-    dPcdP::Float64,
-    Temp::Float64,
-    b1::Float64,
-    b2::Float64,
-    b3::Float64,
-    b4::Float64,
-    b5::Float64,
-    b6::Float64,
-)::Float64 =
-    1e-8 * real(
+end
+
+function dmeqdT_silicic(Pw::T, Temp::T, b1::T, b2::T, b3::T)::T where {T<:Float64}
+    return 1e-2 *
+           real(-1 * (b1 * Complex(Pw)^0.5 + b2 * Pw + b3 * Complex(Pw)^1.5) * Temp^(-2))
+end
+
+function dmeqdP_silicic(
+    Pw::T, dPwdP::T, Pc::T, dPcdP::T, Temp::T, b1::T, b2::T, b3::T, b4::T, b5::T, b6::T
+)::T where {T<:Float64}
+    return 1e-8 * real(
         dPwdP * (
             (1 / Temp) * (0.5 * b1 * Complex(Pw)^(-0.5) + b2 + 1.5 * b3 * Complex(Pw)^0.5) +
             1.5 * b4 * Complex(Pw)^0.5 +
             Pc * (0.5 * b5 * Complex(Pw)^(-0.5) + b6)
         ) + dPcdP * (b5 * Complex(Pw)^0.5 + b6 * Pw),
     )
-dmeqdXco2_silicic(
-    Pw::Float64,
-    dPwdXco2::Float64,
-    Pc::Float64,
-    dPcdXco2::Float64,
-    Temp::Float64,
-    b1::Float64,
-    b2::Float64,
-    b3::Float64,
-    b4::Float64,
-    b5::Float64,
-    b6::Float64,
-)::Float64 =
-    1e-2 * real(
+end
+
+function dmeqdXco2_silicic(
+    Pw::T,
+    dPwdXco2::T,
+    Pc::T,
+    dPcdXco2::T,
+    Temp::T,
+    b1::T,
+    b2::T,
+    b3::T,
+    b4::T,
+    b5::T,
+    b6::T,
+)::T where {T<:Float64}
+    return 1e-2 * real(
         dPwdXco2 * (
             (1 / Temp) * (0.5 * b1 * Complex(Pw)^(-0.5) + b2 + 1.5 * b3 * Complex(Pw)^0.5) +
             1.5 * b4 * Complex(Pw)^0.5 +
             Pc * (0.5 * b5 * Complex(Pw)^(-0.5) + b6)
         ) + dPcdXco2 * (b5 * Complex(Pw)^0.5 + b6 * Pw),
     )
+end
 
-meq_mafic(
-    P::Float64,
-    T_C::Float64,
-    X_co2::Float64,
-    b1::Float64,
-    b2::Float64,
-    b3::Float64,
-    b4::Float64,
-    b5::Float64,
-    b6::Float64,
-    b7::Float64,
-    b8::Float64,
-    b9::Float64,
-    b10::Float64,
-)::Float64 =
-    1e-2 * real(
+function meq_mafic(
+    P::T,
+    T_C::T,
+    X_co2::T,
+    b1::T,
+    b2::T,
+    b3::T,
+    b4::T,
+    b5::T,
+    b6::T,
+    b7::T,
+    b8::T,
+    b9::T,
+    b10::T,
+)::T where {T<:Float64}
+    return 1e-2 * real(
         b1 +
         b2 * T_C +
         b3 * X_co2 +
@@ -130,82 +120,58 @@ meq_mafic(
         b9 * Complex(X_co2)^2 +
         b10 * Complex(P)^2,
     )
-dmeqdT_mafic(
-    P::Float64,
-    T_C::Float64,
-    X_co2::Float64,
-    b2::Float64,
-    b5::Float64,
-    b6::Float64,
-    b8::Float64,
-)::Float64 = 1e-2 * real(b2 + b5 * X_co2 + b6 * P + 2 * b8 * T_C)
-dmeqdP_mafic(
-    P::Float64,
-    T_C::Float64,
-    X_co2::Float64,
-    b4::Float64,
-    b6::Float64,
-    b7::Float64,
-    b10::Float64,
-)::Float64 = 1e-8 * real(b4 + b6 * T_C + b7 * X_co2 + 2 * b10 * P)
-dmeqdXco2_mafic(
-    P::Float64,
-    T_C::Float64,
-    X_co2::Float64,
-    b3::Float64,
-    b5::Float64,
-    b7::Float64,
-    b9::Float64,
-)::Float64 = 1e-2 * real(b3 + b5 * T_C + b7 * P + 2 * b9 * X_co2)
+end
 
-C_co2_f(
-    Pw::Float64,
-    Pc::Float64,
-    Temp::Float64,
-    c1::Float64,
-    c2::Float64,
-    c3::Float64,
-    c4::Float64,
-)::Float64 =
-    1e-6 *
-    real(Pc * (c1 + c2 * Pw) / Temp + Pc * (c3 * Complex(Pw)^0.5 + c4 * Complex(Pw)^1.5))
-dC_co2dT_f(Pw::Float64, Pc::Float64, Temp::Float64, c1::Float64, c2::Float64)::Float64 =
-    1e-6 * real(-1 * Pc * (c1 + c2 * Pw) * Complex(Temp)^(-2))
-dC_co2dP_f(
-    Pw::Float64,
-    Pc::Float64,
-    Temp::Float64,
-    dPwdP::Float64,
-    dPcdP::Float64,
-    c1::Float64,
-    c2::Float64,
-    c3::Float64,
-    c4::Float64,
-)::Float64 =
-    1e-12 * real(
+function dmeqdT_mafic(
+    P::T, T_C::T, X_co2::T, b2::T, b5::T, b6::T, b8::T
+)::T where {T<:Float64}
+    return 1e-2 * real(b2 + b5 * X_co2 + b6 * P + 2 * b8 * T_C)
+end
+
+function dmeqdP_mafic(
+    P::T, T_C::T, X_co2::T, b4::T, b6::T, b7::T, b10::T
+)::T where {T<:Float64}
+    return 1e-8 * real(b4 + b6 * T_C + b7 * X_co2 + 2 * b10 * P)
+end
+
+function dmeqdXco2_mafic(
+    P::T, T_C::T, X_co2::T, b3::T, b5::T, b7::T, b9::T
+)::T where {T<:Float64}
+    return 1e-2 * real(b3 + b5 * T_C + b7 * P + 2 * b9 * X_co2)
+end
+
+function C_co2_f(Pw::T, Pc::T, Temp::T, c1::T, c2::T, c3::T, c4::T)::T where {T<:Float64}
+    return 1e-6 * real(
+        Pc * (c1 + c2 * Pw) / Temp + Pc * (c3 * Complex(Pw)^0.5 + c4 * Complex(Pw)^1.5)
+    )
+end
+
+function dC_co2dT_f(Pw::T, Pc::T, Temp::T, c1::T, c2::T)::T where {T<:Float64}
+    return 1e-6 * real(-1 * Pc * (c1 + c2 * Pw) * Complex(Temp)^(-2))
+end
+
+function dC_co2dP_f(
+    Pw::T, Pc::T, Temp::T, dPwdP::T, dPcdP::T, c1::T, c2::T, c3::T, c4::T
+)::T where {T<:Float64}
+    return 1e-12 * real(
         Complex(Temp)^(-1) * (dPcdP * (c1 + c2 * Pw) + Pc * (c2 * dPwdP)) +
         dPcdP * (c3 * Complex(Pw)^0.5 + c4 * Complex(Pw)^1.5) +
         Pc * (0.5 * c3 * Complex(Pw)^(-0.5) * dPwdP + 1.5 * c4 * Complex(Pw)^0.5 * dPwdP),
     )
-dC_co2dXco2_f(
-    Pw::Float64,
-    Pc::Float64,
-    Temp::Float64,
-    dPwdXco2::Float64,
-    dPcdXco2::Float64,
-    c1::Float64,
-    c2::Float64,
-    c3::Float64,
-    c4::Float64,
-)::Float64 =
-    1e-6 * real(
+end
+
+function dC_co2dXco2_f(
+    Pw::T, Pc::T, Temp::T, dPwdXco2::T, dPcdXco2::T, c1::T, c2::T, c3::T, c4::T
+)::T where {T<:Float64}
+    return 1e-6 * real(
         Complex(Temp)^(-1) * (dPcdXco2 * (c1 + c2 * Pw) + Pc * (c2 * dPwdXco2)) +
         dPcdXco2 * (c3 * Complex(Pw)^0.5 + c4 * Complex(Pw)^1.5) +
         Pc *
         (0.5 * c3 * Complex(Pw)^(-0.5) * dPwdXco2 + 1.5 * c4 * Complex(Pw)^0.5 * dPwdXco2),
     )
+end
 
-# for function exsolve
+# For function exsolve
 function build_meq(
     composition::Silicic,
     Pw::T,
@@ -236,7 +202,7 @@ function build_meq(
     return (; meq, dmeqdT, dmeqdP, dmeqdXco2)
 end
 
-# for function exsolve
+# For function exsolve
 function build_co2(
     Pw::T, Pc::T, Temp::T, dPwdP::T, dPcdP::T, dPwdXco2::T, dPcdXco2::T
 )::NamedTuple{(:C_co2, :dC_co2dT, :dC_co2dP, :dC_co2dXco2),NTuple{4,T}} where {T<:Float64}
@@ -281,7 +247,7 @@ struct EosG_RhoG{T}
 end
 EosG_RhoG(P, T) = EosG_RhoG{typeof(P)}(rho_g(P, T))
 
-# for function exsolve3
+# For function exsolve3
 @with_kw struct Exsolve3Silicic{T}
     h1::T = 354.94
     h2::T = 9.623
@@ -305,9 +271,7 @@ end
 end
 
 # Water Paritioning Function
-function water(
-    composition::Silicic, p::Float64, t::Float64, x::Float64, c::Float64
-)::Float64
+function water(composition::Silicic, p::T, t::T, x::T, c::T)::T where {T<:Float64}
     @unpack h1, h2, h3, h4, h5, h6 = Exsolve3Silicic()
     return real(
         (
@@ -320,7 +284,7 @@ function water(
     )
 end
 
-function water(composition::Mafic, p::Float64, t::Float64, x::Float64, c::Float64)::Float64
+function water(composition::Mafic, p::T, t::T, x::T, c::T)::T where {T<:Float64}
     @unpack h1, h2, h3, h4, h5, h6, h7, h8, h9, h10 = Exsolve3Mafic()
     return real(
         h1 +
@@ -337,7 +301,7 @@ function water(composition::Mafic, p::Float64, t::Float64, x::Float64, c::Float6
 end
 
 # Derivative of Water wrt Xco2
-function dwater_dx(composition::Silicic, p::Float64, t::Float64, x::Float64)::Float64
+function dwater_dx(composition::Silicic, p::T, t::T, x::T)::T where {T<:Float64}
     @unpack h1, h2, h3, h4, h5, h6 = Exsolve3Silicic()
     return real(
         -p * (
@@ -352,15 +316,15 @@ function dwater_dx(composition::Silicic, p::Float64, t::Float64, x::Float64)::Fl
     )
 end
 
-function dwater_dx(composition::Mafic, p::Float64, t::Float64, x::Float64)::Float64
+function dwater_dx(composition::Mafic, p::T, t::T, x::T)::T where {T<:Float64}
     @unpack h3, h5, h7, h9 = Exsolve3Mafic()
     return h3 + h5 * t + h7 * p + 2 * h9 * x
 end
 
-# for function exsolve3, finding X_CO2
+# For function exsolve3, finding X_CO2
 function solve_NR(
-    f, f_prime, errorTol::Float64, count_max::Float64, Xc_initial::Float64
-)::Float64
+    f, f_prime, errorTol::T, count_max::T, Xc_initial::T
+)::T where {T<:Float64}
     # P,T and inital guesses/values
     Xc_guess = Xc_initial
     Xc_prev = 0.0
@@ -396,4 +360,113 @@ function solve_NR(
         X_co2 = 1.0
     end
     return X_co2
+end
+
+# For parameters_melting_curve(Silicic())
+@with_kw struct MeltingCurveSilicicA{T}
+    c1::T = 0.36
+    c2::T = -0.02
+    c3::T = -0.06
+    c4::T = 8.6e-4
+    c5::T = 0.0024
+    c6::T = 6.27e-5
+    c7::T = 3.57e-5
+    c8::T = -0.0026
+    c9::T = 0.003
+    c10::T = -1.16e-6
+end
+
+@with_kw struct MeltingCurveSilicicB{T}
+    c1::T = 0.0071
+    c2::T = 0.0049
+    c3::T = 0.0043
+    c4::T = -4.08e-5
+    c5::T = -7.85e-4
+    c6::T = -1.3e-5
+    c7::T = 3.97e-6
+    c8::T = 6.29e-4
+    c9::T = -0.0025
+    c10::T = 8.51e-8
+end
+
+@with_kw struct MeltingCurveSilicicC{T}
+    c1::T = 863.09
+    c2::T = -36.9
+    c3::T = 48.81
+    c4::T = -0.17
+    c5::T = -1.52
+    c6::T = -0.04
+    c7::T = -0.04
+    c8::T = 4.57
+    c9::T = -7.79
+    c10::T = 4.65e-4
+end
+
+# For parameters_melting_curve(Mafic())
+@with_kw struct MeltingCurveMaficA{T}
+    c1::T = -0.0106007180771044    # intercept
+    c2::T = 0.00642879427079997    # H2Ocoeff
+    c3::T = -0.000362698886591479  # CO2coeff
+    c4::T = 6.33762356329763e-06   # Pcoeff
+    c5::T = -0.0000409319695736593 # H2OxCO2coeff
+    c6::T = -0.0000020971242285322 # H2OxPcoeff
+    c7::T = 3.66354014084072e-07   # CO2xPcoeff
+    c8::T = -0.00127225661031757   # H2Osquarecoeff
+    c9::T = 0.000219802992993448   # CO2squarecoeff
+    c10::T = -1.4241625041626E-09  # Psquarecoeff
+end
+
+@with_kw struct MeltingCurveMaficB{T}
+    c1::T = 12.1982401917454      # intercept
+    c2::T = -7.49690626527448     # H2Ocoeff
+    c3::T = 0.398381500262876     # CO2coeff
+    c4::T = -0.00632911929609247  # Pcoeff
+    c5::T = 0.0571369994114008    # H2OxCO2coeff
+    c6::T = 0.00216190962922558   # H2OxPcoeff
+    c7::T = -0.000409810092770206 # CO2xPcoeff
+    c8::T = 1.48907741502382      # H2Osquarecoeff
+    c9::T = -0.251451720536687    # CO2squarecoeff
+    c10::T = 1.36630369630388e-06 # Psquarecoeff
+end
+
+meltingcurve_dict = Dict(
+    Silicic() => Dict(
+        "a" => MeltingCurveSilicicA(),
+        "b" => MeltingCurveSilicicB(),
+        "c" => MeltingCurveSilicicC(),
+    ),
+    Mafic() => Dict("a" => MeltingCurveMaficA(), "b" => MeltingCurveMaficB()),
+)
+
+"""
+    dX_dxdydz(composition::Union{Silicic,Mafic}, s::String, x::T, y::T, z::T)::NamedTuple{(:X, :dXdx, :dXdy, :dXdz),NTuple{4,T}} where {T<:Float64}
+
+Calculate value from different parameter sets (# of parameter sets: Silicic: 3, Mafic: 2)
+
+# Arguments
+- `composition`: Silicic() or Mafic()
+- `s`: represent different set of parammeters, the Silicic case has "a", "b", "c", and the Mafic has "a", "b".
+- `x`: Water (H2O)
+- `y`: Gas (CO2)
+- `z`: Pressure (P)
+"""
+function dX_dxdydz(
+    composition::Union{Silicic,Mafic}, s::String, x::T, y::T, z::T
+)::NamedTuple{(:X, :dXdx, :dXdy, :dXdz),NTuple{4,T}} where {T<:Float64}
+    @unpack c1, c2, c3, c4, c5, c6, c7, c8, c9, c10 = meltingcurve_dict[composition][s]
+    X =
+        c1 +
+        c2 * x +
+        c3 * y +
+        c4 * z +
+        c5 * x * y +
+        c6 * x * z +
+        c7 * y * z +
+        c8 * x^2 +
+        c9 * y^2 +
+        c10 * z^2
+    dXdx = 100 * (c2 + c5 * y + c6 * z + 2 * c8 * x)
+    dXdy = 100 * (c3 + c5 * x + c7 * z + 2 * c9 * y)
+    dXdz = 1e-6 * (c4 + c6 * x + c7 * y + 2 * c10 * z)
+    return (; X, dXdx, dXdy, dXdz)
 end
