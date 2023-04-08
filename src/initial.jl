@@ -201,9 +201,9 @@ function parameters_melting_curve(
     NTuple{12,Float64},
 }
     x, y, z = mH2O, mCO2, P / 1e6
-    a, dadx, dady, dadz = dX_dxdydz("a")
-    b, dbdx, dbdy, dbdz = dX_dxdydz("b")
-    c, dcdx, dcdy, dcdz = dX_dxdydz("c")
+    a, dadx, dady, dadz = dX_dxdydz(composition, "a", x, y, z)
+    b, dbdx, dbdy, dbdz = dX_dxdydz(composition, "b", x, y, z)
+    c, dcdx, dcdy, dcdz = dX_dxdydz(composition, "c", x, y, z)
     return (; a, dadx, dady, dadz, b, dbdx, dbdy, dbdz, c, dcdx, dcdy, dcdz)
 end
 
@@ -219,8 +219,8 @@ function parameters_melting_curve(
     composition::Mafic, mH2O::Float64, mCO2::Float64, P::Float64
 )::NamedTuple{(:a, :dadx, :dady, :dadz, :b, :dbdx, :dbdy, :dbdz),NTuple{8,Float64}}
     x, y, z = mH2O, mCO2, P / 1e6
-    a, dadx, dady, dadz = dX_dxdydz("a")
-    b, dbdx, dbdy, dbdz = dX_dxdydz("b")
+    a, dadx, dady, dadz = dX_dxdydz(composition, "a", x, y, z)
+    b, dbdx, dbdy, dbdz = dX_dxdydz(composition, "b", x, y, z)
     return (; a, dadx, dady, dadz, b, dbdx, dbdy, dbdz)
 end
 

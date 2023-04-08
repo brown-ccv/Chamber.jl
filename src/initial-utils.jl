@@ -470,5 +470,3 @@ function dX_dxdydz(
     dXdz = 1e-6 * (c4 + c6 * x + c7 * y + 2 * c10 * z)
     return (; X, dXdx, dXdy, dXdz)
 end
-
-dX_dxdydz(s) = dX_dxdydz(composition, s, x, y, z)
