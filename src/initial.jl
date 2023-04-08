@@ -4,8 +4,14 @@
 parametrization of redlich kwong taken from Huber et al. 2010
 
 # Arguments
--`P`: Pressure (Pa)
--`T`: Temperature (K)
+- `P`: Pressure (Pa)
+- `T`: Temperature (K)
+
+# Returns
+An instance of the `EosG` struct, containing the following fields:
+- `rho_g`: density of the gas in kg/m³.
+- `drho_g_dP`: partial derivative of the density with respect to pressure, in kg/m³/Pa.
+- `drho_g_dT`: partial derivative of the density with respect to temperature, in kg/m³/K.
 """
 function eos_g(P::Float64, T::Float64)::EosG{Float64}
     eos_g = EosG(P, T)
@@ -16,6 +22,13 @@ end
     eos_g_rho_g(P::Float64, T::Float64)::Float64
 
 Spetialized version of eos_g that computes `rho_g` only.
+
+# Arguments
+- `P`: Pressure (Pa)
+- `T`: Temperature (K)
+
+# Returns
+- `rho_g`: density of the gas in kg/m³.
 """
 function eos_g_rho_g(P::Float64, T::Float64)::Float64
     ρ = EosG_RhoG(P, T).rho_g
@@ -28,9 +41,9 @@ end
 This script uses Liu et al. (2006) to calculate the solubility of water
 
 # Arguments
--`P`: represents pressure
--`T`: represents the temperature in some units
--`X_co2`: mole fraction of CO2 in gas.
+- `P`: Pressure (Pa)
+- `T`: Temperature (K)
+- `X_co2`: mole fraction of CO2 in gas.
 """
 function exsolve(
     composition::Silicic, P::Float64, T::Float64, X_co2::Float64
@@ -59,9 +72,9 @@ end
 This script uses Liu et al. (2006) to calculate the solubility of water
 
 # Arguments
--`P`: represents pressure
--`T`: represents the temperature in some units
--`X_co2`: mole fraction of CO2 in gas.
+- `P`: Pressure (Pa)
+- `T`: Temperature (K)
+- `X_co2`: mole fraction of CO2 in gas.
 """
 function exsolve(
     composition::Mafic, P::Float64, T::Float64, X_co2::Float64
@@ -85,12 +98,12 @@ end
 """
     exsolve_meq(composition::Silicic, P::Float64, T::Float64, X_co2::Float64)::Float64
 
-This script uses Liu et al. (2006) to calculate the solubility of water
+Spetialized version of exsolve that computes `meq` only. `meq`: amount of water
 
 # Arguments
--`P`: represents pressure
--`T`: represents the temperature in some units
--`X_co2`: mole fraction of CO2 in gas.
+- `P`: Pressure (Pa)
+- `T`: Temperature (K)
+- `X_co2`: mole fraction of CO2 in gas.
 """
 function exsolve_meq(composition::Silicic, P::Float64, T::Float64, X_co2::Float64)::Float64
     P = P / 1e6
@@ -103,12 +116,12 @@ end
 """
     exsolve_meq(composition::Mafic, P::Float64, T::Float64, X_co2::Float64)::Float64
 
-This script uses Liu et al. (2006) to calculate the solubility of water
+Spetialized version of exsolve that computes `meq` only. `meq`: amount of water
 
 # Arguments
--`P`: represents pressure
--`T`: represents the temperature in some units
--`X_co2`: mole fraction of CO2 in gas.
+- `P`: Pressure (Pa)
+- `T`: Temperature (K)
+- `X_co2`: mole fraction of CO2 in gas.
 """
 function exsolve_meq(composition::Mafic, P::Float64, T::Float64, X_co2::Float64)::Float64
     P = P / 1e6
@@ -124,9 +137,9 @@ end
 Takes pressure, temperature, and amount of water to solve for the concentration of CO2 and X_CO2 (basically, goes the other direction compared to exsolve) using a Newton Raphson scheme
 
 # Arguments
--`P`: pressure (Pa)
--`T`: temperature (K)
--`m_eq`: amount of water
+- `P`: pressure (Pa)
+- `T`: temperature (K)
+- `m_eq`: amount of water
 """
 function exsolve3(
     composition::Silicic, P::Float64, T::Float64, m_eq::Float64
@@ -157,9 +170,9 @@ end
 Takes pressure, temperature, and amount of water to solve for the concentration of CO2 and X_CO2 (basically, goes the other direction compared to exsolve.m) using a Newton Raphson scheme
 
 # Arguments
--`P`: pressure (Pa)
--`T`: temperature (K)
--`m_eq`: amount of water
+- `P`: pressure (Pa)
+- `T`: temperature (K)
+- `m_eq`: amount of water
 """
 function exsolve3(
     composition::Mafic, P::Float64, T::Float64, m_eq::Float64
@@ -190,9 +203,9 @@ end
     parameters_melting_curve(composition::Silicic, mH2O::Float64, mCO2::Float64, P::Float64)::NamedTuple{(:a, :dadx, :dady, :dadz, :b, :dbdx, :dbdy, :dbdz, :c, :dcdx, :dcdy, :dcdz), NTuple{12, Float64}}
 
 # Arguments
--`mH2O`: Weight fration of the H2O in magma.
--`mCO2`: Weight fration of the CO2 in magma.
--`P`: Pressure (Pa)
+- `mH2O`: Weight fration of the H2O in magma.
+- `mCO2`: Weight fration of the CO2 in magma.
+- `P`: Pressure (Pa)
 """
 function parameters_melting_curve(
     composition::Silicic, mH2O::Float64, mCO2::Float64, P::Float64
@@ -211,9 +224,9 @@ end
     parameters_melting_curve(composition::Mafic, mH2O::Float64, mCO2::Float64, P::Float64)::NamedTuple{(:a, :dadx, :dady, :dadz, :b, :dbdx, :dbdy, :dbdz), NTuple{8, Float64}}
 
 # Arguments
--`mH2O`: Weight fration of the H2O in magma.
--`mCO2`: Weight fration of the CO2 in magma.
--`P`: Pressure (Pa)
+- `mH2O`: Weight fration of the H2O in magma.
+- `mCO2`: Weight fration of the CO2 in magma.
+- `P`: Pressure (Pa)
 """
 function parameters_melting_curve(
     composition::Mafic, mH2O::Float64, mCO2::Float64, P::Float64
@@ -228,10 +241,10 @@ end
     find_liq(composition::Silicic, water::Float64, co2::Float64, P::Float64, ini_eps_x::Float64)::Float64
 
 # Arguments
--`water`: Weight fration of the H2O in magma.
--`co2`: Weight fration of the CO2 in magma.
--`P`: Pressure (Pa)
--`ini_eps_x`: The starting volumn fraction of crystal.
+- `water`: Weight fration of the H2O in magma.
+- `co2`: Weight fration of the CO2 in magma.
+- `P`: Pressure (Pa)
+- `ini_eps_x`: The starting volumn fraction of crystal.
 """
 function find_liq(
     composition::Silicic, water::Float64, co2::Float64, P::Float64, ini_eps_x::Float64
@@ -247,10 +260,10 @@ end
     find_liq(composition::Mafic, water::Float64, co2::Float64, P::Float64, ini_eps_x::Float64)::Float64
 
 # Arguments
--`water`: Weight fration of the H2O in magma.
--`co2`: Weight fration of the CO2 in magma.
--`P`: Pressure (Pa)
--`ini_eps_x`: The starting volumn fraction of crystal.
+- `water`: Weight fration of the H2O in magma.
+- `co2`: Weight fration of the CO2 in magma.
+- `P`: Pressure (Pa)
+- `ini_eps_x`: The starting volumn fraction of crystal.
 """
 function find_liq(
     composition::Mafic, water::Float64, co2::Float64, P::Float64, ini_eps_x::Float64
@@ -264,10 +277,10 @@ end
     crystal_fraction(composition::Silicic, T::Float64, P::Float64, mH2O::Float64, mCO2::Float64)::NamedTuple{(:eps_x, :deps_x_dP, :deps_x_dT, :deps_x_deps_g, :deps_x_dmco2_t, :deps_x_dmh2o_t), NTuple{6, Float64}}
 
 # Arguments
--`T`: Temperature (K)
--`P`: Pressure (Pa)
--`mH2O`: Weight fration of the H2O in magma.
--`mCO2`: Weight fration of the CO2 in magma.
+- `T`: Temperature (K)
+- `P`: Pressure (Pa)
+- `mH2O`: Weight fration of the H2O in magma.
+- `mCO2`: Weight fration of the CO2 in magma.
 """
 function crystal_fraction(
     composition::Silicic, T::Float64, P::Float64, mH2O::Float64, mCO2::Float64
@@ -303,10 +316,10 @@ end
     crystal_fraction(composition::Mafic, T::Float64, P::Float64, mH2O::Float64, mCO2::Float64)::NamedTuple{(:eps_x, :deps_x_dP, :deps_x_dT, :deps_x_deps_g, :deps_x_dmco2_t, :deps_x_dmh2o_t), NTuple{6, Float64}}
 
 # Arguments
--`T`: Temperature (K)
--`P`: Pressure (Pa)
--`mH2O`: Weight fration of the H2O in magma.
--`mCO2`: Weight fration of the CO2 in magma.
+- `T`: Temperature (K)
+- `P`: Pressure (Pa)
+- `mH2O`: Weight fration of the H2O in magma.
+- `mCO2`: Weight fration of the CO2 in magma.
 """
 function crystal_fraction(
     composition::Mafic, T::Float64, P::Float64, mH2O::Float64, mCO2::Float64
@@ -336,6 +349,11 @@ function crystal_fraction(
     return (; eps_x, deps_x_dP, deps_x_dT, deps_x_deps_g, deps_x_dmco2_t, deps_x_dmh2o_t)
 end
 
+"""
+    crystal_fraction_eps_x(composition::Silicic, T::Float64, P::Float64, mH2O::Float64, mCO2::Float64)::Float64
+
+Spetialized version of crystal_fraction that computes `eps_x` only.
+"""
 function crystal_fraction_eps_x(
     composition::Silicic, T::Float64, P::Float64, mH2O::Float64, mCO2::Float64
 )::Float64
@@ -345,6 +363,11 @@ function crystal_fraction_eps_x(
     return eps_x
 end
 
+"""
+    crystal_fraction_eps_x(composition::Mafic, T::Float64, P::Float64, mH2O::Float64, mCO2::Float64)::Float64
+
+Spetialized version of crystal_fraction that computes `eps_x` only.
+"""
 function crystal_fraction_eps_x(
     composition::Mafic, T::Float64, P::Float64, mH2O::Float64, mCO2::Float64
 )::Float64
