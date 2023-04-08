@@ -172,6 +172,11 @@ function dC_co2dXco2_f(
 end
 
 # For function exsolve
+"""
+    build_meq(composition::Silicic, Pw::T, Pc::T, Temp::T, dPwdP::T, dPcdP::T, dPwdXco2::T, dPcdXco2::T)::NamedTuple{(:meq, :dmeqdT, :dmeqdP, :dmeqdXco2),NTuple{4,T}} where {T<:Float64}
+
+- This function is used within the `exsolve` function.
+"""
 function build_meq(
     composition::Silicic,
     Pw::T,
@@ -190,6 +195,11 @@ function build_meq(
     return (; meq, dmeqdT, dmeqdP, dmeqdXco2)
 end
 
+"""
+    build_meq(composition::Mafic, P::T, Temp::T, X_co2::T)::NamedTuple{(:meq, :dmeqdT, :dmeqdP, :dmeqdXco2),NTuple{4,T}} where {T<:Float64}
+
+- This function is used within the `exsolve` function.
+"""
 function build_meq(
     composition::Mafic, P::T, Temp::T, X_co2::T
 )::NamedTuple{(:meq, :dmeqdT, :dmeqdP, :dmeqdXco2),NTuple{4,T}} where {T<:Float64}
@@ -202,7 +212,11 @@ function build_meq(
     return (; meq, dmeqdT, dmeqdP, dmeqdXco2)
 end
 
-# For function exsolve
+"""
+    build_co2(Pw::T, Pc::T, Temp::T, dPwdP::T, dPcdP::T, dPwdXco2::T, dPcdXco2::T)::NamedTuple{(:C_co2, :dC_co2dT, :dC_co2dP, :dC_co2dXco2),NTuple{4,T}} where {T<:Float64}
+
+- This function is used within the `exsolve` function.
+"""
 function build_co2(
     Pw::T, Pc::T, Temp::T, dPwdP::T, dPcdP::T, dPwdXco2::T, dPcdXco2::T
 )::NamedTuple{(:C_co2, :dC_co2dT, :dC_co2dP, :dC_co2dXco2),NTuple{4,T}} where {T<:Float64}
@@ -271,6 +285,18 @@ end
 end
 
 # Water Paritioning Function
+"""
+    water(composition::Silicic, p::T, t::T, x::T, c::T)::T where {T<:Float64}
+
+- Water Paritioning Function
+- This function is used within the `exsolve3` function.
+
+# Arguments:
+- `p`: pressure (Pa)
+- `t`: temperature (K)
+- `x`: The previous mole fraction of CO2 (X_CO2)
+- `c`: amount of water
+"""
 function water(composition::Silicic, p::T, t::T, x::T, c::T)::T where {T<:Float64}
     @unpack h1, h2, h3, h4, h5, h6 = Exsolve3Silicic()
     return real(
@@ -284,6 +310,18 @@ function water(composition::Silicic, p::T, t::T, x::T, c::T)::T where {T<:Float6
     )
 end
 
+"""
+    water(composition::Silicic, p::T, t::T, x::T, c::T)::T where {T<:Float64}
+
+- Water Paritioning Function
+- This function is used within the `exsolve3` function.
+
+# Arguments:
+- `p`: pressure (Pa)
+- `t`: temperature (K)
+- `x`: The previous mole fraction of CO2 (X_CO2)
+- `c`: amount of water
+"""
 function water(composition::Mafic, p::T, t::T, x::T, c::T)::T where {T<:Float64}
     @unpack h1, h2, h3, h4, h5, h6, h7, h8, h9, h10 = Exsolve3Mafic()
     return real(
@@ -301,6 +339,17 @@ function water(composition::Mafic, p::T, t::T, x::T, c::T)::T where {T<:Float64}
 end
 
 # Derivative of Water wrt Xco2
+"""
+    dwater_dx(composition::Silicic, p::T, t::T, x::T)::T where {T<:Float64}
+
+- Function for the derivative of water with reference to X_CO2
+- This function is used within the `exsolve3` function.
+
+# Arguments:
+- `p`: pressure (Pa)
+- `t`: temperature (K)
+- `x`: The previous mole fraction of CO2 (X_CO2)
+"""
 function dwater_dx(composition::Silicic, p::T, t::T, x::T)::T where {T<:Float64}
     @unpack h1, h2, h3, h4, h5, h6 = Exsolve3Silicic()
     return real(
@@ -316,12 +365,38 @@ function dwater_dx(composition::Silicic, p::T, t::T, x::T)::T where {T<:Float64}
     )
 end
 
+"""
+    dwater_dx(composition::Mafic, p::T, t::T, x::T)::T where {T<:Float64}
+
+- Derivative of Water Partitioning Function with respect to X_CO2
+- This function is used within the `exsolve3` function.
+
+# Arguments:
+- `p`: pressure (Pa)
+- `t`: temperature (K)
+- `x`: The previous mole fraction of CO2 (X_CO2)
+"""
 function dwater_dx(composition::Mafic, p::T, t::T, x::T)::T where {T<:Float64}
     @unpack h3, h5, h7, h9 = Exsolve3Mafic()
     return h3 + h5 * t + h7 * p + 2 * h9 * x
 end
 
-# For function exsolve3, finding X_CO2
+"""
+    solve_NR(f, f_prime, errorTol::T, count_max::T, Xc_initial::T)::T where {T<:Float64}
+
+- Finding mole fraction of CO2 in gas (X_CO2).
+- This function is used within the `exsolve3` function.
+
+# Arguments
+- `f`: Water Paritioning Function
+- `f_prime`: Function for the derivative of water with reference to X_CO2
+- `errorTol`: error tolerance, the default value is 1e-10
+- `count_max`: Maximum loop count, the default value is 1e2
+- `Xc_initial`: initial guess of X_CO2, the dedault value is 1e-2
+
+# Returns
+- `X_CO2`: mole fraction of CO2 in gas
+"""
 function solve_NR(
     f, f_prime, errorTol::T, count_max::T, Xc_initial::T
 )::T where {T<:Float64}
@@ -438,13 +513,19 @@ meltingcurve_dict = Dict(
     Mafic() => Dict("a" => MeltingCurveMaficA(), "b" => MeltingCurveMaficB()),
 )
 
+#=
+TODO:
+- use more meaningful variable names instead of "a", "b", "c".
+=#
+
 """
     dX_dxdydz(composition::Union{Silicic,Mafic}, s::String, x::T, y::T, z::T)::NamedTuple{(:X, :dXdx, :dXdy, :dXdz),NTuple{4,T}} where {T<:Float64}
 
-Calculate value from different parameter sets (# of parameter sets: Silicic: 3, Mafic: 2)
+- This function is used within the `exsolve3` function.
+- Calculate value from different parameter sets (# of parameter sets: Silicic: 3, Mafic: 2)
 
 # Arguments
-- `composition`: Silicic() or Mafic()
+- `composition`: Silicic or Mafic
 - `s`: represent different set of parammeters, the Silicic case has "a", "b", "c", and the Mafic has "a", "b".
 - `x`: Water (H2O)
 - `y`: Gas (CO2)
