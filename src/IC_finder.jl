@@ -148,7 +148,6 @@ function IC_Finder(
                 abs((eps_g0 - eps_g_prev) / eps_g_prev) > Tol
             ) && count < max_count
         )
-            eps_x0 = crystal_fraction_eps_x(composition, T, P, m_h2o_tot, m_co2_tot)
             function fun(x)
                 return real(
                     mco2_dissolved_sat(x, P, T) * (1 - eps_g0 - eps_x0) * V * rho_m +
@@ -201,7 +200,6 @@ function IC_Finder(
                     abs((X_co20 - X_co2_prev) / X_co2_prev) > Tol ||
                     abs((eps_g0 - eps_g_prev) / eps_g_prev) > Tol
                 ) && count < max_count || X_co20 > 1
-                    eps_x0 = crystal_fraction_eps_x(composition, T, P, m_h2o_tot, m_co2_tot)
                     function fun(x)
                         return real(
                             mco2_dissolved_sat(x, P, T) *
@@ -326,7 +324,6 @@ function IC_Finder(
                 abs((eps_g0 - eps_g_prev) / eps_g_prev) > Tol
             ) && count < max_count
         )
-            eps_x0 = crystal_fraction_eps_x(composition, T_0, P_0, mH2O, mCO2)
             function fun(x)
                 return real(
                     mco2_dissolved_sat(x, P_0, T_0) * (1 - eps_g0 - eps_x0) * V_0 * rho_m0 +
@@ -391,7 +388,6 @@ function IC_Finder(
                           count < max_count &&
                           X_co20 <= 1
                     count_loop = count_loop + 1
-                    eps_x0 = crystal_fraction_eps_x(composition, T_0, P_0, mH2O, mCO2)
                     function fun(x)
                         return real(
                             mco2_dissolved_sat(x, P_0, T_0) *
