@@ -89,3 +89,24 @@ function get_phase(composition::Union{Silicic,Mafic}, P::Float64, T::Float64, V:
     end
     return (; phase, m_co2_melt)
 end
+
+
+function fun(x::Float64, P::Float64, T::Float64, eps_g0::Float64, eps_x0::Float64, V::Float64, rho_m::Float64, rho_g::Float64, mm_co2::Float64, mm_h2o::Float64, M_co2::Float64)::Float64
+    sol = real(mco2_dissolved_sat(x, P, T) * (1 - eps_g0 - eps_x0) * V * rho_m + eps_g0 * rho_g * V * x * mm_co2 / (x * mm_co2 + (1 - x) * mm_h2o) - M_co2)
+    return sol
+end
+
+function solve_X_co2(eps_g0::Float64, X_co2_prev::Float64, P::Float64, T::Float64, eps_x0::Float64, V::Float64, rho_m::Float64, rho_g::Float64, M_co2::Float64, Tol::Float64)::Float64
+    c = ConstantValues()
+    mm_co2, mm_h2o = c.mm_co2, c.mm_h2o
+    fx = ZeroProblem(x -> fun(x, P, T, eps_g0, eps_x0, V, rho_m, rho_g, mm_co2, mm_h2o, M_co2), X_co2_prev)
+    X_co20 = solve(fx; xatol=Tol, atol=Tol, maxiters=100)
+    if X_co20 < 0 || X_co20 > 1
+        X_co20 = -1.0
+        return X_co20
+    end
+    fraction = ParamICFinder().fraction
+    Xmean = (1 - fraction) * X_co2_prev + fraction * X_co20
+    X_co20 = Xmean
+    return X_co20
+end

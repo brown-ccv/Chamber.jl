@@ -57,7 +57,7 @@ function chamber(
             param.nn, param.AA, param.G, param.M = r.nn, r.AA, r.G, r.M
         end
 
-        c = Const()
+        c = ConstantValues()
         param_IC_Finder = ParamICFinder()
         param_saved_var = ParamSaved()
         sw = SW()
@@ -118,8 +118,6 @@ function chamber(
             T_0,
             V_0,
             rc.rho_m0,
-            param.mm_co2,
-            param.mm_h2o,
             param_IC_Finder,
         )
 
@@ -475,8 +473,6 @@ function chamber(
                     int.u[2],
                     int.u[4],
                     int.u[5],
-                    param.mm_co2,
-                    param.mm_h2o,
                     param_IC_Finder,
                 )
 
@@ -498,8 +494,6 @@ function chamber(
                         int.u[2],
                         int.u[4],
                         int.u[5],
-                        param.mm_co2,
-                        param.mm_h2o,
                         param_IC_Finder,
                     )
                     param_saved_var.phase = phase
@@ -525,8 +519,6 @@ function chamber(
                             int.u[2],
                             int.u[4],
                             int.u[5],
-                            param.mm_co2,
-                            param.mm_h2o,
                             param_IC_Finder,
                         )
                         param_saved_var.phase = phase

@@ -26,11 +26,12 @@ end
 
 OdeSetting() = OdeSetting{Float64}(1e-8, 1e-8, 1e5, 1e7)
 
-struct Const{T}
-    T_surface::T   # surface temperature (K)
-    T_gradient::T  # thermal gradient (K/m)
-    grav_acc::T    # gravitational acceleration (m/s2)
-    Const() = new{Float64}(273.0, 32 / 1e3, 9.81)
+@with_kw struct ConstantValues{T}
+    T_surface::T = 273.0     # surface temperature (K)
+    T_gradient::T = 32 / 1e3 # thermal gradient (K/m)
+    grav_acc::T = 9.81       # gravitational acceleration (m/s2)
+    mm_co2::T = 44.01e-3     # molecular mass of CO2
+    mm_h2o::T = 18.02e-3     # molecular mass of H2O
 end
 
 ## Rheology of the crust
