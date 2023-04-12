@@ -20,6 +20,7 @@ include("./write_csv.jl")
 include("./plot_figs.jl")
 include("./boundary_condition.jl")
 include("./runCode-func.jl")
+include("./ic_finder-utils.jl")
 include("./IC_finder.jl")
 include("./utils-matrix.jl")
 include("../scripts/runCode.jl")
@@ -56,13 +57,14 @@ export Silicic,
     find_liq,
     gas_heat_capacity,
     Co2PartitionCoeff,
-    IC_Finder,
     boundary_conditions_new,
     heat_conduction_chamber_profileCH,
     water,
     dwater_dx,
     solve_NR,
     exsolve3,
+    get_phase,
+    IC_Finder,
     GLQ_points_weights_hard,
     compute_dXdP_dXdT,
     odeChamber,

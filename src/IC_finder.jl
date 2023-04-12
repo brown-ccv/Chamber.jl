@@ -13,8 +13,7 @@ function mco2_dissolved_sat(X::Float64, P::Float64, T::Float64)::Float64
     Pc = P_MPa * X
     Pw = P_MPa * (1 - X)
     @unpack c1, c2, c3, c4 = Co2PartitionCoeff()
-    sol = real(Pc * (c1 + c2 * Pw) / T + Pc * (c3 * Complex(Pw)^0.5 + c4 * Complex(Pw)^1.5))
-    sol = sol / 1e6
+    sol = real(Pc * (c1 + c2 * Pw) / T + Pc * (c3 * Complex(Pw)^0.5 + c4 * Complex(Pw)^1.5)) / 1e6
     return sol
 end
 
@@ -35,8 +34,7 @@ function meq_water(composition::Silicic, X::Float64, P::Float64, T::Float64)::Fl
         (h1 * Complex(Pw)^0.5 + h2 * Pw + h3 * Complex(Pw)^1.5) / T +
         h4 * Complex(Pw)^1.5 +
         Pc * (h5 * Complex(Pw)^0.5 + h6 * Pw),
-    )
-    sol = sol / 100
+    ) / 100
     return sol
 end
 
@@ -70,15 +68,15 @@ end
     IC_Finder(composition::Silicic, M_h2o::Float64, M_co2::Float64, M_tot::Float64, P::Float64, T::Float64, V::Float64, rho_m::Float64, mm_co2::Float64, mm_h2o::Float64, param_IC::ParamICFinder{Float64})::NamedTuple{(:eps_g0, :X_co20, :mco2_diss, :phase),NTuple{4,Float64}}
 
 # Arguments
-`M_h2o`: total mass of water in magma
-`M_co2`: total mass of CO2 in magma
-`M_tot`: total mass of magma
-`P`: Pressure (Pa)
-`T`: Temperature (K)
-`V`: chamber volume (m^3)
-`rho_m`: density of the melt
-`mm_co2`: molecular mass of CO2
-`mm_h2o`: molecular mass of H2O
+- `M_h2o`: total mass of water in magma
+- `M_co2`: total mass of CO2 in magma
+- `M_tot`: total mass of magma
+- `P`: Pressure (Pa)
+- `T`: Temperature (K)
+- `V`: chamber volume (m^3)
+- `rho_m`: density of the melt
+- `mm_co2`: molecular mass of CO2
+- `mm_h2o`: molecular mass of H2O
 """
 function IC_Finder(
     composition::Silicic,
@@ -108,30 +106,12 @@ function IC_Finder(
     m_co2_tot = M_co2 / M_tot
     eps_x0 = crystal_fraction_eps_x(composition, T, P, m_h2o_tot, m_co2_tot)
 
-    # Fixing total mass of volatiles set in MainChamber in real model
-    eps_m0 = 1 - eps_x0
-    m_h2o_melt = M_h2o / (V * rho_m * eps_m0)
-    m_co2_melt = M_co2 / (V * rho_m * eps_m0)
-
-    # CHECK IF SATURATED
-    m_eq_max = exsolve_meq(composition, P, T, 0.0)
-
-    if m_h2o_melt > m_eq_max
-        phase = 3
-    else
-        C_co2_sat = exsolve3(composition, P, T, m_h2o_melt)[1]
-        if m_co2_melt > C_co2_sat  ###
-            phase = 3
-        else
-            phase = 2
-        end
-    end
+    phase, m_co2_melt = get_phase(composition, P, T, V, rho_m, M_h2o, M_co2, eps_x0)
 
     if phase == 2
         X_co20 = 0.0
         eps_g0 = 0.0
         mco2_diss = m_co2_melt
-
     else
         # First Guesses
         eps_g_guess = eps_g_guess_ini
@@ -148,13 +128,7 @@ function IC_Finder(
                 abs((eps_g0 - eps_g_prev) / eps_g_prev) > Tol
             ) && count < max_count
         )
-            function fun(x)
-                return real(
-                    mco2_dissolved_sat(x, P, T) * (1 - eps_g0 - eps_x0) * V * rho_m +
-                    eps_g0 * rho_g * V * x * mm_co2 / (x * mm_co2 + (1 - x) * mm_h2o) -
-                    M_co2,
-                )
-            end
+            fun(x) = real(mco2_dissolved_sat(x, P, T) * (1 - eps_g0 - eps_x0) * V * rho_m + eps_g0 * rho_g * V * x * mm_co2 / (x * mm_co2 + (1 - x) * mm_h2o) - M_co2)
             X_co2_prev = X_co20
             fx = ZeroProblem(fun, X_co2_prev)
             X_co20 = solve(fx; xatol=Tol, atol=Tol, maxiters=100)
@@ -200,16 +174,7 @@ function IC_Finder(
                     abs((X_co20 - X_co2_prev) / X_co2_prev) > Tol ||
                     abs((eps_g0 - eps_g_prev) / eps_g_prev) > Tol
                 ) && count < max_count || X_co20 > 1
-                    function fun(x)
-                        return real(
-                            mco2_dissolved_sat(x, P, T) *
-                            (1 - eps_g0 - eps_x0) *
-                            V *
-                            rho_m +
-                            eps_g0 * rho_g * V * x * mm_co2 /
-                            (x * mm_co2 + (1 - x) * mm_h2o) - M_co2,
-                        )
-                    end
+                    fun(x) = real(mco2_dissolved_sat(x, P, T) * (1 - eps_g0 - eps_x0) * V * rho_m + eps_g0 * rho_g * V * x * mm_co2 / (x * mm_co2 + (1 - x) * mm_h2o) - M_co2)
                     X_co2_prev = X_co20
                     fx = ZeroProblem(fun, X_co2_prev)
                     X_co20 = solve(fx; xatol=Tol, atol=Tol, maxiters=100)
@@ -243,28 +208,28 @@ function IC_Finder(
 end
 
 """
-    IC_Finder(composition::Mafic, M_h2o_0::Float64, M_co2_0::Float64, M_tot::Float64, P_0::Float64, T_0::Float64, V_0::Float64, rho_m0::Float64, mm_co2::Float64, mm_h2o::Float64, param_IC::ParamICFinder{Float64})::NamedTuple{(:eps_g0, :X_co20, :mco2_diss, :phase),NTuple{4,Float64}}
+    IC_Finder(composition::Mafic, M_h2o::Float64, M_co2::Float64, M_tot::Float64, P::Float64, T::Float64, V::Float64, rho_m::Float64, mm_co2::Float64, mm_h2o::Float64, param_IC::ParamICFinder{Float64})::NamedTuple{(:eps_g0, :X_co20, :mco2_diss, :phase),NTuple{4,Float64}}
 
 # Arguments
-`M_h2o_0`: total mass of water in magma
-`M_co2_0`: total mass of CO2 in magma
-`M_tot`: total mass of magma
-`P_0`: Pressure (Pa)
-`T_0`: Temperature (K)
-`V_0`: chamber volume (m^3)
-`rho_m0`: density of the melt
-`mm_co2`: molecular mass of CO2
-`mm_h2o`: molecular mass of H2O
+- `M_h2o`: total mass of water in magma
+- `M_co2`: total mass of CO2 in magma
+- `M_tot`: total mass of magma
+- `P`: Pressure (Pa)
+- `T`: Temperature (K)
+- `V`: chamber volume (m^3)
+- `rho_m`: density of the melt
+- `mm_co2`: molecular mass of CO2
+- `mm_h2o`: molecular mass of H2O
 """
 function IC_Finder(
     composition::Mafic,
-    M_h2o_0::Float64,
-    M_co2_0::Float64,
+    M_h2o::Float64,
+    M_co2::Float64,
     M_tot::Float64,
-    P_0::Float64,
-    T_0::Float64,
-    V_0::Float64,
-    rho_m0::Float64,
+    P::Float64,
+    T::Float64,
+    V::Float64,
+    rho_m::Float64,
     mm_co2::Float64,
     mm_h2o::Float64,
     param_IC::ParamICFinder{Float64},
@@ -279,35 +244,18 @@ function IC_Finder(
     delta_X_co2 = param_IC.delta_X_co2
     ## ------------------------------
     count_fzeros = 0
-    rho_g0 = eos_g_rho_g(P_0, T_0)
+    rho_g0 = eos_g_rho_g(P, T)
 
-    mH2O = M_h2o_0 / M_tot
-    mCO2 = M_co2_0 / M_tot
-    eps_x0 = crystal_fraction_eps_x(composition, T_0, P_0, mH2O, mCO2)
+    m_h2o_tot = M_h2o / M_tot
+    m_co2_tot = M_co2 / M_tot
+    eps_x0 = crystal_fraction_eps_x(composition, T, P, m_h2o_tot, m_co2_tot)
 
-    eps_m0 = 1 - eps_x0
-
-    Conc_Water = M_h2o_0 / (V_0 * rho_m0 * eps_m0)
-    Conc_co2 = M_co2_0 / (V_0 * rho_m0 * eps_m0)
-
-    # CHECK IF SATURATED
-    m_eq_max = exsolve_meq(composition, P_0, T_0, 0.0)
-
-    if Conc_Water > m_eq_max
-        phase = 3
-    else
-        C_co2_sat = exsolve3(composition, P_0, T_0, Conc_Water)[1]
-        if Conc_co2 > C_co2_sat
-            phase = 3
-        else
-            phase = 2
-        end
-    end
+    phase, m_co2_melt = get_phase(composition, P, T, V, rho_m, M_h2o, M_co2, eps_x0)
 
     if phase == 2
         X_co20 = 0.0
         eps_g0 = 0.0
-        mco2_diss = Conc_co2
+        mco2_diss = m_co2_melt
     else
         # First Guesses
         eps_g_guess = eps_g_guess_ini
@@ -326,9 +274,9 @@ function IC_Finder(
         )
             function fun(x)
                 return real(
-                    mco2_dissolved_sat(x, P_0, T_0) * (1 - eps_g0 - eps_x0) * V_0 * rho_m0 +
-                    eps_g0 * rho_g0 * V_0 * x * mm_co2 / (x * mm_co2 + (1 - x) * mm_h2o) -
-                    M_co2_0,
+                    mco2_dissolved_sat(x, P, T) * (1 - eps_g0 - eps_x0) * V * rho_m +
+                    eps_g0 * rho_g0 * V * x * mm_co2 / (x * mm_co2 + (1 - x) * mm_h2o) -
+                    M_co2,
                 )
             end
             if ~isreal(X_co20) || isnan(X_co20)
@@ -341,13 +289,13 @@ function IC_Finder(
             count_fzeros = count_fzeros + 1
             Xmean = (1 - fraction) * X_co2_prev + fraction * X_co20
             X_co20 = Xmean
-            mwater_dissolved = meq_water(composition, X_co20, P_0, T_0)
-            mco2_diss = mco2_dissolved_sat(X_co20, P_0, T_0)
+            mwater_dissolved = meq_water(composition, X_co20, P, T)
+            mco2_diss = mco2_dissolved_sat(X_co20, P, T)
             eps_m = 1 - eps_g0 - eps_x0
             Num =
-                M_co2_0 - mco2_diss * eps_m * V_0 * rho_m0 + M_h2o_0 -
-                mwater_dissolved * eps_m * V_0 * rho_m0
-            Den = rho_g0 * V_0
+                M_co2 - mco2_diss * eps_m * V * rho_m + M_h2o -
+                mwater_dissolved * eps_m * V * rho_m
+            Den = rho_g0 * V
             eps_g_prev = eps_g0
             eps_g0 = (1 - fraction) * eps_g_prev + fraction * Num / Den
             count = count + 1
@@ -390,12 +338,12 @@ function IC_Finder(
                     count_loop = count_loop + 1
                     function fun(x)
                         return real(
-                            mco2_dissolved_sat(x, P_0, T_0) *
+                            mco2_dissolved_sat(x, P, T) *
                             (1 - eps_g0 - eps_x0) *
-                            V_0 *
-                            rho_m0 +
-                            eps_g0 * rho_g0 * V_0 * x * mm_co2 /
-                            (x * mm_co2 + (1 - x) * mm_h2o) - M_co2_0,
+                            V *
+                            rho_m +
+                            eps_g0 * rho_g0 * V * x * mm_co2 /
+                            (x * mm_co2 + (1 - x) * mm_h2o) - M_co2,
                         )
                     end
 
@@ -409,14 +357,14 @@ function IC_Finder(
                     count_fzeros = count_fzeros + 1
                     Xmean = (1 - fraction) * X_co2_prev + fraction * X_co20
                     X_co20 = Xmean
-                    mwater_dissolved = meq_water(composition, X_co20, P_0, T_0)
-                    mco2_diss = mco2_dissolved_sat(X_co20, P_0, T_0)
+                    mwater_dissolved = meq_water(composition, X_co20, P, T)
+                    mco2_diss = mco2_dissolved_sat(X_co20, P, T)
 
                     eps_m = 1 - eps_g0 - eps_x0
                     Num =
-                        M_co2_0 - mco2_diss * eps_m * V_0 * rho_m0 + M_h2o_0 -
-                        mwater_dissolved * eps_m * V_0 * rho_m0
-                    Den = rho_g0 * V_0
+                        M_co2 - mco2_diss * eps_m * V * rho_m + M_h2o -
+                        mwater_dissolved * eps_m * V * rho_m
+                    Den = rho_g0 * V
                     eps_g_prev = eps_g0
                     eps_g0 = (1 - fraction) * eps_g_prev + fraction * Num / Den
                     count = count + 1
@@ -440,13 +388,13 @@ function IC_Finder(
         if eps_g0 <= 0 || X_co20 < 0
             X_co20 = 0.0
             eps_g0 = 0.0
-            mco2_diss = Conc_co2
+            mco2_diss = m_co2_melt
             phase = 2
         end
         if count == max_count && (Err_eps_g > Tol || Err_Xco2 > Tol)
             X_co20 = 0.0
             eps_g0 = 0.0
-            mco2_diss = Conc_co2
+            mco2_diss = m_co2_melt
             phase = 2
         end
         eps_g0 = real(eps_g0)
