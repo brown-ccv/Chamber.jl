@@ -96,7 +96,7 @@ function fun(x::Float64, P::Float64, T::Float64, eps_g0::Float64, eps_x0::Float6
     return sol
 end
 
-function solve_X_co2(eps_g0::Float64, X_co2_prev::Float64, P::Float64, T::Float64, eps_x0::Float64, V::Float64, rho_m::Float64, rho_g::Float64, M_co2::Float64, Tol::Float64)::Float64
+function solve_X_co2(composition::Silicic, eps_g0::Float64, X_co2_prev::Float64, P::Float64, T::Float64, eps_x0::Float64, V::Float64, rho_m::Float64, rho_g::Float64, M_co2::Float64, Tol::Float64)::Float64
     c = ConstantValues()
     mm_co2, mm_h2o = c.mm_co2, c.mm_h2o
     fx = ZeroProblem(x -> fun(x, P, T, eps_g0, eps_x0, V, rho_m, rho_g, mm_co2, mm_h2o, M_co2), X_co2_prev)
@@ -105,6 +105,17 @@ function solve_X_co2(eps_g0::Float64, X_co2_prev::Float64, P::Float64, T::Float6
         X_co20 = -1.0
         return X_co20
     end
+    fraction = ParamICFinder().fraction
+    Xmean = (1 - fraction) * X_co2_prev + fraction * X_co20
+    X_co20 = Xmean
+    return X_co20
+end
+
+function solve_X_co2(composition::Mafic, eps_g0::Float64, X_co2_prev::Float64, P::Float64, T::Float64, eps_x0::Float64, V::Float64, rho_m::Float64, rho_g::Float64, M_co2::Float64, Tol::Float64)::Float64
+    c = ConstantValues()
+    mm_co2, mm_h2o = c.mm_co2, c.mm_h2o
+    fx = ZeroProblem(x -> fun(x, P, T, eps_g0, eps_x0, V, rho_m, rho_g, mm_co2, mm_h2o, M_co2), X_co2_prev)
+    X_co20 = solve(fx; xatol=Tol, atol=Tol, maxiters=100)
     fraction = ParamICFinder().fraction
     Xmean = (1 - fraction) * X_co2_prev + fraction * X_co20
     X_co20 = Xmean
