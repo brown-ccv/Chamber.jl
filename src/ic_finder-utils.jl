@@ -110,3 +110,14 @@ function solve_X_co2(eps_g0::Float64, X_co2_prev::Float64, P::Float64, T::Float6
     X_co20 = Xmean
     return X_co20
 end
+
+function get_eps_g(composition::Union{Silicic,Mafic}, eps_g_prev::Float64, X_co20::Float64, P::Float64, T::Float64, eps_x0::Float64, V::Float64, rho_m::Float64, rho_g::Float64, M_h2o::Float64, M_co2::Float64)::NamedTuple{(:eps_g0, :mco2_diss),NTuple{2,Float64}}
+    mwater_dissolved = meq_water(composition, X_co20, P, T)
+    mco2_diss = mco2_dissolved_sat(X_co20, P, T)
+    eps_m = 1 - eps_g_prev - eps_x0
+    Num = M_co2 - mco2_diss * eps_m * V * rho_m + M_h2o - mwater_dissolved * eps_m * V * rho_m
+    Den = rho_g * V
+    fraction = ParamICFinder().fraction
+    eps_g0 = (1 - fraction) * eps_g_prev + fraction * Num / Den
+    return (; eps_g0, mco2_diss)
+end
