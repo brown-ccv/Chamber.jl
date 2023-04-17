@@ -4,17 +4,52 @@ include("./solver_methods.jl")
 """
     chamber(composition::Union{Silicic,Mafic}, end_time::Float64, log_volume_km3::Float64, InitialConc_H2O::Float64, InitialConc_CO2::Float64, log_vfr::Float64, depth::Float64, methods::Dict=methods, method::String="Tsit5", odesetting=OdeSetting(), ini_eps_x::Float64=0.15, rheol::String="old")
 
-The volcano eruption simulation
+Simulate the eruption of a volcano using a model for the frequency of eruptions of upper crustal magma chambers based on Degruyter and Huber (2014).
 
 # Arguments
+- `composition`: Either a `Silicic` or a `Mafic` object that specifies the composition of the magma.
+- `end_time`: Simulation period in seconds.
+- `log_volume_km3`: The estimated volume of the volcano chamber in logarithmic scale.
+- `InitialConc_H2O`: The initial water content of the magma, as a fraction of the total mass.
+- `InitialConc_CO2`: The initial carbon dioxide content of the magma, as a fraction of the total mass.
+- `log_vfr`: The logarithm of the volume flux rate, in cubic meters per second.
+- `depth`: Estimate of depth of volcano chamber in meters.
 
-- `composition`: "Silicic()" or "Mafic()"
-- `end_time`: simulation period. ex. 3e9
-- `log_volume_km3`: Estimate volume of volcano chamber in log scale.
-- `InitialConc_H2O`: water content
-- `InitialConc_CO2`: CO2 content
-- `log_vfr`: 
-- `depth`: Estimate depth of volcano chamber
+# Returns
+- A `DataFrame` containing the solution with columns: timestamp, P+dP, T, eps_g, V, rho_m, rho_x, X_CO2, total_mass, total_mass_H2O, and total_mass_CO2.
+
+# Output
+- `out.csv`: A CSV file containing the solution with headers: timestamp, P+dP, T, eps_g, V, rho_m, rho_x, X_CO2, total_mass, total_mass_H2O, and total_mass_CO2.
+- Figures of the following variables plotted against time: P+dP, T, eps_g, V, X_CO2, total_mass.
+
+# References
+- W. Degruyter and C. Huber. A model for eruption frequency of upper crustal silicic magma chambers. Earth Planet. Sci. Lett. (2014).
+
+# Examples
+```
+# Run a simulation with silicic magma chamber
+julia> composition = Silicic()
+julia> end_time = 3e9
+julia> log_volume_km3 = 0.2
+julia> InitialConc_H2O = 0.04
+julia> InitialConc_CO2 = 0.001
+julia> log_vfr = -3.3
+julia> depth = 8e3
+
+julia> chamber(composition, end_time, log_volume_km3, InitialConc_H2O, InitialConc_CO2, log_vfr, depth)
+
+# Run a simulation with mafic magma chamber
+julia> composition = Mafic()
+julia> end_time = 3e9
+julia> log_volume_km3 = 0.2
+julia> InitialConc_H2O = 0.01
+julia> InitialConc_CO2 = 0.001
+julia> log_vfr = -3.3
+julia> depth = 8e3
+
+julia> chamber(composition, end_time, log_volume_km3, InitialConc_H2O, InitialConc_CO2, log_vfr, depth)
+```
+
 """
 function chamber(
     composition::Union{Silicic,Mafic},
@@ -190,6 +225,7 @@ function chamber(
     end
     println(to)
     @info(to)
+    reset_timer!(to)
     close(io)
     df = DataFrame(sol)
     write_csv(df, path)
