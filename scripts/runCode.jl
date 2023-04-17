@@ -57,7 +57,7 @@ function chamber(
             param.nn, param.AA, param.G, param.M = r.nn, r.AA, r.G, r.M
         end
 
-        c = Const()
+        c = ConstantValues()
         param_IC_Finder = ParamICFinder()
         param_saved_var = ParamSaved()
         sw = SW()
@@ -110,17 +110,7 @@ function chamber(
         end
 
         eps_g0, X_co20, C_co2, phase = IC_Finder(
-            composition,
-            M_h2o_0,
-            M_co2_0,
-            M_tot,
-            P_0,
-            T_0,
-            V_0,
-            rc.rho_m0,
-            param.mm_co2,
-            param.mm_h2o,
-            param_IC_Finder,
+            composition, M_h2o_0, M_co2_0, M_tot, P_0, T_0, V_0, rc.rho_m0, param_IC_Finder
         )
 
         println("IC_Finder done")
