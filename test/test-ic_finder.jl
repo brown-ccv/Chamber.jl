@@ -11,16 +11,14 @@ include("ic_finder-silicic-data.jl")
     eps_g, X_co2, mco2_diss, phase = IC_Finder(
         composition, M_h2o_2, M_co2_2, M_tot_2, P_2, T_2, V_2, rho_m_2, param_IC
     )
-    @test (eps_g0_2, X_co20_2, mco2_diss0_2, phase0_2) ==
-        (eps_g, X_co2, mco2_diss, phase)
+    @test (eps_g0_2, X_co20_2, mco2_diss0_2, phase0_2) == (eps_g, X_co2, mco2_diss, phase)
 
     # Case 3
     param_IC.max_count = 150
     eps_g, X_co2, mco2_diss, phase = IC_Finder(
         composition, M_h2o_3, M_co2_3, M_tot_3, P_3, T_3, V_3, rho_m_3, param_IC
     )
-    @test (eps_g0_3, X_co20_3, mco2_diss0_3, phase0_3) ==
-        (eps_g, X_co2, mco2_diss, phase)
+    @test (eps_g0_3, X_co20_3, mco2_diss0_3, phase0_3) == (eps_g, X_co2, mco2_diss, phase)
     param_IC.max_count = 100
 end
 
@@ -36,22 +34,19 @@ include("ic_finder-mafic-data.jl")
     eps_g, X_co2, mco2_diss, phase = IC_Finder(
         composition, M_h2o_2, M_co2_2, M_tot_2, P_2, T_2, V_2, rho_m_2, param_IC
     )
-    @test (eps_g0_2, X_co20_2, mco2_diss0_2, phase0_2) ==
-        (eps_g, X_co2, mco2_diss, phase)
+    @test (eps_g0_2, X_co20_2, mco2_diss0_2, phase0_2) == (eps_g, X_co2, mco2_diss, phase)
 
     # Case 3
     eps_g, X_co2, mco2_diss, phase = IC_Finder(
         composition, M_h2o_3, M_co2_3, M_tot_3, P_3, T_3, V_3, rho_m_3, param_IC
     )
-    @test (eps_g0_3, X_co20_3, mco2_diss0_3, phase0_3) ==
-        (eps_g, X_co2, mco2_diss, phase)
+    @test (eps_g0_3, X_co20_3, mco2_diss0_3, phase0_3) == (eps_g, X_co2, mco2_diss, phase)
 
     # Case 4
     param_IC.max_count = 150
     eps_g, X_co2, mco2_diss, phase = IC_Finder(
         composition, M_h2o_4, M_co2_4, M_tot_4, P_4, T_4, V_4, rho_m_4, param_IC
     )
-    @test (eps_g0_4, X_co20_4, mco2_diss0_4, phase0_4) ==
-        (eps_g, X_co2, mco2_diss, phase)
+    @test (eps_g0_4, X_co20_4, mco2_diss0_4, phase0_4) == (eps_g, X_co2, mco2_diss, phase)
     param_IC.max_count = 100
 end

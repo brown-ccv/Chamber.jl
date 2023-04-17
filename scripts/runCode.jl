@@ -110,15 +110,7 @@ function chamber(
         end
 
         eps_g0, X_co20, C_co2, phase = IC_Finder(
-            composition,
-            M_h2o_0,
-            M_co2_0,
-            M_tot,
-            P_0,
-            T_0,
-            V_0,
-            rc.rho_m0,
-            param_IC_Finder,
+            composition, M_h2o_0, M_co2_0, M_tot, P_0, T_0, V_0, rc.rho_m0, param_IC_Finder
         )
 
         println("IC_Finder done")

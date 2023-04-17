@@ -12,7 +12,9 @@ function mco2_dissolved_sat(X::Float64, P::Float64, T::Float64)::Float64
     Pc = P_MPa * X
     Pw = P_MPa * (1 - X)
     @unpack c1, c2, c3, c4 = Co2PartitionCoeff()
-    sol = real(Pc * (c1 + c2 * Pw) / T + Pc * (c3 * Complex(Pw)^0.5 + c4 * Complex(Pw)^1.5)) / 1e6
+    sol =
+        real(Pc * (c1 + c2 * Pw) / T + Pc * (c3 * Complex(Pw)^0.5 + c4 * Complex(Pw)^1.5)) /
+        1e6
     return sol
 end
 
@@ -29,11 +31,12 @@ function meq_water(composition::Silicic, X::Float64, P::Float64, T::Float64)::Fl
     Pw = (1 - X) * P
     Pc = X * P
     @unpack h1, h2, h3, h4, h5, h6 = Exsolve3Silicic()
-    sol = real(
-        (h1 * Complex(Pw)^0.5 + h2 * Pw + h3 * Complex(Pw)^1.5) / T +
-        h4 * Complex(Pw)^1.5 +
-        Pc * (h5 * Complex(Pw)^0.5 + h6 * Pw),
-    ) / 100
+    sol =
+        real(
+            (h1 * Complex(Pw)^0.5 + h2 * Pw + h3 * Complex(Pw)^1.5) / T +
+            h4 * Complex(Pw)^1.5 +
+            Pc * (h5 * Complex(Pw)^0.5 + h6 * Pw),
+        ) / 100
     return sol
 end
 
@@ -72,7 +75,16 @@ end
 - `phase`: 2 or 3
 - `m_co2_melt`
 """
-function get_phase(composition::Union{Silicic,Mafic}, P::Float64, T::Float64, V::Float64, rho_m::Float64, M_h2o::Float64, M_co2::Float64, eps_x0::Float64)::NamedTuple{(:phase, :m_co2_melt),NTuple{2,Float64}}
+function get_phase(
+    composition::Union{Silicic,Mafic},
+    P::Float64,
+    T::Float64,
+    V::Float64,
+    rho_m::Float64,
+    M_h2o::Float64,
+    M_co2::Float64,
+    eps_x0::Float64,
+)::NamedTuple{(:phase, :m_co2_melt),NTuple{2,Float64}}
     # Fixing total mass of volatiles set in MainChamber in real model
     m_h2o_melt = M_h2o / (V * rho_m * (1 - eps_x0))
     m_co2_melt = M_co2 / (V * rho_m * (1 - eps_x0))
@@ -90,16 +102,58 @@ function get_phase(composition::Union{Silicic,Mafic}, P::Float64, T::Float64, V:
     return (; phase, m_co2_melt)
 end
 
+"""
+    fun(x::Float64, P::Float64, T::Float64, eps_g0::Float64, eps_x0::Float64, V::Float64, rho_m::Float64, rho_g::Float64, mm_co2::Float64, mm_h2o::Float64, M_co2::Float64)::Float64
 
-function fun(x::Float64, P::Float64, T::Float64, eps_g0::Float64, eps_x0::Float64, V::Float64, rho_m::Float64, rho_g::Float64, mm_co2::Float64, mm_h2o::Float64, M_co2::Float64)::Float64
-    sol = real(mco2_dissolved_sat(x, P, T) * (1 - eps_g0 - eps_x0) * V * rho_m + eps_g0 * rho_g * V * x * mm_co2 / (x * mm_co2 + (1 - x) * mm_h2o) - M_co2)
+- This function is used within the `solve_X_co2` function to solve X_co20.
+"""
+function fun(
+    x::Float64,
+    P::Float64,
+    T::Float64,
+    eps_g0::Float64,
+    eps_x0::Float64,
+    V::Float64,
+    rho_m::Float64,
+    rho_g::Float64,
+    mm_co2::Float64,
+    mm_h2o::Float64,
+    M_co2::Float64,
+)::Float64
+    sol = real(
+        mco2_dissolved_sat(x, P, T) * (1 - eps_g0 - eps_x0) * V * rho_m +
+        eps_g0 * rho_g * V * x * mm_co2 / (x * mm_co2 + (1 - x) * mm_h2o) - M_co2,
+    )
     return sol
 end
 
-function solve_X_co2(composition::Silicic, eps_g0::Float64, X_co2_prev::Float64, P::Float64, T::Float64, eps_x0::Float64, V::Float64, rho_m::Float64, rho_g::Float64, M_co2::Float64, Tol::Float64)::Float64
+"""
+    solve_X_co2(composition::Silicic, eps_g0::Float64, X_co2_prev::Float64, P::Float64, T::Float64, eps_x0::Float64, V::Float64, rho_m::Float64, rho_g::Float64, M_co2::Float64, Tol::Float64)::Float64
+
+- This function is used within the `IC_Finder` function to solve X_co20.
+
+# Returns
+- `X_co20`
+"""
+function solve_X_co2(
+    composition::Silicic,
+    eps_g0::Float64,
+    X_co2_prev::Float64,
+    P::Float64,
+    T::Float64,
+    eps_x0::Float64,
+    V::Float64,
+    rho_m::Float64,
+    rho_g::Float64,
+    M_co2::Float64,
+    Tol::Float64,
+)::Float64
     c = ConstantValues()
     mm_co2, mm_h2o = c.mm_co2, c.mm_h2o
-    fx = ZeroProblem(x -> fun(x, P, T, eps_g0, eps_x0, V, rho_m, rho_g, mm_co2, mm_h2o, M_co2), X_co2_prev)
+    fx = ZeroProblem(
+        x -> fun(x, P, T, eps_g0, eps_x0, V, rho_m, rho_g, mm_co2, mm_h2o, M_co2),
+        X_co2_prev,
+    )
     X_co20 = solve(fx; xatol=Tol, atol=Tol, maxiters=100)
     if X_co20 < 0 || X_co20 > 1
         X_co20 = -1.0
@@ -111,10 +165,33 @@ function solve_X_co2(composition::Silicic, eps_g0::Float64, X_co2_prev::Float64,
     return X_co20
 end
 
-function solve_X_co2(composition::Mafic, eps_g0::Float64, X_co2_prev::Float64, P::Float64, T::Float64, eps_x0::Float64, V::Float64, rho_m::Float64, rho_g::Float64, M_co2::Float64, Tol::Float64)::Float64
+"""
+    solve_X_co2(composition::Mafic, eps_g0::Float64, X_co2_prev::Float64, P::Float64, T::Float64, eps_x0::Float64, V::Float64, rho_m::Float64, rho_g::Float64, M_co2::Float64, Tol::Float64)::Float64
+
+- This function is used within the `IC_Finder` function to solve X_co20.
+
+# Returns
+- `X_co20`
+"""
+function solve_X_co2(
+    composition::Mafic,
+    eps_g0::Float64,
+    X_co2_prev::Float64,
+    P::Float64,
+    T::Float64,
+    eps_x0::Float64,
+    V::Float64,
+    rho_m::Float64,
+    rho_g::Float64,
+    M_co2::Float64,
+    Tol::Float64,
+)::Float64
     c = ConstantValues()
     mm_co2, mm_h2o = c.mm_co2, c.mm_h2o
-    fx = ZeroProblem(x -> fun(x, P, T, eps_g0, eps_x0, V, rho_m, rho_g, mm_co2, mm_h2o, M_co2), X_co2_prev)
+    fx = ZeroProblem(
+        x -> fun(x, P, T, eps_g0, eps_x0, V, rho_m, rho_g, mm_co2, mm_h2o, M_co2),
+        X_co2_prev,
+    )
     X_co20 = solve(fx; xatol=Tol, atol=Tol, maxiters=100)
     fraction = ParamICFinder().fraction
     Xmean = (1 - fraction) * X_co2_prev + fraction * X_co20
@@ -122,11 +199,33 @@ function solve_X_co2(composition::Mafic, eps_g0::Float64, X_co2_prev::Float64, P
     return X_co20
 end
 
-function get_eps_g(composition::Union{Silicic,Mafic}, eps_g_prev::Float64, X_co20::Float64, P::Float64, T::Float64, eps_x0::Float64, V::Float64, rho_m::Float64, rho_g::Float64, M_h2o::Float64, M_co2::Float64)::NamedTuple{(:eps_g0, :mco2_diss),NTuple{2,Float64}}
+"""
+    get_eps_g(composition::Union{Silicic,Mafic}, eps_g_prev::Float64, X_co20::Float64, P::Float64, T::Float64, eps_x0::Float64, V::Float64, rho_m::Float64, rho_g::Float64, M_h2o::Float64, M_co2::Float64)::NamedTuple{(:eps_g0, :mco2_diss),NTuple{2,Float64}}
+
+- This function is used within the `IC_Finder` function to get eps_g0 and mco2_diss.
+
+# Returns
+- `eps_g0`
+- `mco2_diss`
+"""
+function get_eps_g(
+    composition::Union{Silicic,Mafic},
+    eps_g_prev::Float64,
+    X_co20::Float64,
+    P::Float64,
+    T::Float64,
+    eps_x0::Float64,
+    V::Float64,
+    rho_m::Float64,
+    rho_g::Float64,
+    M_h2o::Float64,
+    M_co2::Float64,
+)::NamedTuple{(:eps_g0, :mco2_diss),NTuple{2,Float64}}
     mwater_dissolved = meq_water(composition, X_co20, P, T)
     mco2_diss = mco2_dissolved_sat(X_co20, P, T)
     eps_m = 1 - eps_g_prev - eps_x0
-    Num = M_co2 - mco2_diss * eps_m * V * rho_m + M_h2o - mwater_dissolved * eps_m * V * rho_m
+    Num =
+        M_co2 - mco2_diss * eps_m * V * rho_m + M_h2o - mwater_dissolved * eps_m * V * rho_m
     Den = rho_g * V
     fraction = ParamICFinder().fraction
     eps_g0 = (1 - fraction) * eps_g_prev + fraction * Num / Den
