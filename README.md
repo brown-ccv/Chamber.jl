@@ -1,3 +1,4 @@
+[![Build Status](https://github.com/CallieHsu/Chamber.jl/actions/workflows/test.yml/badge.svg?event=push)](https://github.com/CallieHsu/Chamber.jl/actions/workflows/test.yml??query=branch%3Amain)
 # Chamber.jl
 `Chamber` is a Julia package for simulating the eruption of a volcano using a model for the frequency of eruptions of upper crustal magma chambers based on Degruyter and Huber (2014). The package generates a CSV file and figures with the solution data of various variables over time.
 
