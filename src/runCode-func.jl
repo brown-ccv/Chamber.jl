@@ -1,10 +1,28 @@
-# Use for runCode.jl, solving the ode problems. 
+# For runCode.jl, solving the ode problems. 
 """
-    odeChamber(du,u,param,t)
+    odeChamber(du::Vector{Float64}, u::Vector{Float64}, params::Tuple{Param{Float64}, ParamSaved{Float64}, SW{Int8}}, t::Float64)
 
-Define the ODE equation.
+- Define the ODE equation.
+- Solve the model for eruption frequency of upper crustal silicic magma chambers using an ODE solver.
+
+# Arguments
+- `du`: An array that stores the output of the ODE solver, i.e., the values of the derivatives of the solution `u` with respect to time `t`.
+- `u`: An array that stores the values of the solution at each time step `t`.
+- `p`: A tuple that stores the model parameters and some saved variables, which are described in more detail below.
+- `t`: The time points corresponding to the saved values of the ODE solution.
+
+The arguments `du`, `u`, `p`, and `t` are from the DifferentialEquations.jl package. These argument formats are specific to the DifferentialEquations.jl package.
+
+# Parameters
+- `param`: A custom parameter containing physical constants and other model parameters.
+- `param_saved_var`: A custom parameter used to store values from the previous time step.
+- `sw`: A custom parameter used to control simulation behavior.
+
+# Returns
+The function modifies `du` in place to store the values of the derivatives of the solution `u` with respect to time `t`.
 """
-function odeChamber(du, u, param, t)
+function odeChamber(du::Vector{Float64}, u::Vector{Float64}, p::Tuple{Param{Float64}, ParamSaved{Float64}, SW{Int8}}, t::Float64)
+    param, param_saved_var, sw = p
     composition = param.composition
     storeTime = param_saved_var.storeTime
     storeTemp = param_saved_var.storeTemp
@@ -24,24 +42,25 @@ function odeChamber(du, u, param, t)
     P_lit = P_lit_0 + dP_lit_dt_0 * t
     if P_lit < P_lit_0 - P_lit_drop_max
         P_lit = P_lit_0 - P_lit_drop_max
-        dP_lit_dt = 0
-        param.dP_lit_dt = 0
+        dP_lit_dt = 0.0
+        param.dP_lit_dt = 0.0
     end
     P = P_lit + P0plusDP - P_lit_0
     # effective gas molar mass
     m_g = mm_co2 * X_co2 + mm_h2o * (1 - X_co2)
 
-    if ~isempty(storeTime)
-        if storeTime[end] == t
-            storeTemp[end] = T
-        elseif t != 0
-            push!(storeTime, t)
-            push!(storeTemp, T)
-        end
+    #=
+    NOTE:
+        push! method is NOT work for odechamber, it may cause some errors when running `chamber`. 
+        using `storeTime = [storeTime; t]` instead of `push!(storeTime, t)`
+    =#
+    if storeTime[end] == t
+        storeTemp[end] = T
     elseif t != 0
-        push!(storeTime, t)
-        push!(storeTemp, T)
+        storeTime = [storeTime; t]
+        storeTemp = [storeTemp; T]
     end
+
     cross = findfirst(!=(0), diff(sign.(diff(storeTime))))
     if cross !== nothing
         cross_time = storeTime[end]
@@ -166,12 +185,11 @@ function odeChamber(du, u, param, t)
     )
 
     # coefficients in the system of unknowns Ax = B, here x= [dP/dt dT/dt deps_g/dt dX_co2/dt]
-    # note: P, T, and phi are y(1), y(2) and y(3) respectively
     if phase == 3
         dDP_dt, dT_dt, deps_g_dt, dX_co2_dt = A \ b
     elseif phase == 2
         dDP_dt, dT_dt = A \ b
-        deps_g_dt, dX_co2_dt = 0, 0
+        deps_g_dt, dX_co2_dt = 0.0, 0.0
     end
     dP_dt = dDP_dt + dP_lit_dt
 
@@ -191,11 +209,35 @@ function odeChamber(du, u, param, t)
 end
 
 """
-    stopChamber_MT(out,u,t,int)
+    stopChamber_MT(out, u::Vector{Float64}, t::Float64, int, sw::SW{Int8}, param::Param{Float64})
 
-Define the stopping criteria for ODE solver. 
+Define the stopping criteria for an ODE solver that simulates a magma chamber.
+
+# Arguments:
+- `out`: An array where the function should save the condition value at the right index. The maximum index of `out` should be specified in the `len` property of `callback`, which allows for a chain of `len` events, triggering the `ith` event when `out[i] = 0`. The function returns the value of `out[8]` as the last condition. Checking Event Handling and Callback Functions page of `DifferentialEquations.jl` for more details.
+- `u`: A vector containing the state of the system at time `t`.
+- `t`: The current time of the ODE solver.
+- `int`: The current state of the integrator. It's format is from the DifferentialEquations.jl package
+- `sw`: A custom parameter used to control simulation behavior.
+- `param`: A custom parameter containing physical constants and other model parameters.
+
+The arguments `out`, `u`, `t`, and `int` are from the DifferentialEquations.jl package. These argument formats are specific to the DifferentialEquations.jl package.
+
+# Returns
+The `out` array is modified in-place to contain the condition values at the current state of the system. The function computes several quantities based on the current state of the system and the model parameters, such as the crystal fraction, the maximum amount of exsolved fluid, and the amount of CO2 in the melt. It then uses these values to calculate the condition values to be stored in the `out` array, as follows:
+- `out[1]`: the crystal fraction.
+- `out[2]`: the ratio of crystal fraction to liquid fraction, minus 0.8.
+- `out[3]`: if an eruption is not occurring, the pressure difference between the lithostatic pressure and the current pressure, minus the critical pressure difference. Otherwise, negative the critical pressure difference.
+- `out[4]`: if an eruption is occurring, the lithostatic pressure minus the current pressure. Otherwise, negative the critical pressure difference.
+- `out[5]`: the crystal fraction minus 0.5.
+- `out[6]`: the difference between the amount of water in the melt and the maximum amount of exsolved fluid.
+- `out[7]`: negative the difference between the initial lithostatic pressure and the current pressure plus the critical pressure difference.
+- `out[8]`: the difference between the amount of CO2 in the melt and the saturation concentration.
+
+Note that the `out` and `u` arguments are in the format expected by the DifferentialEquations.jl package, and the function is intended to be used as a condition for a callback function.
 """
-function stopChamber_MT(out, u, t, int)
+function stopChamber_MT(out, u::Vector{Float64}, t::Float64, int, sw::SW{Int8}, param::Param{Float64})
+    composition = param.composition
     P_lit = param.P_lit
     DP_crit = param.DP_crit
     P0plusDP = u[1]
@@ -212,8 +254,8 @@ function stopChamber_MT(out, u, t, int)
     m_h20 = tot_w / tot_m
     m_co2 = tot_c / tot_m
 
-    eps_x = crystal_fraction_eps_x(param.composition, T, P, m_h20, m_co2)
-    m_eq_max = exsolve_meq(param.composition, P, T, 0)
+    eps_x = crystal_fraction_eps_x(composition, T, P, m_h20, m_co2)
+    m_eq_max = exsolve_meq(composition, P, T, 0.0)
 
     # MT's new stuff
     eps_m0 = 1 - eps_x
@@ -221,11 +263,7 @@ function stopChamber_MT(out, u, t, int)
     m_h2o_melt = tot_w / (V * rho_m * eps_m0)
     m_co2_melt = tot_c / (V * rho_m * eps_m0)
 
-    if param.composition == "silicic"
-        C_co2_sat = exsolve3_silicic(P, T, m_h2o_melt)[1]
-    elseif param.composition == "mafic"
-        C_co2_sat = exsolve3_mafic(P, T, m_h2o_melt)[1]
-    end
+    C_co2_sat = exsolve3(composition, P, T, m_h2o_melt)[1]
 
     out[1] = eps_x
     out[2] = eps_x / (1 - eps_g) - 0.8
@@ -246,15 +284,23 @@ function stopChamber_MT(out, u, t, int)
 end
 
 """
-    affect!(int, idx)
+    affect!(int, idx, sw::SW{Int8}, param::Param{Float64}, param_saved_var::ParamSaved{Float64}, param_IC_Finder::ParamICFinder{Float64})
 
-Re-initialize the condition when the event happen.
-int, idx defined by DifferentialEquations 
+Re-initialize the condition when the event happens. This function modifies the current state of the integrator (`int.u`) when a particular event occurs during the simulation. The function adjusts various parameters based on the current state of the integrator and the custom parameters that were passed in.
+
+# Arguments:
+- `int`: The current state of the integrator. It's format is from the DifferentialEquations.jl package
+- `idx`: The index of the event that caused the function to be called.
+- `sw`: A custom parameter used to control simulation behavior.
+- `param`: A custom parameter containing physical constants and other model parameters.
+- `param_saved_var`: A custom parameter used to store values from the previous time step.
+- `param_IC_Finder`: A custom parameter used to control the behavior of the IC_Finder function.
+
+The arguments `int` and `idx` are from the DifferentialEquations.jl package. These argument formats are specific to the DifferentialEquations.jl package.
 """
-function affect!(int, idx)
+function affect!(int, idx, sw::SW{Int8}, param::Param{Float64}, param_saved_var::ParamSaved{Float64}, param_IC_Finder::ParamICFinder{Float64})
     println("*event idx: ", idx)
-    # write(io, "*event idx: $idx \n")
-
+    composition = param.composition
     storeTime = param_saved_var.storeTime
     storeTemp = param_saved_var.storeTemp
     storeTemp = storeTemp[storeTime .< int.t]
@@ -263,7 +309,7 @@ function affect!(int, idx)
     param_saved_var.storeTemp = storeTemp
 
     if param.dP_lit_dt_0 == 0
-        temp_P_lit = 0
+        temp_P_lit = 0.0
     else
         if int.t <= abs(param.P_lit_drop_max / param.dP_lit_dt_0)
             temp_P_lit = param.dP_lit_dt_0 * int.t
@@ -276,160 +322,93 @@ function affect!(int, idx)
     m_h2o = int.u[9] / int.u[8]
     m_co2 = int.u[10] / int.u[8]
 
-    eps_x0 = crystal_fraction_eps_x(param.composition, int.u[2], P_0, m_h2o, m_co2)
+    eps_x0 = crystal_fraction_eps_x(composition, int.u[2], P_0, m_h2o, m_co2)
 
     if idx == 3 && eps_x0 < 0.5
         sw.eruption = 1
-        println("reached critical pressure and need to start an eruption,  time: ", int.t)
-        # if "out" in keys(param)
-        #     # write(io, " stopChamber_MT: $(param["out"])\n")
-        # end
+        println(
+            "reached critical pressure and need to start an eruption,  time: ",
+            int.t,
+        )
     elseif idx == 4
         sw.eruption = 0
         println("If it just finished an eruption...  time: ", int.t)
-        # if "out" in keys(param)
-        #     # write(io, " stopChamber_MT: $(param["out"])\n")
-        # end
     elseif idx == 6 || idx == 8
         phase_here = param_saved_var.phase
         println(
             "starting ic finder for conversion of phase,  time: $(int.t), phase_here: $phase_here",
         )
-        # write(io, "starting ic finder for conversion of phase,  time: $(int.t), phase_here: $phase_here\n")
-        # if "out" in keys(param)
-        #     # write(io, " stopChamber_MT: $(param["out"])\n")
-        # end
-        if param.composition == "silicic"
-            eps_g_temp, X_co2_temp, C_co2_temp, phase = IC_Finder_silicic(
-                int.u[9],
-                int.u[10],
-                int.u[8],
-                P_0,
-                int.u[2],
-                int.u[4],
-                int.u[5],
-                param.mm_co2,
-                param.mm_h2o,
-                param_IC_Finder,
-            )
-            # write(io, " 1. [$eps_g_temp, $X_co2_temp, $C_co2_temp, $phase] = IC_Finder_silicic($(int.u[9]), $(int.u[10]), $(int.u[8]), $P_0, $(int.u[2]), $(int.u[4]), $(int.u[5])),  max_count: $(param_IC_Finder["max_count"])\n")
-        elseif param.composition == "mafic"
-            eps_g_temp, X_co2_temp, C_co2_temp, phase = IC_Finder_mafic(
-                int.u[9],
-                int.u[10],
-                int.u[8],
-                P_0,
-                int.u[2],
-                int.u[4],
-                int.u[5],
-                param.mm_co2,
-                param.mm_h2o,
-                param_IC_Finder,
-            )
-            # write(io, " 1. [$eps_g_temp, $X_co2_temp, $C_co2_temp, $phase] = IC_Finder_mafic($(int.u[9]), $(int.u[10]), $(int.u[8]), $P_0, $(int.u[2]), $(int.u[4]), $(int.u[5])),  max_count: $(param_IC_Finder["max_count"])\n")
-        end
+        eps_g_temp, X_co2_temp, C_co2_temp, phase = IC_Finder(
+            composition,
+            int.u[9],
+            int.u[10],
+            int.u[8],
+            P_0,
+            int.u[2],
+            int.u[4],
+            int.u[5],
+            param_IC_Finder,
+        )
 
         param_saved_var.phase = phase
         if phase_here != phase
             println("1st try in IC Finder successful")
-            # write(io, "1st try in IC Finder successful\n")
             int.u[3] = eps_g_temp
             int.u[7] = X_co2_temp
             C_co2 = C_co2_temp
         else
             println("trying new IC parameters...")
-            # write(io, "trying new IC parameters...\n")
             param_IC_Finder.max_count = 150
-
-            if param.composition == "silicic"
-                eps_g_temp, X_co2_temp, C_co2_temp, phase = IC_Finder_silicic(
-                    int.u[9],
-                    int.u[10],
-                    int.u[8],
-                    P_0,
-                    int.u[2],
-                    int.u[4],
-                    int.u[5],
-                    param.mm_co2,
-                    param.mm_h2o,
-                    param_IC_Finder,
-                )
-                # write(io, " 2. [$eps_g_temp, $X_co2_temp, $C_co2_temp, $phase] = IC_Finder_silicic($(int.u[9]), $(int.u[10]), $(int.u[8]), $P_0, $(int.u[2]), $(int.u[4]), $(int.u[5])),  max_count: $(param_IC_Finder["max_count"])\n")
-            elseif param.composition == "mafic"
-                eps_g_temp, X_co2_temp, C_co2_temp, phase = IC_Finder_mafic(
-                    int.u[9],
-                    int.u[10],
-                    int.u[8],
-                    P_0,
-                    int.u[2],
-                    int.u[4],
-                    int.u[5],
-                    param.mm_co2,
-                    param.mm_h2o,
-                    param_IC_Finder,
-                )
-                # write(io, " 2. [$eps_g_temp, $X_co2_temp, $C_co2_temp, $phase] = IC_Finder_mafic($(int.u[9]), $(int.u[10]), $(int.u[8]), $P_0, $(int.u[2]), $(int.u[4]), $(int.u[5])),  max_count: $(param_IC_Finder["max_count"])\n")
-            end
+            eps_g_temp, X_co2_temp, C_co2_temp, phase = IC_Finder(
+                composition,
+                int.u[9],
+                int.u[10],
+                int.u[8],
+                P_0,
+                int.u[2],
+                int.u[4],
+                int.u[5],
+                param_IC_Finder,
+            )
             param_saved_var.phase = phase
             ## change back to initial max_count
             param_IC_Finder.max_count = 100
             if phase_here != phase
                 println("2nd try in IC Finder successful")
-                # write(io, "2nd try in IC Finder successful\n")
                 int.u[3] = eps_g_temp
                 int.u[7] = X_co2_temp
                 C_co2 = C_co2_temp
             else
-                println("2nd try in IC Finder not successful, trying new IC parameters...")
-                # write(io, "2nd try in IC Finder not successful, trying new IC parameters...\n")
+                println(
+                    "2nd try in IC Finder not successful, trying new IC parameters...",
+                )
                 param_IC_Finder.max_count = 100
                 param_IC_Finder.Tol = param_IC_Finder.Tol * 0.1
-                if param.composition == "silicic"
-                    eps_g_temp, X_co2_temp, C_co2_temp, phase = IC_Finder_silicic(
-                        int.u[9],
-                        int.u[10],
-                        int.u[8],
-                        P_0,
-                        int.u[2],
-                        int.u[4],
-                        int.u[5],
-                        param.mm_co2,
-                        param.mm_h2o,
-                        param_IC_Finder,
-                    )
-                    # write(io, " 3. [$eps_g_temp, $X_co2_temp, $C_co2_temp, $phase] = IC_Finder_silicic($(int.u[9]), $(int.u[10]), $(int.u[8]), $P_0, $(int.u[2]), $(int.u[4]), $(int.u[5])),  max_count: $(param_IC_Finder["max_count"])\n")
-                elseif param.composition == "mafic"
-                    eps_g_temp, X_co2_temp, C_co2_temp, phase = IC_Finder_mafic(
-                        int.u[9],
-                        int.u[10],
-                        int.u[8],
-                        P_0,
-                        int.u[2],
-                        int.u[4],
-                        int.u[5],
-                        param.mm_co2,
-                        param.mm_h2o,
-                        param_IC_Finder,
-                    )
-                    # write(io, " 3. [$eps_g_temp, $X_co2_temp, $C_co2_temp, $phase] = IC_Finder_mafic($(int.u[9]), $(int.u[10]), $(int.u[8]), $P_0, $(int.u[2]), $(int.u[4]), $(int.u[5])),  max_count: $(param_IC_Finder["max_count"])\n")
-                end
+                eps_g_temp, X_co2_temp, C_co2_temp, phase = IC_Finder(
+                    composition,
+                    int.u[9],
+                    int.u[10],
+                    int.u[8],
+                    P_0,
+                    int.u[2],
+                    int.u[4],
+                    int.u[5],
+                    param_IC_Finder,
+                )
                 param_saved_var.phase = phase
                 ## change back to initial Tol
                 param_IC_Finder.Tol = param_IC_Finder.Tol * 10
                 if phase_here != phase
                     println("3rd try in IC Finder successful")
-                    # write(io, "3rd try in IC Finder successful\n")
                     int.u[3] = eps_g_temp
                     int.u[7] = X_co2_temp
                     C_co2 = C_co2_temp
                 else
-                    println("3rd try in IC Finder not successful")
-                    # write(io, "3rd try in IC Finder not successful\n")
+                    @warn("3rd try in IC Finder not successful")
                 end
             end
         end
         println("phase_here: ", phase_here, "  new_phase: ", phase)
-        # write(io, " phase_here: $phase_here, new_phase: $phase\n")
 
     elseif idx == 1 || idx == 2 || idx == 5 || idx == 7 || idx === nothing
         if idx == 1
@@ -445,6 +424,4 @@ function affect!(int, idx)
         end
         terminate!(int)
     end
-    # write(io, "time: $(int.t)\n")
-    # write(io, "IC = [$(int.u[1]), $(int.u[2]), $(int.u[3]), $(int.u[4]), $(int.u[5]), $(int.u[6]), $(int.u[7]), $(int.u[8]), $(int.u[9]), $(int.u[10])]\n")
 end
