@@ -60,7 +60,7 @@ function chamber(
     log_vfr::Float64,
     depth::Float64,
     methods::Dict=methods,
-    method::String="Tsit5",
+    method::String="CVODE_BDF",
     odesetting=OdeSetting(),
     ini_eps_x::Float64=0.15,
     rheol::String="old",
@@ -73,7 +73,7 @@ function chamber(
     logger = SimpleLogger(io)
     global_logger(logger)
 
-    to = get_timer("share")
+    to = TimerOutput()
     @timeit to "chamber" begin
         rc = rheol_composition_dict[composition_str]
         param = Param{Float64}(;
@@ -225,7 +225,6 @@ function chamber(
     end
     println(to)
     @info(to)
-    reset_timer!(to)
     close(io)
     df = DataFrame(sol)
     write_csv(df, path)
