@@ -2,7 +2,7 @@ using Chamber
 include("./solver_methods.jl")
 
 """
-    chamber(composition::Union{Silicic,Mafic}, end_time::Float64, log_volume_km3::Float64, InitialConc_H2O::Float64, InitialConc_CO2::Float64, log_vfr::Float64, depth::Float64, methods::Dict=methods, method::String="Tsit5", odesetting=OdeSetting(), ini_eps_x::Float64=0.15, rheol::String="old")
+    chamber(composition::Union{Silicic,Mafic}, end_time::Float64, log_volume_km3::Float64, InitialConc_H2O::Float64, InitialConc_CO2::Float64, log_vfr::Float64, depth::Float64, methods::Dict=methods, method::String="CVODE_BDF", odesetting=OdeSetting{Float64}(), ini_eps_x::Float64=0.15, rheol::String="old")
 
 Simulate the eruption of a volcano using a model for the frequency of eruptions of upper crustal magma chambers based on Degruyter and Huber (2014).
 
@@ -61,7 +61,7 @@ function chamber(
     depth::Float64,
     methods::Dict=methods,
     method::String="CVODE_BDF",
-    odesetting=OdeSetting(),
+    odesetting=OdeSetting{Float64}(),
     ini_eps_x::Float64=0.15,
     rheol::String="old",
 )
@@ -92,10 +92,11 @@ function chamber(
             param.nn, param.AA, param.G, param.M = r.nn, r.AA, r.G, r.M
         end
 
-        c = ConstantValues()
-        param_IC_Finder = ParamICFinder()
-        param_saved_var = ParamSaved()
-        sw = SW()
+        c = ConstantValues{Float64}()
+        param_IC_Finder = ParamICFinder{Float64}()
+        param_saved_var = ParamSaved{Float64}()
+        sw = SW{Int8}()
+        erupt_saved = EruptSaved{Float64}()
 
         # Initial temperature and viscosity profile around chamber
         param_saved_var.storeSumk = zeros(param.maxn)
@@ -191,7 +192,11 @@ function chamber(
         @info("params: $(param)")
 
         stopChamber_MT′(out, u, t, int) = stopChamber_MT(out, u, t, int, sw, param)
-        affect!′(int, idx) = affect!(int, idx, sw, param, param_saved_var, param_IC_Finder)
+        function affect!′(int, idx)
+            return affect!(
+                int, idx, sw, param, param_saved_var, param_IC_Finder, erupt_saved
+            )
+        end
 
         tspan = (0, end_time)
         IC = [
@@ -227,7 +232,7 @@ function chamber(
     @info(to)
     close(io)
     df = DataFrame(sol)
-    write_csv(df, path)
+    write_csv(df, erupt_saved, path)
     plot_figs(df, path)
 
     println(".. Done!")

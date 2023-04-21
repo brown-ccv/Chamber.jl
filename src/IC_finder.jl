@@ -23,7 +23,17 @@ An iterative function that uses thermodynamic modeling to determine the gas phas
 # Details
 The function uses a thermodynamic model to find the initial gas fraction (`eps_g0`) and initial mole fraction of CO2 in the gas phase (`X_co20`) for a silicic magma chamber. The model assumes that the chamber contains two phases: a liquid melt and a gas phase. The model calculates the saturation state of the magma with respect to CO2, and determines whether the gas phase contains only CO2 or a mixture of CO2 and H2O. If the chamber is in two-phase state, the model returns `eps_g0 = 0.0`, `X_co20 = 0.0`, `mco2_diss = Total mass of CO2 dissolved in the melt`, and `phase = 2`. If the chamber is in gas or liquid state, the function iteratively solves for `eps_g0` and `X_co20` using the `solve_X_co2` and `get_eps_g` helper functions until the relative difference between `eps_g0` and `X_co20` in two consecutive iterations is less than the tolerance `Tol`, or until the maximum number of iterations `max_count` is reached. 
 """
-function IC_Finder(composition::Silicic, M_h2o::T, M_co2::T, M_tot::T, P::T, Temp::T, V::T, rho_m::T, param_IC::ParamICFinder{T})::NamedTuple{(:eps_g0, :X_co20, :mco2_diss, :phase),NTuple{4,T}} where {T<:Float64}
+function IC_Finder(
+    composition::Silicic,
+    M_h2o::T,
+    M_co2::T,
+    M_tot::T,
+    P::T,
+    Temp::T,
+    V::T,
+    rho_m::T,
+    param_IC::ParamICFinder{T},
+)::NamedTuple{(:eps_g0, :X_co20, :mco2_diss, :phase),NTuple{4,T}} where {T<:Float64}
     ## IC Finder parameters
     max_count = param_IC.max_count
     Tol = param_IC.Tol
@@ -49,9 +59,20 @@ function IC_Finder(composition::Silicic, M_h2o::T, M_co2::T, M_tot::T, P::T, Tem
     X_co2_prev = X_co20 + 2 * Tol
     eps_g_prev = eps_g0 + 2 * Tol
     count = 0
-    solve_X_co2′(eps_g0, X_co2_prev) = solve_X_co2(composition, eps_g0, X_co2_prev, P, Temp, eps_x0, V, rho_m, rho_g, M_co2, Tol)
-    get_eps_g′(eps_g_prev, X_co20) = get_eps_g(composition, eps_g_prev, X_co20, P, Temp, eps_x0, V, rho_m, rho_g, M_h2o, M_co2)
-    while (abs((X_co20 - X_co2_prev) / X_co2_prev) > Tol || abs((eps_g0 - eps_g_prev) / eps_g_prev) > Tol) && count < max_count
+    function solve_X_co2′(eps_g0, X_co2_prev)
+        return solve_X_co2(
+            composition, eps_g0, X_co2_prev, P, Temp, eps_x0, V, rho_m, rho_g, M_co2, Tol
+        )
+    end
+    function get_eps_g′(eps_g_prev, X_co20)
+        return get_eps_g(
+            composition, eps_g_prev, X_co20, P, Temp, eps_x0, V, rho_m, rho_g, M_h2o, M_co2
+        )
+    end
+    while (
+        abs((X_co20 - X_co2_prev) / X_co2_prev) > Tol ||
+        abs((eps_g0 - eps_g_prev) / eps_g_prev) > Tol
+    ) && count < max_count
         X_co2_prev = X_co20
         X_co20 = solve_X_co2′(eps_g0, X_co2_prev)
         if X_co20 == -1
@@ -61,18 +82,29 @@ function IC_Finder(composition::Silicic, M_h2o::T, M_co2::T, M_tot::T, P::T, Tem
         eps_g0, mco2_diss = get_eps_g′(eps_g_prev, X_co20)
         count += 1
     end
-    while (isnan(X_co20) || isnan(eps_g0) || X_co20 < 0 || eps_g0 < 0) && eps_g_guess > min_eps_g
+    while (isnan(X_co20) || isnan(eps_g0) || X_co20 < 0 || eps_g0 < 0) &&
+        eps_g_guess > min_eps_g
         eps_g_guess = eps_g_guess / 1.5
         X_co2_guess = X_co2_guess_ini
         X_co2_prev = X_co2_guess + 2 * Tol
         eps_g_prev = eps_g_guess + 2 * Tol
         Err_eps_g = 0.0
         Err_Xco2 = 0.0
-        while (isnan(X_co20) || isnan(eps_g0) || X_co20 < 0 || eps_g0 < 0 || Err_eps_g > Tol || Err_Xco2 > Tol) && X_co2_guess <= 1
+        while (
+            isnan(X_co20) ||
+            isnan(eps_g0) ||
+            X_co20 < 0 ||
+            eps_g0 < 0 ||
+            Err_eps_g > Tol ||
+            Err_Xco2 > Tol
+        ) && X_co2_guess <= 1
             eps_g0 = eps_g_guess
             X_co20 = X_co2_guess
             count = 0
-            while (abs((X_co20 - X_co2_prev) / X_co2_prev) > Tol ||abs((eps_g0 - eps_g_prev) / eps_g_prev) > Tol) && count < max_count || X_co20 > 1
+            while (
+                abs((X_co20 - X_co2_prev) / X_co2_prev) > Tol ||
+                abs((eps_g0 - eps_g_prev) / eps_g_prev) > Tol
+            ) && count < max_count || X_co20 > 1
                 X_co2_prev = X_co20
                 X_co20 = solve_X_co2′(eps_g0, X_co2_prev)
                 eps_g_prev = eps_g0
@@ -118,7 +150,17 @@ An iterative function that uses thermodynamic modeling to determine the gas phas
 # Details
 The function uses a thermodynamic model to find the initial gas fraction (`eps_g0`) and initial mole fraction of CO2 in the gas phase (`X_co20`) for a mafic magma chamber. The model assumes that the chamber contains two phases: a liquid melt and a gas phase. The model calculates the saturation state of the magma with respect to CO2, and determines whether the gas phase contains only CO2 or a mixture of CO2 and H2O. If the chamber is in two-phase state, the model returns `eps_g0 = 0.0`, `X_co20 = 0.0`, `mco2_diss = Total mass of CO2 dissolved in the melt`, and `phase = 2`. If the chamber is in gas or liquid state, the function iteratively solves for `eps_g0` and `X_co20` using the `solve_X_co2` and `get_eps_g` helper functions until the relative difference between `eps_g0` and `X_co20` in two consecutive iterations is less than the tolerance `Tol`, or until the maximum number of iterations `max_count` is reached. 
 """
-function IC_Finder( composition::Mafic, M_h2o::T, M_co2::T, M_tot::T, P::T, Temp::T, V::T, rho_m::T, param_IC::ParamICFinder{T})::NamedTuple{(:eps_g0, :X_co20, :mco2_diss, :phase),NTuple{4,T}} where {T<:Float64}
+function IC_Finder(
+    composition::Mafic,
+    M_h2o::T,
+    M_co2::T,
+    M_tot::T,
+    P::T,
+    Temp::T,
+    V::T,
+    rho_m::T,
+    param_IC::ParamICFinder{T},
+)::NamedTuple{(:eps_g0, :X_co20, :mco2_diss, :phase),NTuple{4,T}} where {T<:Float64}
     ## IC Finder parameters
     max_count = param_IC.max_count
     Tol = param_IC.Tol
@@ -144,9 +186,20 @@ function IC_Finder( composition::Mafic, M_h2o::T, M_co2::T, M_tot::T, P::T, Temp
     X_co2_prev = X_co20 + 2 * Tol
     eps_g_prev = eps_g0 + 2 * Tol
     count = 0
-    solve_X_co2′(eps_g0, X_co2_prev) = solve_X_co2(composition, eps_g0, X_co2_prev, P, Temp, eps_x0, V, rho_m, rho_g, M_co2, Tol)
-    get_eps_g′(eps_g_prev, X_co20) = get_eps_g(composition, eps_g_prev, X_co20, P, Temp, eps_x0, V, rho_m, rho_g, M_h2o, M_co2)
-    while (abs((X_co20 - X_co2_prev) / X_co2_prev) > Tol || abs((eps_g0 - eps_g_prev) / eps_g_prev) > Tol) && count < max_count
+    function solve_X_co2′(eps_g0, X_co2_prev)
+        return solve_X_co2(
+            composition, eps_g0, X_co2_prev, P, Temp, eps_x0, V, rho_m, rho_g, M_co2, Tol
+        )
+    end
+    function get_eps_g′(eps_g_prev, X_co20)
+        return get_eps_g(
+            composition, eps_g_prev, X_co20, P, Temp, eps_x0, V, rho_m, rho_g, M_h2o, M_co2
+        )
+    end
+    while (
+        abs((X_co20 - X_co2_prev) / X_co2_prev) > Tol ||
+        abs((eps_g0 - eps_g_prev) / eps_g_prev) > Tol
+    ) && count < max_count
         X_co2_prev = isreal(X_co20) && !isnan(X_co20) ? X_co20 : 0.0
         X_co20 = solve_X_co2′(eps_g0, X_co2_prev)
         eps_g_prev = eps_g0
@@ -156,17 +209,42 @@ function IC_Finder( composition::Mafic, M_h2o::T, M_co2::T, M_tot::T, P::T, Temp
 
     Err_eps_g = abs((eps_g0 - eps_g_prev) / eps_g_prev)
     Err_Xco2 = abs((X_co20 - X_co2_prev) / X_co2_prev)
-    while (isnan(X_co20) || isnan(eps_g0) || X_co20 < 0 || eps_g0 < 0 || X_co20 > 1 || Err_eps_g > Tol || Err_Xco2 > Tol) && eps_g_guess > min_eps_g
+    while (
+        isnan(X_co20) ||
+        isnan(eps_g0) ||
+        X_co20 < 0 ||
+        eps_g0 < 0 ||
+        X_co20 > 1 ||
+        Err_eps_g > Tol ||
+        Err_Xco2 > Tol
+    ) && eps_g_guess > min_eps_g
         eps_g_guess = eps_g_guess / 2
         X_co2_guess = X_co2_guess_ini
         X_co2_prev = X_co2_guess + 2 * Tol
         eps_g_prev = eps_g_guess + 2 * Tol
-        while (isnan(X_co20) || isnan(eps_g0) || X_co20 < 0 || eps_g0 < 0 || Err_eps_g > Tol || Err_Xco2 > Tol) && X_co2_guess <= 1 - delta_X_co2
+        while (
+            isnan(X_co20) ||
+            isnan(eps_g0) ||
+            X_co20 < 0 ||
+            eps_g0 < 0 ||
+            Err_eps_g > Tol ||
+            Err_Xco2 > Tol
+        ) && X_co2_guess <= 1 - delta_X_co2
             eps_g0 = eps_g_guess
             X_co20 = X_co2_guess
             count = 0
-            while (abs((X_co20 - X_co2_prev) / X_co2_prev) > Tol || abs((eps_g0 - eps_g_prev) / eps_g_prev) > Tol) && count < max_count && X_co20 <= 1
-                X_co2_prev = (any(isreal, [X_co20, eps_g0]) && any(!isnan, [X_co20, eps_g0])) ? X_co20 : 0.0
+            while (
+                          abs((X_co20 - X_co2_prev) / X_co2_prev) > Tol ||
+                          abs((eps_g0 - eps_g_prev) / eps_g_prev) > Tol
+                      ) &&
+                      count < max_count &&
+                      X_co20 <= 1
+                X_co2_prev =
+                    if (any(isreal, [X_co20, eps_g0]) && any(!isnan, [X_co20, eps_g0]))
+                        X_co20
+                    else
+                        0.0
+                    end
                 X_co20 = solve_X_co2′(eps_g0, X_co2_prev)
                 eps_g_prev = eps_g0
                 eps_g0, mco2_diss = get_eps_g′(eps_g_prev, X_co20)

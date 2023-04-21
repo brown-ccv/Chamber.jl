@@ -21,7 +21,12 @@ The arguments `du`, `u`, `p`, and `t` are from the DifferentialEquations.jl pack
 # Returns
 The function modifies `du` in place to store the values of the derivatives of the solution `u` with respect to time `t`.
 """
-function odeChamber(du::Vector{Float64}, u::Vector{Float64}, p::Tuple{Param{Float64}, ParamSaved{Float64}, SW{Int8}}, t::Float64)
+function odeChamber(
+    du::Vector{Float64},
+    u::Vector{Float64},
+    p::Tuple{Param{Float64},ParamSaved{Float64},SW{Int8}},
+    t::Float64,
+)
     param, param_saved_var, sw = p
     composition = param.composition
     storeTime = param_saved_var.storeTime
@@ -236,7 +241,9 @@ The `out` array is modified in-place to contain the condition values at the curr
 
 Note that the `out` and `u` arguments are in the format expected by the DifferentialEquations.jl package, and the function is intended to be used as a condition for a callback function.
 """
-function stopChamber_MT(out, u::Vector{Float64}, t::Float64, int, sw::SW{Int8}, param::Param{Float64})
+function stopChamber_MT(
+    out, u::Vector{Float64}, t::Float64, int, sw::SW{Int8}, param::Param{Float64}
+)
     composition = param.composition
     P_lit = param.P_lit
     DP_crit = param.DP_crit
@@ -298,7 +305,15 @@ Re-initialize the condition when the event happens. This function modifies the c
 
 The arguments `int` and `idx` are from the DifferentialEquations.jl package. These argument formats are specific to the DifferentialEquations.jl package.
 """
-function affect!(int, idx, sw::SW{Int8}, param::Param{Float64}, param_saved_var::ParamSaved{Float64}, param_IC_Finder::ParamICFinder{Float64})
+function affect!(
+    int,
+    idx,
+    sw::SW{Int8},
+    param::Param{Float64},
+    param_saved_var::ParamSaved{Float64},
+    param_IC_Finder::ParamICFinder{Float64},
+    erupt_saved::EruptSaved{Float64},
+)
     println("*event idx: ", idx)
     composition = param.composition
     storeTime = param_saved_var.storeTime
@@ -321,17 +336,16 @@ function affect!(int, idx, sw::SW{Int8}, param::Param{Float64}, param_saved_var:
 
     m_h2o = int.u[9] / int.u[8]
     m_co2 = int.u[10] / int.u[8]
-
     eps_x0 = crystal_fraction_eps_x(composition, int.u[2], P_0, m_h2o, m_co2)
 
     if idx == 3 && eps_x0 < 0.5
         sw.eruption = 1
-        println(
-            "reached critical pressure and need to start an eruption,  time: ",
-            int.t,
-        )
+        rho_g0 = eos_g_rho_g(P_0, int.u[2])
+        record_erupt_start(int.t, int.u[3], eps_x0, int.u[5], int.u[6], rho_g0, erupt_saved)
+        println("reached critical pressure and need to start an eruption,  time: ", int.t)
     elseif idx == 4
         sw.eruption = 0
+        record_erupt_end(int.t, erupt_saved, param)
         println("If it just finished an eruption...  time: ", int.t)
     elseif idx == 6 || idx == 8
         phase_here = param_saved_var.phase
@@ -379,9 +393,7 @@ function affect!(int, idx, sw::SW{Int8}, param::Param{Float64}, param_saved_var:
                 int.u[7] = X_co2_temp
                 C_co2 = C_co2_temp
             else
-                println(
-                    "2nd try in IC Finder not successful, trying new IC parameters...",
-                )
+                println("2nd try in IC Finder not successful, trying new IC parameters...")
                 param_IC_Finder.max_count = 100
                 param_IC_Finder.Tol = param_IC_Finder.Tol * 0.1
                 eps_g_temp, X_co2_temp, C_co2_temp, phase = IC_Finder(
