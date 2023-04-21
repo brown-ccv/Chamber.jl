@@ -336,11 +336,11 @@ function affect!(
 
     m_h2o = int.u[9] / int.u[8]
     m_co2 = int.u[10] / int.u[8]
-    rho_g0 = eos_g_rho_g(P_0, int.u[2])
     eps_x0 = crystal_fraction_eps_x(composition, int.u[2], P_0, m_h2o, m_co2)
 
     if idx == 3 && eps_x0 < 0.5
         sw.eruption = 1
+        rho_g0 = eos_g_rho_g(P_0, int.u[2])
         record_erupt_start(int.t, int.u[3], eps_x0, int.u[5], int.u[6], rho_g0, erupt_saved)
         println("reached critical pressure and need to start an eruption,  time: ", int.t)
     elseif idx == 4
