@@ -314,7 +314,7 @@ function affect!(
     param_IC_Finder::ParamICFinder{Float64},
     erupt_saved::EruptSaved{Float64},
 )
-    println("*event idx: ", idx)
+    @info("*event idx: ", idx)
     composition = param.composition
     storeTime = param_saved_var.storeTime
     storeTemp = param_saved_var.storeTemp
@@ -342,15 +342,15 @@ function affect!(
         sw.eruption = 1
         rho_g0 = eos_g_rho_g(P_0, int.u[2])
         record_erupt_start(int.t, int.u[3], eps_x0, int.u[5], int.u[6], rho_g0, erupt_saved)
-        println("reached critical pressure and need to start an eruption,  time: ", int.t)
+        @info("time: $(int.t), Reached critical pressure and need to start an eruption")
     elseif idx == 4
         sw.eruption = 0
         record_erupt_end(int.t, erupt_saved, param)
-        println("If it just finished an eruption...  time: ", int.t)
+        @info("time: $(int.t), Finished an eruption...")
     elseif idx == 6 || idx == 8
         phase_here = param_saved_var.phase
-        println(
-            "starting ic finder for conversion of phase,  time: $(int.t), phase_here: $phase_here",
+        @info(
+            "time: $(int.t), starting ic finder for conversion of phase, phase_here: $phase_here",
         )
         eps_g_temp, X_co2_temp, C_co2_temp, phase = IC_Finder(
             composition,
@@ -366,12 +366,12 @@ function affect!(
 
         param_saved_var.phase = phase
         if phase_here != phase
-            println("1st try in IC Finder successful")
+            @info("1st try in IC Finder successful")
             int.u[3] = eps_g_temp
             int.u[7] = X_co2_temp
             C_co2 = C_co2_temp
         else
-            println("trying new IC parameters...")
+            @info("1st try in IC Finder unsuccessful, trying new IC parameters...")
             param_IC_Finder.max_count = 150
             eps_g_temp, X_co2_temp, C_co2_temp, phase = IC_Finder(
                 composition,
@@ -388,12 +388,12 @@ function affect!(
             ## change back to initial max_count
             param_IC_Finder.max_count = 100
             if phase_here != phase
-                println("2nd try in IC Finder successful")
+                @info("2nd try in IC Finder successful")
                 int.u[3] = eps_g_temp
                 int.u[7] = X_co2_temp
                 C_co2 = C_co2_temp
             else
-                println("2nd try in IC Finder not successful, trying new IC parameters...")
+                @info("2nd try in IC Finder unsuccessful, trying new IC parameters...")
                 param_IC_Finder.max_count = 100
                 param_IC_Finder.Tol = param_IC_Finder.Tol * 0.1
                 eps_g_temp, X_co2_temp, C_co2_temp, phase = IC_Finder(
@@ -411,28 +411,28 @@ function affect!(
                 ## change back to initial Tol
                 param_IC_Finder.Tol = param_IC_Finder.Tol * 10
                 if phase_here != phase
-                    println("3rd try in IC Finder successful")
+                    @info("3rd try in IC Finder successful")
                     int.u[3] = eps_g_temp
                     int.u[7] = X_co2_temp
                     C_co2 = C_co2_temp
                 else
-                    @warn("3rd try in IC Finder not successful")
+                    @warn("3rd try in IC Finder unsuccessful")
                 end
             end
         end
-        println("phase_here: ", phase_here, "  new_phase: ", phase)
+        @info("phase_here: $phase_here, new_phase: $phase")
 
     elseif idx == 1 || idx == 2 || idx == 5 || idx == 7 || idx === nothing
         if idx == 1
-            println("eps_x became 0.")
+            @info("eps_x became 0.")
         elseif idx == 2
-            println("eps_x/(1-eps_g) became 0.8")
+            @info("eps_x/(1-eps_g) became 0.8")
         elseif idx == 5
-            println("eps_x became 0.5")
+            @info("eps_x became 0.5")
         elseif idx == 7
             println("too much underpressure - collapse")
         elseif idx === nothing
-            println("you reached the end of time")
+            @info("you reached the end of time")
         end
         terminate!(int)
     end
