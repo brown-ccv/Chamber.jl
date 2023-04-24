@@ -2,7 +2,7 @@ using Chamber
 include("./solver_methods.jl")
 
 """
-    chamber(composition::Union{Silicic,Mafic}, end_time::Float64, log_volume_km3::Float64, InitialConc_H2O::Float64, InitialConc_CO2::Float64, log_vfr::Float64, depth::Float64, methods::Dict=methods, method::String="CVODE_BDF", odesetting=OdeSetting{Float64}(), ini_eps_x::Float64=0.15, rheol::String="old")
+    chamber(composition::Union{Silicic,Mafic}, end_time::Float64, log_volume_km3::Float64, InitialConc_H2O::Float64, InitialConc_CO2::Float64, log_vfr::Float64, depth::Float64, output_dirname::String=get_timestamp(); method::String="CVODE_BDF", rheol::String="old")
 
 Simulate the eruption of a volcano using a model for the frequency of eruptions of upper crustal magma chambers based on Degruyter and Huber (2014).
 
@@ -59,15 +59,14 @@ function chamber(
     InitialConc_CO2::Float64,
     log_vfr::Float64,
     depth::Float64,
-    methods::Dict=methods,
+    output_dirname::String=get_timestamp(),
+    ;
     method::String="CVODE_BDF",
-    odesetting=OdeSetting{Float64}(),
-    ini_eps_x::Float64=0.15,
     rheol::String="old",
 )
     datetime = get_timestamp()
     composition_str = string(typeof(composition))
-    path = joinpath(pwd(), "$(datetime)_$composition_str")
+    path = joinpath(pwd(), output_dirname)
     mkdir(path)
     io = open("$path/$datetime.log", "w+")
     logger = SimpleLogger(io)
@@ -96,6 +95,7 @@ function chamber(
         param_IC_Finder = ParamICFinder{Float64}()
         param_saved_var = ParamSaved{Float64}()
         sw = SW{Int8}()
+        odesetting = OdeSetting{Float64}()
         erupt_saved = EruptSaved{Float64}()
 
         # Initial temperature and viscosity profile around chamber
@@ -119,7 +119,7 @@ function chamber(
             P_0 = P_0 + param.DP_crit
         end
 
-        T_0 = find_liq(composition, InitialConc_H2O, InitialConc_CO2, P_0, ini_eps_x)
+        T_0 = find_liq(composition, InitialConc_H2O, InitialConc_CO2, P_0, param.ini_eps_x)
 
         T_in = T_0 + 50        # Temperature of inflowing magma (K)
         param.T_in = T_in

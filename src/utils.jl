@@ -68,6 +68,7 @@ rheol_dict = Dict("new" => new, "old" => old)
     kappa::T = 1e-6
     rho_r::T = 2750
     c_r::T = 1200
+    ini_eps_x::T = 0.15
     maxn::Int64 = 10000
     GLQ_n::Int64 = 64
     Q_out_old::T = 0
