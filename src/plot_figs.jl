@@ -6,7 +6,7 @@ function plot_sol(df, x_axis_col, y_axis_col)
         y;
         xaxis=x_axis_col,
         yaxis=y_axis_col,
-        label="Julia",
+        label="Chamber.jl",
         linewidth=2,
         marker=(:x, 3, Plots.stroke(2)),
     )
@@ -14,12 +14,12 @@ end
 
 function plot_figs(df::DataFrame, path::String)::Nothing
     ENV["GKSwstype"] = "100"  # magic environmental variable for Plots
-    p1 = plot_sol(df, "timestamp", "P+dP")
-    p2 = plot_sol(df, "timestamp", "T")
-    p3 = plot_sol(df, "timestamp", "eps_g")
-    p4 = plot_sol(df, "timestamp", "V")
-    p5 = plot_sol(df, "timestamp", "X_CO2")
-    p6 = plot_sol(df, "timestamp", "total_mass")
+    p1 = plot_sol(df, "time", "P+dP")
+    p2 = plot_sol(df, "time", "T")
+    p3 = plot_sol(df, "time", "eps_g")
+    p4 = plot_sol(df, "time", "V")
+    p5 = plot_sol(df, "time", "X_CO2")
+    p6 = plot_sol(df, "time", "total_mass")
 
     savefig(p1, "$path/1_P.png")
     savefig(p2, "$path/2_T.png")

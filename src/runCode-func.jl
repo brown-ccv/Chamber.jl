@@ -21,7 +21,12 @@ The arguments `du`, `u`, `p`, and `t` are from the DifferentialEquations.jl pack
 # Returns
 The function modifies `du` in place to store the values of the derivatives of the solution `u` with respect to time `t`.
 """
-function odeChamber(du::Vector{Float64}, u::Vector{Float64}, p::Tuple{Param{Float64}, ParamSaved{Float64}, SW{Int8}}, t::Float64)
+function odeChamber(
+    du::Vector{Float64},
+    u::Vector{Float64},
+    p::Tuple{Param{Float64},ParamSaved{Float64},SW{Int8}},
+    t::Float64,
+)
     param, param_saved_var, sw = p
     composition = param.composition
     storeTime = param_saved_var.storeTime
@@ -236,7 +241,9 @@ The `out` array is modified in-place to contain the condition values at the curr
 
 Note that the `out` and `u` arguments are in the format expected by the DifferentialEquations.jl package, and the function is intended to be used as a condition for a callback function.
 """
-function stopChamber_MT(out, u::Vector{Float64}, t::Float64, int, sw::SW{Int8}, param::Param{Float64})
+function stopChamber_MT(
+    out, u::Vector{Float64}, t::Float64, int, sw::SW{Int8}, param::Param{Float64}
+)
     composition = param.composition
     P_lit = param.P_lit
     DP_crit = param.DP_crit
@@ -298,8 +305,16 @@ Re-initialize the condition when the event happens. This function modifies the c
 
 The arguments `int` and `idx` are from the DifferentialEquations.jl package. These argument formats are specific to the DifferentialEquations.jl package.
 """
-function affect!(int, idx, sw::SW{Int8}, param::Param{Float64}, param_saved_var::ParamSaved{Float64}, param_IC_Finder::ParamICFinder{Float64})
-    println("*event idx: ", idx)
+function affect!(
+    int,
+    idx,
+    sw::SW{Int8},
+    param::Param{Float64},
+    param_saved_var::ParamSaved{Float64},
+    param_IC_Finder::ParamICFinder{Float64},
+    erupt_saved::EruptSaved{Float64},
+)
+    @info("*event idx: ", idx)
     composition = param.composition
     storeTime = param_saved_var.storeTime
     storeTemp = param_saved_var.storeTemp
@@ -321,22 +336,21 @@ function affect!(int, idx, sw::SW{Int8}, param::Param{Float64}, param_saved_var:
 
     m_h2o = int.u[9] / int.u[8]
     m_co2 = int.u[10] / int.u[8]
-
     eps_x0 = crystal_fraction_eps_x(composition, int.u[2], P_0, m_h2o, m_co2)
 
     if idx == 3 && eps_x0 < 0.5
         sw.eruption = 1
-        println(
-            "reached critical pressure and need to start an eruption,  time: ",
-            int.t,
-        )
+        rho_g0 = eos_g_rho_g(P_0, int.u[2])
+        record_erupt_start(int.t, int.u[3], eps_x0, int.u[5], int.u[6], rho_g0, erupt_saved)
+        @info("time: $(int.t), Reached critical pressure and need to start an eruption")
     elseif idx == 4
         sw.eruption = 0
-        println("If it just finished an eruption...  time: ", int.t)
+        record_erupt_end(int.t, erupt_saved, param)
+        @info("time: $(int.t), Finished an eruption...")
     elseif idx == 6 || idx == 8
         phase_here = param_saved_var.phase
-        println(
-            "starting ic finder for conversion of phase,  time: $(int.t), phase_here: $phase_here",
+        @info(
+            "time: $(int.t), starting ic finder for conversion of phase, phase_here: $phase_here",
         )
         eps_g_temp, X_co2_temp, C_co2_temp, phase = IC_Finder(
             composition,
@@ -352,12 +366,12 @@ function affect!(int, idx, sw::SW{Int8}, param::Param{Float64}, param_saved_var:
 
         param_saved_var.phase = phase
         if phase_here != phase
-            println("1st try in IC Finder successful")
+            @info("1st try in IC Finder successful")
             int.u[3] = eps_g_temp
             int.u[7] = X_co2_temp
             C_co2 = C_co2_temp
         else
-            println("trying new IC parameters...")
+            @info("1st try in IC Finder unsuccessful, trying new IC parameters...")
             param_IC_Finder.max_count = 150
             eps_g_temp, X_co2_temp, C_co2_temp, phase = IC_Finder(
                 composition,
@@ -374,14 +388,12 @@ function affect!(int, idx, sw::SW{Int8}, param::Param{Float64}, param_saved_var:
             ## change back to initial max_count
             param_IC_Finder.max_count = 100
             if phase_here != phase
-                println("2nd try in IC Finder successful")
+                @info("2nd try in IC Finder successful")
                 int.u[3] = eps_g_temp
                 int.u[7] = X_co2_temp
                 C_co2 = C_co2_temp
             else
-                println(
-                    "2nd try in IC Finder not successful, trying new IC parameters...",
-                )
+                @info("2nd try in IC Finder unsuccessful, trying new IC parameters...")
                 param_IC_Finder.max_count = 100
                 param_IC_Finder.Tol = param_IC_Finder.Tol * 0.1
                 eps_g_temp, X_co2_temp, C_co2_temp, phase = IC_Finder(
@@ -399,28 +411,28 @@ function affect!(int, idx, sw::SW{Int8}, param::Param{Float64}, param_saved_var:
                 ## change back to initial Tol
                 param_IC_Finder.Tol = param_IC_Finder.Tol * 10
                 if phase_here != phase
-                    println("3rd try in IC Finder successful")
+                    @info("3rd try in IC Finder successful")
                     int.u[3] = eps_g_temp
                     int.u[7] = X_co2_temp
                     C_co2 = C_co2_temp
                 else
-                    @warn("3rd try in IC Finder not successful")
+                    @warn("3rd try in IC Finder unsuccessful")
                 end
             end
         end
-        println("phase_here: ", phase_here, "  new_phase: ", phase)
+        @info("phase_here: $phase_here, new_phase: $phase")
 
     elseif idx == 1 || idx == 2 || idx == 5 || idx == 7 || idx === nothing
         if idx == 1
-            println("eps_x became 0.")
+            @info("eps_x became 0.")
         elseif idx == 2
-            println("eps_x/(1-eps_g) became 0.8")
+            @info("eps_x/(1-eps_g) became 0.8")
         elseif idx == 5
-            println("eps_x became 0.5")
+            @info("eps_x became 0.5")
         elseif idx == 7
             println("too much underpressure - collapse")
         elseif idx === nothing
-            println("you reached the end of time")
+            @info("you reached the end of time")
         end
         terminate!(int)
     end

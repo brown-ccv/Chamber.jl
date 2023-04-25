@@ -2,28 +2,42 @@ using Chamber
 include("./solver_methods.jl")
 
 """
-    chamber(composition::Union{Silicic,Mafic}, end_time::Float64, log_volume_km3::Float64, InitialConc_H2O::Float64, InitialConc_CO2::Float64, log_vfr::Float64, depth::Float64, methods::Dict=methods, method::String="Tsit5", odesetting=OdeSetting(), ini_eps_x::Float64=0.15, rheol::String="old")
+    chamber(composition::Union{Silicic,Mafic}, end_time::Float64, log_volume_km3::Float64, InitialConc_H2O::Float64, InitialConc_CO2::Float64, log_vfr::Float64, depth::Float64, output_dirname::String=get_timestamp(); method::String="CVODE_BDF", rheol::String="old")
 
 Simulate the eruption of a volcano using a model for the frequency of eruptions of upper crustal magma chambers based on Degruyter and Huber (2014).
 
 # Arguments
-- `composition`: Either a `Silicic` or a `Mafic` object that specifies the composition of the magma.
-- `end_time`: Simulation period in seconds.
-- `log_volume_km3`: The estimated volume of the volcano chamber in logarithmic scale.
-- `InitialConc_H2O`: The initial water content of the magma, as a fraction of the total mass.
-- `InitialConc_CO2`: The initial carbon dioxide content of the magma, as a fraction of the total mass.
-- `log_vfr`: The logarithm of the volume flux rate, in cubic meters per second.
-- `depth`: Estimate of depth of volcano chamber in meters.
+- `composition`: The magma composition. Use `Silicic()` for rhyolite composition (arc magma) or `Mafic()` for basalt composition (rift).
+- `end_time`: Maximum magma chamber evolution duration in seconds.
+- `log_volume_km3`: The initial volume of the chamber in logarithmic scale. The actual initial chamber volume is calculated as 10^(`log_volume_km3`) in km³.
+- `InitialConc_H2O`: The initial weight fraction of water in the magma (exsolved + dissolved).
+- `InitialConc_CO2`: The initial weight fraction of CO₂ in the magma (exsolved + dissolved).
+- `log_vfr`: Magma recharge rate in km³/yr calculated as 10^(`log_vfr`).
+- `depth`: Depth of the magma chamber in meters.
+- `output_dirname`(optional): Name of the output directory. Defaults to current timestamp.
 
 # Returns
-- A `DataFrame` containing the solution with columns: timestamp, P+dP, T, eps_g, V, rho_m, rho_x, X_CO2, total_mass, total_mass_H2O, and total_mass_CO2.
+A `DataFrame` containing the solution with columns:
+- `time`: Simulation timestamps in seconds.
+- `P+dP`: Pressure in Pa.
+- `T`: Temperature in K.
+- `eps_g`: Gas volume fraction.
+- `V`: Volume of the magma chamber in m³.
+- `rho_m`: Density of the melt in kg/m³.
+- `rho_x`: Density of magma crystal in kg/m³.
+- `X_CO2`: Mole fraction of CO2 in the gas.
+- `total_mass`: Total mess of magma chamber in kg.
+- `total_mass_H2O`: Total mess of water in the magma in kg.
+- `total_mass_CO2`: Total mass of CO₂ in the magma in kg.
 
-# Output
-- `out.csv`: A CSV file containing the solution with headers: timestamp, P+dP, T, eps_g, V, rho_m, rho_x, X_CO2, total_mass, total_mass_H2O, and total_mass_CO2.
-- Figures of the following variables plotted against time: P+dP, T, eps_g, V, X_CO2, total_mass.
+# Outputs
+A directory named after `output_dirname` or the default value, containing the following files:
+- `out.csv`: a CSV file containing the solution columns listed above.
+- `eruptions.csv`, A CSV file containing the datas of eruptions with the following columns: time_of_eruption (sec), duration_of_eruption (sec), mass_erupted (kg) and volume_erupted (km³).
+- Figures for P+dP(t), T(t), eps_g(t), V(t), X_CO2(t), total_mass(t).
 
 # References
-- W. Degruyter and C. Huber. A model for eruption frequency of upper crustal silicic magma chambers. Earth Planet. Sci. Lett. (2014).
+- W. Degruyter and C. Huber (2014). A model for eruption frequency of upper crustal silicic magma chambers. Earth Planet. Sci. Lett. https://doi.org/10.1016/j.epsl.2014.06.047
 
 # Examples
 ```
@@ -38,7 +52,7 @@ julia> depth = 8e3
 
 julia> chamber(composition, end_time, log_volume_km3, InitialConc_H2O, InitialConc_CO2, log_vfr, depth)
 
-# Run a simulation with mafic magma chamber
+# Run a simulation with mafic magma chamber, with custom directory name "MyDirname"
 julia> composition = Mafic()
 julia> end_time = 3e9
 julia> log_volume_km3 = 0.2
@@ -46,10 +60,10 @@ julia> InitialConc_H2O = 0.01
 julia> InitialConc_CO2 = 0.001
 julia> log_vfr = -3.3
 julia> depth = 8e3
+julia> output_dirname = "MyDirname"
 
-julia> chamber(composition, end_time, log_volume_km3, InitialConc_H2O, InitialConc_CO2, log_vfr, depth)
+julia> chamber(composition, end_time, log_volume_km3, InitialConc_H2O, InitialConc_CO2, log_vfr, depth, output_dirname)
 ```
-
 """
 function chamber(
     composition::Union{Silicic,Mafic},
@@ -59,19 +73,31 @@ function chamber(
     InitialConc_CO2::Float64,
     log_vfr::Float64,
     depth::Float64,
-    methods::Dict=methods,
+    output_dirname::String=get_timestamp(),
+    ;
     method::String="CVODE_BDF",
-    odesetting=OdeSetting(),
-    ini_eps_x::Float64=0.15,
     rheol::String="old",
-)
+)::DataFrame
     datetime = get_timestamp()
     composition_str = string(typeof(composition))
-    path = joinpath(pwd(), "$(datetime)_$composition_str")
+    path = joinpath(pwd(), output_dirname)
     mkdir(path)
+    println("Output path: $path")
     io = open("$path/$datetime.log", "w+")
     logger = SimpleLogger(io)
     global_logger(logger)
+
+    @info(
+        "Arguments:",
+        composition,
+        end_time,
+        log_volume_km3,
+        InitialConc_H2O,
+        InitialConc_CO2,
+        log_vfr,
+        depth,
+        path
+    )
 
     to = TimerOutput()
     @timeit to "chamber" begin
@@ -92,10 +118,12 @@ function chamber(
             param.nn, param.AA, param.G, param.M = r.nn, r.AA, r.G, r.M
         end
 
-        c = ConstantValues()
-        param_IC_Finder = ParamICFinder()
-        param_saved_var = ParamSaved()
-        sw = SW()
+        c = ConstantValues{Float64}()
+        param_IC_Finder = ParamICFinder{Float64}()
+        param_saved_var = ParamSaved{Float64}()
+        sw = SW{Int8}()
+        odesetting = OdeSetting{Float64}()
+        erupt_saved = EruptSaved{Float64}()
 
         # Initial temperature and viscosity profile around chamber
         param_saved_var.storeSumk = zeros(param.maxn)
@@ -118,7 +146,7 @@ function chamber(
             P_0 = P_0 + param.DP_crit
         end
 
-        T_0 = find_liq(composition, InitialConc_H2O, InitialConc_CO2, P_0, ini_eps_x)
+        T_0 = find_liq(composition, InitialConc_H2O, InitialConc_CO2, P_0, param.ini_eps_x)
 
         T_in = T_0 + 50        # Temperature of inflowing magma (K)
         param.T_in = T_in
@@ -148,10 +176,7 @@ function chamber(
             composition, M_h2o_0, M_co2_0, M_tot, P_0, T_0, V_0, rc.rho_m0, param_IC_Finder
         )
 
-        println("IC_Finder done")
-        @show eps_g0 X_co20 C_co2
-        println("phase: ", phase)
-        @info("IC_Finder done: $eps_g0, $X_co20, $C_co2, $phase")
+        @info("First IC_Finder done: ", eps_g0, X_co20, C_co2, phase)
         param_saved_var.phase = phase
 
         # update initial bulk density (kg/m^3)
@@ -186,14 +211,16 @@ function chamber(
         param_saved_var.storeTime = Vector{Float64}([0])
         param_saved_var.storeTemp = Vector{Float64}([T_0])
 
-        @info("sw: $(sw)")
         @info("IC_Finder parameters: $(param_IC_Finder)")
-        @info("params: $(param)")
 
         stopChamber_MT′(out, u, t, int) = stopChamber_MT(out, u, t, int, sw, param)
-        affect!′(int, idx) = affect!(int, idx, sw, param, param_saved_var, param_IC_Finder)
+        function affect!′(int, idx)
+            return affect!(
+                int, idx, sw, param, param_saved_var, param_IC_Finder, erupt_saved
+            )
+        end
 
-        tspan = (0, end_time)
+        timespan = (0, end_time)
         IC = [
             P_0,
             T_0,
@@ -206,13 +233,11 @@ function chamber(
             tot_Mass_H2O_0,
             tot_Mass_CO2_0,
         ]
-        println("tspan: ", tspan)
-        println("IC: ", IC)
-        @info("IC: $IC")
+        @info("ODE solver settings: ", method, odesetting, IC, timespan, param, sw)
         cb = VectorContinuousCallback(
             stopChamber_MT′, affect!′, 8; rootfind=SciMLBase.RightRootFind
         )
-        prob = ODEProblem(odeChamber, IC, tspan, (param, param_saved_var, sw))
+        prob = ODEProblem(odeChamber, IC, timespan, (param, param_saved_var, sw))
         sol = solve(
             prob,
             methods[method];
@@ -223,13 +248,10 @@ function chamber(
             dtmax=odesetting.max_step,
         )
     end
-    println(to)
     @info(to)
     close(io)
     df = DataFrame(sol)
-    write_csv(df, path)
+    write_csv(df, erupt_saved, path)
     plot_figs(df, path)
-
-    println(".. Done!")
     return df
 end

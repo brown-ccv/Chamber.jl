@@ -1,4 +1,4 @@
-function write_csv(df::DataFrame, path::String)::Nothing
+function write_csv(df::DataFrame, erupt_saved::EruptSaved{Float64}, path::String)::Nothing
     number_of_data = size(df, 1)
     println("number_of_data: $number_of_data")
     names = [
@@ -13,7 +13,16 @@ function write_csv(df::DataFrame, path::String)::Nothing
         "total_mass_H2O",
         "total_mass_CO2",
     ]
+    rename!(df, ["timestamp" => "time"])
     rename!(df, ["value$i" => names[i] for i in 1:10])
+    df_erupt = DataFrame(
+        reduce(
+            hcat,
+            [erupt_saved.time, erupt_saved.duration, erupt_saved.mass, erupt_saved.volume],
+        ),
+        ["time_of_eruption", "duration_of_eruption", "mass_erupted", "volume_erupted"],
+    )
     CSV.write("$path/out.csv", df)
+    CSV.write("$path/eruptions.csv", df_erupt)
     return nothing
 end

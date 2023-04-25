@@ -8,23 +8,12 @@ function get_timestamp()::String
 end
 
 ## Settings for ODE Solver Calculation
-struct OdeSetting{T}
-    reltol::T     # Relative tolerance
-    abstol::T     # Absolute tolerance
-    first_step::T # Initial step size
-    max_step::T   # Maximum allowed step size
+@with_kw struct OdeSetting{T}
+    reltol::T = 1e-8    # Relative tolerance
+    abstol::T = 1e-8    # Absolute tolerance
+    first_step::T = 1e5 # Initial step size
+    max_step::T = 1e7   # Maximum allowed step size
 end
-
-function makeOdeSetting(;
-    reltol=1e-8::Float64,
-    abstol=1e-8::Float64,
-    first_step=1e5::Float64,
-    max_step=1e7::Float64,
-)::OdeSetting{Float64}
-    return OdeSetting(reltol, abstol, first_step, max_step)
-end
-
-OdeSetting() = OdeSetting{Float64}(1e-8, 1e-8, 1e5, 1e7)
 
 @with_kw struct ConstantValues{T}
     T_surface::T = 273.0     # surface temperature (K)
@@ -79,6 +68,7 @@ rheol_dict = Dict("new" => new, "old" => old)
     kappa::T = 1e-6
     rho_r::T = 2750
     c_r::T = 1200
+    ini_eps_x::T = 0.15
     maxn::Int64 = 10000
     GLQ_n::Int64 = 64
     Q_out_old::T = 0
@@ -109,36 +99,41 @@ rheol_dict = Dict("new" => new, "old" => old)
 end
 
 ## eruption/cooling_module/viscous_relaxation control
-mutable struct SW{T}
-    heat_cond::T
-    visc_relax::T
-    eruption::T
-    SW() = new{Int8}(1, 1, 0)
+@with_kw mutable struct SW{T}
+    heat_cond::T = 1
+    visc_relax::T = 1
+    eruption::T = 0
 end
 
-mutable struct ParamICFinder{T}
-    max_count::Int64
-    min_eps_g::T
-    eps_g_guess_ini::T
-    X_co2_guess_ini::T
-    fraction::T
-    delta_X_co2::T
-    Tol::T
-    ParamICFinder() = new{Float64}(100, 1e-10, 1e-2, 0.2, 0.2, 1e-2, 0)
+@with_kw mutable struct ParamICFinder{T}
+    max_count::Int64 = 100
+    min_eps_g::T = 1e-10
+    eps_g_guess_ini::T = 1e-2
+    X_co2_guess_ini::T = 0.2
+    fraction::T = 0.2
+    delta_X_co2::T = 1e-2
+    Tol::T = 0.0
 end
 
-mutable struct ParamSaved{T}
-    maxTime::Number
-    lengthTime::Int64
-    switch_Tprofile::Int8
-    phase::T
-    storeTime::Vector{T}
-    storeTemp::Vector{T}
-    storeSumk::Vector{T}
-    storeSumk_2::Vector{T}
-    storeSumk_old::Vector{T}
-    storeSumk_2_old::Vector{T}
-    ParamSaved() = new{Float64}(0, 0, 0, 0, [], [], [], [], [], [])
+@with_kw mutable struct ParamSaved{T}
+    maxTime::Number = 0
+    lengthTime::Int64 = 0
+    switch_Tprofile::Int8 = 0
+    phase::T = 0
+    storeTime::Vector{T} = []
+    storeTemp::Vector{T} = []
+    storeSumk::Vector{T} = []
+    storeSumk_2::Vector{T} = []
+    storeSumk_old::Vector{T} = []
+    storeSumk_2_old::Vector{T} = []
+end
+
+@with_kw mutable struct EruptSaved{T}
+    time::Vector{T} = []
+    rho::T = 0
+    duration::Vector{T} = []
+    mass::Vector{T} = []
+    volume::Vector{T} = []
 end
 
 function rho_f(;
@@ -303,4 +298,36 @@ function compute_dXdP_dXdT(
 )::Tuple{Float64,Float64,Float64}
     α, β = "alpha_$var", "beta_$var"
     return (u, u / getproperty(param, Symbol(β)), -u * getproperty(param, Symbol(α)))
+end
+
+"""
+    record_erupt_start(time::T, eps_g::T, eps_x::T, rho_m::T, rho_x::T, rho_g::T, erupt_saved::EruptSaved{T}) where {T<:Float64}
+
+Record time, density of eruptions to `EruptSaved`
+- This function is used within the `affect!` function.
+"""
+function record_erupt_start(
+    time::T, eps_g::T, eps_x::T, rho_m::T, rho_x::T, rho_g::T, erupt_saved::EruptSaved{T}
+)::Nothing where {T<:Float64}
+    push!(erupt_saved.time, time)
+    erupt_saved.rho = (1 - eps_g - eps_x) * rho_m + eps_g * rho_g + eps_x * rho_x
+    return nothing
+end
+
+"""
+    record_erupt_end(time::T, erupt_saved::EruptSaved{T}, param::Param{T}) where {T<:Float64}
+
+Record duration, mass and volume of eruptions to `EruptSaved`
+- This function is used within the `affect!` function.
+"""
+function record_erupt_end(
+    time::T, erupt_saved::EruptSaved{T}, param::Param{T}
+)::Nothing where {T<:Float64}
+    duration = time - erupt_saved.time[end]
+    mass = duration * param.Mdot_out_pass
+    volume = mass / erupt_saved.rho
+    push!(erupt_saved.duration, duration)
+    push!(erupt_saved.mass, mass)
+    push!(erupt_saved.volume, volume)
+    return nothing
 end
