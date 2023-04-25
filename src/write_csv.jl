@@ -20,7 +20,7 @@ function write_csv(df::DataFrame, erupt_saved::EruptSaved{Float64}, path::String
             hcat,
             [erupt_saved.time, erupt_saved.duration, erupt_saved.mass, erupt_saved.volume],
         ),
-        ["time of eruption", "duration of eruption", "mass erupted", "volume erupted"],
+        ["time_of_eruption", "duration_of_eruption", "mass_erupted", "volume_erupted"],
     )
     CSV.write("$path/out.csv", df)
     CSV.write("$path/eruptions.csv", df_erupt)

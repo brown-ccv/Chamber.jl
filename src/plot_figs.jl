@@ -6,7 +6,7 @@ function plot_sol(df, x_axis_col, y_axis_col)
         y;
         xaxis=x_axis_col,
         yaxis=y_axis_col,
-        label="Julia",
+        label="Chamber.jl",
         linewidth=2,
         marker=(:x, 3, Plots.stroke(2)),
     )
