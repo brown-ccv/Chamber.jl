@@ -25,6 +25,7 @@ A `DataFrame` containing the solution with columns:
 - `V`: Volume of the magma chamber in m³.
 - `rho_m`: Density of the melt in kg/m³.
 - `rho_x`: Density of magma crystal in kg/m³.
+- `X_CO2`: Mole fraction of CO2 in the gas.
 - `total_mass`: Total mess of magma chamber in kg.
 - `total_mass_H2O`: Total mess of water in the magma in kg.
 - `total_mass_CO2`: Total mass of CO₂ in the magma in kg.
@@ -32,7 +33,7 @@ A `DataFrame` containing the solution with columns:
 # Outputs
 A directory named after `output_dirname` or the default value, containing the following files:
 - `out.csv`: a CSV file containing the solution columns listed above.
-- `eruptions.csv`, A CSV file containing the datas of eruptions with the following columns: time of eruption (sec), duration of eruption (sec), mass erupted (kg) and volume erupted (km³).
+- `eruptions.csv`, A CSV file containing the datas of eruptions with the following columns: time_of_eruption (sec), duration_of_eruption (sec), mass_erupted (kg) and volume_erupted (km³).
 - Figures for P+dP(t), T(t), eps_g(t), V(t), X_CO2(t), total_mass(t).
 
 # References
@@ -76,7 +77,7 @@ function chamber(
     ;
     method::String="CVODE_BDF",
     rheol::String="old",
-)
+)::DataFrame
     datetime = get_timestamp()
     composition_str = string(typeof(composition))
     path = joinpath(pwd(), output_dirname)
@@ -175,7 +176,6 @@ function chamber(
             composition, M_h2o_0, M_co2_0, M_tot, P_0, T_0, V_0, rc.rho_m0, param_IC_Finder
         )
 
-        println("IC_Finder done, phase: ", phase)
         @info("First IC_Finder done: ", eps_g0, X_co20, C_co2, phase)
         param_saved_var.phase = phase
 
@@ -233,8 +233,6 @@ function chamber(
             tot_Mass_H2O_0,
             tot_Mass_CO2_0,
         ]
-        println("timespan: ", timespan)
-        println("Initial Conditions: ", IC)
         @info("ODE solver settings: ", method, odesetting, IC, timespan, param, sw)
         cb = VectorContinuousCallback(
             stopChamber_MT′, affect!′, 8; rootfind=SciMLBase.RightRootFind
@@ -250,13 +248,10 @@ function chamber(
             dtmax=odesetting.max_step,
         )
     end
-    println(to)
     @info(to)
     close(io)
     df = DataFrame(sol)
     write_csv(df, erupt_saved, path)
     plot_figs(df, path)
-
-    println(".. Done!")
     return df
 end
