@@ -1,8 +1,8 @@
 """
     gas_heat_capacity(X_co2::Float64)
 
-# Arguments
-`X_co2`: mole fraction of CO2 in the gas.
+## Arguments
+- `X_co2`: mole fraction of CO2 in the gas.
 """
 function gas_heat_capacity(X_co2::Float64)::Float64
     if X_co2 == 0
@@ -28,15 +28,21 @@ end
 """
     heat_conduction_chamberCH(maxn::Int64, a::Float64, c::Float64, dr::Float64, kappa::Float64, rho::Float64, cp::Float64, Tb::Float64, param_sv::ParamSaved{Float64})::Float64
 
-# Arguments
-`maxn`: number of terms
-`a`: radius of magma chamber (m)
-`c`: radius of outer shell (m)
-`dr`: grid spacing of calculate the heat transfer
-`kappa`: thermal diffusivity of host rocks
-`rho`: density of the magma
-`cp`: specific heat of magma
-`Tb`: boundary temperature of the outer shell
+The function calculates the heat conduction within a magma chamber by solving the heat equation in cylindrical coordinates.
+
+## Arguments
+- `maxn`: number of terms
+- `a`: radius of magma chamber (m)
+- `c`: radius of outer shell (m)
+- `dr`: grid spacing for calculating the heat transfer
+- `kappa`: thermal diffusivity of host rocks (m^2/s)
+- `rho`: density of the magma (kg/m³)
+- `cp`: specific heat of magma (J/(kg K))
+- `Tb`: boundary temperature of the outer shell (K)
+- `param_sv`: a struct `ParamSaved` stores the previous results of the function
+
+## Returns
+- `Q`: heat flow rate through the magma chamber (J/s)
 """
 function heat_conduction_chamberCH(
     maxn::Int64,
@@ -287,13 +293,19 @@ end
 """
     heat_conduction_chamber_profileCH(maxn::Int64, a::Float64, c::Float64, r::Float64, kappa::Float64, Tb::Float64, param_sv::ParamSaved{Float64})::Float64
 
-# Arguments
-`maxn`: number of terms
-`a`: radius of magma chamber (m)
-`c`: radius of outer shell (m)
-`r`: 
-`kappa`: thermal diffusivity of host rocks
-`Tb`: boundary temperature of the outer shell
+Calculates the heat transfer in a magma chamber based on the thermal diffusivity of the host rocks and the temperature profile of the outer shell.
+
+## Arguments
+- `maxn`: number of terms
+- `a`: radius of magma chamber (m)
+- `c`: radius of outer shell (m)
+- `r`: grid spacing of calculate the heat transfer
+- `kappa`: thermal diffusivity of host rocks
+- `Tb`: boundary temperature of the outer shell (K)
+- `param_sv`: a struct `ParamSaved` stores the previous results of the function
+
+## Returns
+- `Trt`
 """
 function heat_conduction_chamber_profileCH(
     maxn::Int64,
@@ -350,10 +362,10 @@ function heat_conduction_chamber_profileCH(
         end
         term1 = -4 * pi * kappa * a / (2 * r * c^2) * (-1) * sumn
 
-        #% second sum over n
+        # second sum over n
         sumn = 0.0
         for n in 1:maxn
-            #% sum over k within second sum over n
+            # sum over k within second sum over n
             sumk = 0.0
             for k in 1:(time_index - 1)
                 past_time = time[k]

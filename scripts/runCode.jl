@@ -6,7 +6,7 @@ include("./solver_methods.jl")
 
 Simulate the eruption of a volcano using a model for the frequency of eruptions of upper crustal magma chambers based on Degruyter and Huber (2014).
 
-# Arguments
+## Arguments
 - `composition`: The magma composition. Use `Silicic()` for rhyolite composition (arc magma) or `Mafic()` for basalt composition (rift).
 - `end_time`: Maximum magma chamber evolution duration in seconds.
 - `log_volume_km3`: The initial volume of the chamber in logarithmic scale. The actual initial chamber volume is calculated as 10^(`log_volume_km3`) in km³.
@@ -16,7 +16,7 @@ Simulate the eruption of a volcano using a model for the frequency of eruptions 
 - `depth`: Depth of the magma chamber in meters.
 - `output_dirname`(optional): Name of the output directory. Defaults to current timestamp.
 
-# Returns
+## Returns
 A `DataFrame` containing the solution with columns:
 - `time`: Simulation timestamps in seconds.
 - `P+dP`: Pressure in Pa.
@@ -30,16 +30,16 @@ A `DataFrame` containing the solution with columns:
 - `total_mass_H2O`: Total mess of water in the magma in kg.
 - `total_mass_CO2`: Total mass of CO₂ in the magma in kg.
 
-# Outputs
+## Outputs
 A directory named after `output_dirname` or the default value, containing the following files:
 - `out.csv`: a CSV file containing the solution columns listed above.
 - `eruptions.csv`, A CSV file containing the datas of eruptions with the following columns: time_of_eruption (sec), duration_of_eruption (sec), mass_erupted (kg) and volume_erupted (km³).
 - Figures for P+dP(t), T(t), eps_g(t), V(t), X_CO2(t), total_mass(t).
 
-# References
+## References
 - W. Degruyter and C. Huber (2014). A model for eruption frequency of upper crustal silicic magma chambers. Earth Planet. Sci. Lett. https://doi.org/10.1016/j.epsl.2014.06.047
 
-# Examples
+## Examples
 ```
 # Run a simulation with silicic magma chamber
 julia> composition = Silicic()
