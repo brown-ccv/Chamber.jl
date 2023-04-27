@@ -176,6 +176,13 @@ end
     build_meq(composition::Silicic, Pw::T, Pc::T, Temp::T, dPwdP::T, dPcdP::T, dPwdXco2::T, dPcdXco2::T)::NamedTuple{(:meq, :dmeqdT, :dmeqdP, :dmeqdXco2),NTuple{4,T}} where {T<:Float64}
 
 - This function is used within the `exsolve` function.
+
+## Returns
+A NamedTuple with the following fields:
+- `meq`
+- `dmeqdT`
+- `dmeqdP`
+- `dmeqdXco2`
 """
 function build_meq(
     composition::Silicic,
@@ -199,6 +206,13 @@ end
     build_meq(composition::Mafic, P::T, Temp::T, X_co2::T)::NamedTuple{(:meq, :dmeqdT, :dmeqdP, :dmeqdXco2),NTuple{4,T}} where {T<:Float64}
 
 - This function is used within the `exsolve` function.
+
+## Returns
+A NamedTuple with the following fields:
+- `meq`
+- `dmeqdT`
+- `dmeqdP`
+- `dmeqdXco2`
 """
 function build_meq(
     composition::Mafic, P::T, Temp::T, X_co2::T
@@ -216,6 +230,13 @@ end
     build_co2(Pw::T, Pc::T, Temp::T, dPwdP::T, dPcdP::T, dPwdXco2::T, dPcdXco2::T)::NamedTuple{(:C_co2, :dC_co2dT, :dC_co2dP, :dC_co2dXco2),NTuple{4,T}} where {T<:Float64}
 
 - This function is used within the `exsolve` function.
+
+## Returns
+A NamedTuple with the following fields:
+- `C_co2`
+- `dC_co2dT`
+- `dC_co2dP`
+- `dC_co2dXco2`
 """
 function build_co2(
     Pw::T, Pc::T, Temp::T, dPwdP::T, dPcdP::T, dPwdXco2::T, dPcdXco2::T
@@ -291,7 +312,7 @@ end
 - Water Paritioning Function
 - This function is used within the `exsolve3` function.
 
-# Arguments:
+## Arguments
 - `p`: pressure (Pa)
 - `t`: temperature (K)
 - `x`: The previous mole fraction of CO2 (X_CO2)
@@ -316,7 +337,7 @@ end
 - Water Paritioning Function
 - This function is used within the `exsolve3` function.
 
-# Arguments:
+## Arguments
 - `p`: pressure (Pa)
 - `t`: temperature (K)
 - `x`: The previous mole fraction of CO2 (X_CO2)
@@ -345,7 +366,7 @@ end
 - Function for the derivative of water with reference to X_CO2
 - This function is used within the `exsolve3` function.
 
-# Arguments:
+## Arguments
 - `p`: pressure (Pa)
 - `t`: temperature (K)
 - `x`: The previous mole fraction of CO2 (X_CO2)
@@ -371,7 +392,7 @@ end
 - Derivative of Water Partitioning Function with respect to X_CO2
 - This function is used within the `exsolve3` function.
 
-# Arguments:
+## Arguments
 - `p`: pressure (Pa)
 - `t`: temperature (K)
 - `x`: The previous mole fraction of CO2 (X_CO2)
@@ -387,14 +408,14 @@ end
 - Finding mole fraction of CO2 in gas (X_CO2).
 - This function is used within the `exsolve3` function.
 
-# Arguments
+## Arguments
 - `f`: Water Paritioning Function
 - `f_prime`: Function for the derivative of water with reference to X_CO2
 - `errorTol`: error tolerance, the default value is 1e-10
 - `count_max`: Maximum loop count, the default value is 1e2
 - `Xc_initial`: initial guess of X_CO2, the dedault value is 1e-2
 
-# Returns
+## Returns
 - `X_CO2`: mole fraction of CO2 in gas
 """
 function solve_NR(
@@ -521,15 +542,22 @@ TODO:
 """
     dX_dxdydz(composition::Union{Silicic,Mafic}, s::String, x::T, y::T, z::T)::NamedTuple{(:X, :dXdx, :dXdy, :dXdz),NTuple{4,T}} where {T<:Float64}
 
-- This function is used within the `exsolve3` function.
+- This function is used within the `parameters_melting_curve` function.
 - Calculate value from different parameter sets (# of parameter sets: Silicic: 3, Mafic: 2)
 
-# Arguments
-- `composition`: Silicic or Mafic
-- `s`: represent different set of parammeters, the Silicic case has "a", "b", "c", and the Mafic has "a", "b".
+## Arguments
+- `composition`: `Silicic()` or `Mafic()`
+- `s`: String that represents the parameter set to use. For `Silicic`, `s` can be `"a"`, `"b"`, or `"c"`. For `Mafic`, `s` can be `"a"` or `"b"`.
 - `x`: Water (H2O)
 - `y`: Gas (CO2)
 - `z`: Pressure (P)
+
+## Returns
+A NamedTuple with the following fields:
+- `X`: the calculated value for the given parameter set
+- `dXdx`: the derivative of `X` with respect to `x`
+- `dXdy`: the derivative of `X` with respect to `y`
+- `dXdz`: the derivative of `X` with respect to `z`
 """
 function dX_dxdydz(
     composition::Union{Silicic,Mafic}, s::String, x::T, y::T, z::T

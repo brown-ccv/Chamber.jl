@@ -1,10 +1,12 @@
 """
     mco2_dissolved_sat(X::Float64, P::Float64, T::Float64)::Float64
 
-# Arguments
-`X`: mole fraction of CO2 in gas
-`P`: Pressure (Pa)
-`T`: Temperature (K)
+- This function is used within the `solve_X_co2` function
+
+## Arguments
+- `X`: mole fraction of CO2 in gas
+- `P`: Pressure (Pa)
+- `T`: Temperature (K)
 """
 function mco2_dissolved_sat(X::Float64, P::Float64, T::Float64)::Float64
     P_MPa = P / 1e6
@@ -21,10 +23,12 @@ end
 """
     meq_water(composition::Silicic, X::Float64, P::Float64, T::Float64)::Float64
 
-# Arguments
-`X`: mole fration of H2O in gas
-`P`: Pressure (Pa)
-`T`: Temperature (K)
+- This function is used within the `get_eps_g` function
+
+## Arguments
+- `X`: mole fration of H2O in gas
+- `P`: Pressure (Pa)
+- `T`: Temperature (K)
 """
 function meq_water(composition::Silicic, X::Float64, P::Float64, T::Float64)::Float64
     P = P / 1e6
@@ -43,10 +47,12 @@ end
 """
     meq_water(composition::Mafic, X::Float64, P::Float64, T::Float64)::Float64
 
-# Arguments
-`X`: mole fration of H2O in gas
-`P`: Pressure (Pa)
-`T`: Temperature (K)
+- This function is used within the `get_eps_g` function
+
+## Arguments
+- `X`: mole fration of H2O in gas
+- `P`: Pressure (Pa)
+- `T`: Temperature (K)
 """
 function meq_water(composition::Mafic, X::Float64, P::Float64, T::Float64)::Float64
     P = P / 1e6
@@ -71,7 +77,8 @@ end
 
 - This function is used within the `IC_Finder` function to determine the initial phase.
 
-# Returns
+## Returns
+A NamedTuple with the following fields:
 - `phase`: 2 or 3
 - `m_co2_melt`
 """
@@ -132,7 +139,7 @@ end
 
 - This function is used within the `IC_Finder` function to solve X_co20.
 
-# Returns
+## Returns
 - `X_co20`
 """
 function solve_X_co2(
@@ -170,7 +177,7 @@ end
 
 - This function is used within the `IC_Finder` function to solve X_co20.
 
-# Returns
+## Returns
 - `X_co20`
 """
 function solve_X_co2(
@@ -204,7 +211,8 @@ end
 
 - This function is used within the `IC_Finder` function to get eps_g0 and mco2_diss.
 
-# Returns
+## Returns
+A NamedTuple with the following fields:
 - `eps_g0`
 - `mco2_diss`
 """

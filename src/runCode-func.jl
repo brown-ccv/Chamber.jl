@@ -3,9 +3,9 @@
     odeChamber(du::Vector{Float64}, u::Vector{Float64}, params::Tuple{Param{Float64}, ParamSaved{Float64}, SW{Int8}}, t::Float64)
 
 - Define the ODE equation.
-- Solve the model for eruption frequency of upper crustal silicic magma chambers using an ODE solver.
+- Solve the model for eruption frequency of upper crustal magma chambers using an ODE solver.
 
-# Arguments
+## Arguments
 - `du`: An array that stores the output of the ODE solver, i.e., the values of the derivatives of the solution `u` with respect to time `t`.
 - `u`: An array that stores the values of the solution at each time step `t`.
 - `p`: A tuple that stores the model parameters and some saved variables, which are described in more detail below.
@@ -13,12 +13,12 @@
 
 The arguments `du`, `u`, `p`, and `t` are from the DifferentialEquations.jl package. These argument formats are specific to the DifferentialEquations.jl package.
 
-# Parameters
+## Parameters
 - `param`: A custom parameter containing physical constants and other model parameters.
 - `param_saved_var`: A custom parameter used to store values from the previous time step.
 - `sw`: A custom parameter used to control simulation behavior.
 
-# Returns
+## Returns
 The function modifies `du` in place to store the values of the derivatives of the solution `u` with respect to time `t`.
 """
 function odeChamber(
@@ -76,10 +76,8 @@ function odeChamber(
     V, dV_dP, dV_dT = compute_dXdP_dXdT(u[4], param, "r")
     rho_m, drho_m_dP, drho_m_dT = compute_dXdP_dXdT(u[5], param, "m")
     rho_x, drho_x_dP, drho_x_dT = compute_dXdP_dXdT(u[6], param, "x")
-    eos_g_results = eos_g(P, T)
-    rho_g, drho_g_dP, drho_g_dT = eos_g_results.rho_g,
-    eos_g_results.drho_g_dP,
-    eos_g_results.drho_g_dT
+    eos_g_res = eos_g(P, T)
+    rho_g, drho_g_dP, drho_g_dT = eos_g_res.rho_g, eos_g_res.drho_g_dP, eos_g_res.drho_g_dT
 
     total_Mass, M_h2o, M_co2 = u[8], u[9], u[10]
     m_h2o = M_h2o / (total_Mass)
@@ -218,7 +216,7 @@ end
 
 Define the stopping criteria for an ODE solver that simulates a magma chamber.
 
-# Arguments:
+## Arguments
 - `out`: An array where the function should save the condition value at the right index. The maximum index of `out` should be specified in the `len` property of `callback`, which allows for a chain of `len` events, triggering the `ith` event when `out[i] = 0`. The function returns the value of `out[8]` as the last condition. Checking Event Handling and Callback Functions page of `DifferentialEquations.jl` for more details.
 - `u`: A vector containing the state of the system at time `t`.
 - `t`: The current time of the ODE solver.
@@ -228,7 +226,7 @@ Define the stopping criteria for an ODE solver that simulates a magma chamber.
 
 The arguments `out`, `u`, `t`, and `int` are from the DifferentialEquations.jl package. These argument formats are specific to the DifferentialEquations.jl package.
 
-# Returns
+## Returns
 The `out` array is modified in-place to contain the condition values at the current state of the system. The function computes several quantities based on the current state of the system and the model parameters, such as the crystal fraction, the maximum amount of exsolved fluid, and the amount of CO2 in the melt. It then uses these values to calculate the condition values to be stored in the `out` array, as follows:
 - `out[1]`: the crystal fraction.
 - `out[2]`: the ratio of crystal fraction to liquid fraction, minus 0.8.
@@ -295,7 +293,7 @@ end
 
 Re-initialize the condition when the event happens. This function modifies the current state of the integrator (`int.u`) when a particular event occurs during the simulation. The function adjusts various parameters based on the current state of the integrator and the custom parameters that were passed in.
 
-# Arguments:
+## Arguments
 - `int`: The current state of the integrator. It's format is from the DifferentialEquations.jl package
 - `idx`: The index of the event that caused the function to be called.
 - `sw`: A custom parameter used to control simulation behavior.

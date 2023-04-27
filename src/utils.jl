@@ -7,7 +7,9 @@ function get_timestamp()::String
     return Dates.format(now(), "YYmmddHHMM")
 end
 
-## Settings for ODE Solver Calculation
+"""
+Settings for ODE Solver Calculation
+"""
 @with_kw struct OdeSetting{T}
     reltol::T = 1e-8    # Relative tolerance
     abstol::T = 1e-8    # Absolute tolerance
@@ -23,7 +25,10 @@ end
     mm_h2o::T = 18.02e-3     # molecular mass of H2O
 end
 
-## Rheology of the crust
+
+"""
+Rheology of the crust
+"""
 struct RheolComposition{T}
     rho_m0::T # initial melt density (kg/m^3)
     rho_x0::T # initial crystal density (kg/m^3)
@@ -50,7 +55,9 @@ end
 old = RheolOld{Float64}((1.9), 141e3, 8.31, 2e-4 * (1e6)^-(1.9))
 rheol_dict = Dict("new" => new, "old" => old)
 
-## Parameters
+"""
+Parameters
+"""
 @with_kw mutable struct Param{T}
     composition::Union{Silicic,Mafic}
     rheol::String
@@ -98,13 +105,18 @@ rheol_dict = Dict("new" => new, "old" => old)
     T_in::T = 0
 end
 
-## eruption/cooling_module/viscous_relaxation control
+"""
+eruption/cooling_module/viscous_relaxation control
+"""
 @with_kw mutable struct SW{T}
     heat_cond::T = 1
     visc_relax::T = 1
     eruption::T = 0
 end
 
+"""
+Settings for `IC_Finder`
+"""
 @with_kw mutable struct ParamICFinder{T}
     max_count::Int64 = 100
     min_eps_g::T = 1e-10
@@ -136,11 +148,27 @@ end
     volume::Vector{T} = []
 end
 
+"""
+    rho_f(;eps_m::T, eps_g::T, eps_x::T, rho_m::T, rho_g::T, rho_x::T)::T where {T<:Float64}
+
+- This function is used within the `build_rho_rc` function.
+## Returns
+- `rho`: bulk density (kg/m³)
+"""
 function rho_f(;
     eps_m::T, eps_g::T, eps_x::T, rho_m::T, rho_g::T, rho_x::T
 )::T where {T<:Float64}
     return eps_m * rho_m + eps_g * rho_g + eps_x * rho_x
 end
+
+"""
+    drho_dX_f(;eps_m::T, eps_g::T, eps_x::T, drho_m_dX::T, drho_g_dX::T, drho_x_dX::T, rho_x::T, rho_m::T, deps_x_dX::T)::T where {T<:Float64}
+
+- `X`: represent `P` or `T`
+- This function is used within the `build_rho_rc` function.
+## Returns
+- `drho_dX`: represent `drho_dP` or `drho_dT`
+"""
 function drho_dX_f(;
     eps_m::T,
     eps_g::T,
@@ -158,12 +186,29 @@ function drho_dX_f(;
            (rho_x - rho_m) * deps_x_dX
 end
 
+"""
+    rc_f(;rho_x::T, eps_x::T, c_x::T, rho_m::T, eps_m::T, c_m::T, rho_g::T, eps_g::T, c_g::T)::T where {T<:Float64}
+
+Computing the product of density and specific heat 
+- This function is used within the `build_rho_rc` function.
+## Returns
+- `rc`: the product of density and specific heat
+"""
 function rc_f(;
     rho_x::T, eps_x::T, c_x::T, rho_m::T, eps_m::T, c_m::T, rho_g::T, eps_g::T, c_g::T
 )::T where {T<:Float64}
     return rho_x * eps_x * c_x + rho_m * eps_m * c_m + rho_g * eps_g * c_g
 end
 
+"""
+    drc_dX_f(;eps_x::T, c_x::T, drho_x_dX::T, eps_g::T, c_g::T, drho_g_dX::T, eps_m::T, c_m::T, drho_m_dX::T, rho_x::T, rho_m::T, deps_x_dX::T)::T where {T<:Float64}
+
+Computing the derivatives of the product of density and specific heat for the mixture
+- `X`: represent `P` or `T`
+- This function is used within the `build_rho_rc` function.
+## Returns
+- `drc_dX`: represent `drc_dP` or `drc_dT`
+"""
 function drc_dX_f(;
     eps_x::T,
     c_x::T,
@@ -184,6 +229,13 @@ function drc_dX_f(;
            (rho_x * c_x - rho_m * c_m) * deps_x_dX
 end
 
+"""
+    build_rho_rc(eps_m::T, eps_g::T, eps_x::T, rho_m::T, rho_g::T, rho_x::T, drho_m_dP::T, drho_g_dP::T, drho_x_dP::T, drho_m_dT::T, drho_g_dT::T, drho_x_dT::T, c_x::T, c_m::T, c_g::T, deps_x_dP::T, deps_x_dT::T)::Vector{T} where {T<:Float64}
+
+- This function is used within the `odeChamber` function.
+## Returns
+[`rho`, `drho_dP`, `drho_dT`, `drho_deps_g`, `rc`, `drc_dP`, `drc_dT`]
+"""
 function build_rho_rc(
     eps_m::T,
     eps_g::T,
@@ -230,8 +282,7 @@ function build_rho_rc(
     )
     drho_deps_g = -rho_m + rho_g
 
-    # computing the product of density and specific heat for the mixture and
-    # its derivatives
+    # computing the product of density and specific heat for the mixture and its derivatives
     rc = rc_f(;
         rho_x=rho_x,
         eps_x=eps_x,
@@ -274,10 +325,23 @@ function build_rho_rc(
     return [rho, drho_dP, drho_dT, drho_deps_g, rc, drc_dP, drc_dT]
 end
 
+"""
+    rho_0_f(eps_g0::Float64, eps_x0::Float64, rho_g0::Float64, rho_m0::Float64, rho_x0::Float64)::Float64
+- This function is used within the `chamber` function.
+## Returns
+- `rho_0`: initial bulk density (kg/m³)
+"""
 rho_0_f(
     eps_g0::Float64, eps_x0::Float64, rho_g0::Float64, rho_m0::Float64, rho_x0::Float64
 )::Float64 = (1 - eps_g0 - eps_x0) * rho_m0 + eps_g0 * rho_g0 + eps_x0 * rho_x0
 
+"""
+    build_mdot_in(fluxing::Bool, rho_m0::Float64, log_vfr::Float64, P_0::Float64, T_in::Float64)::Float64
+
+- This function is used within the `chamber` function.
+## Returns
+- `mdot_in`: mass inflow rate
+"""
 function build_mdot_in(
     fluxing::Bool, rho_m0::Float64, log_vfr::Float64, P_0::Float64, T_in::Float64
 )::Float64
@@ -285,7 +349,7 @@ function build_mdot_in(
         range_vfr = 10^log_vfr   # volume flow rate (km3/yr)  
         mdot_in = rho_m0 * range_vfr * 1e9 / (3600 * 24 * 365)
     else
-        log_vfr = -4.3         # log volume flow rate (km3/yr)
+        log_vfr = -4.3           # log volume flow rate (km3/yr)
         range_vfr = 10^log_vfr   # volume flow rate (km3/yr)
         rho_g_in = eos_g_rho_g(P_0, T_in)
         mdot_in = rho_g_in * range_vfr * 1e9 / (3600 * 24 * 365)
@@ -293,6 +357,11 @@ function build_mdot_in(
     return mdot_in
 end
 
+"""
+    compute_dXdP_dXdT(u::Float64, param::Param, var::String)::Tuple{Float64,Float64,Float64}
+
+- This function is used within the `odeChamber` function.
+"""
 function compute_dXdP_dXdT(
     u::Float64, param::Param, var::String
 )::Tuple{Float64,Float64,Float64}
