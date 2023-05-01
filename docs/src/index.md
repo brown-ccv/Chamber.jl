@@ -8,9 +8,6 @@ This a brief description of the package.
 
 Add more paragraphs as needed.
 
-```@contents
-```
-
 ## Functions
 ```@autodocs
 Modules = [Chamber]
