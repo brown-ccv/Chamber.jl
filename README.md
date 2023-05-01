@@ -1,7 +1,8 @@
 [![Build Status](https://github.com/CallieHsu/Chamber.jl/actions/workflows/test.yml/badge.svg?event=push)](https://github.com/CallieHsu/Chamber.jl/actions/workflows/test.yml??query=branch%3Amain)
+[![Dev](https://img.shields.io/badge/docs-dev-blue.svg)](https://brown-ccv.github.io/Chamber.jl/)
 
 # Chamber.jl
-`Chamber` is a Julia package for simulating the eruption of a volcano using a model for the frequency of eruptions of upper crustal magma chambers based on Degruyter and Huber (2014). The package generates a CSV file and figures with the solution data of various variables over time.
+`Chamber.jl` is a Julia package for simulating the eruption of a volcano using a model for the frequency of eruptions of upper crustal magma chambers based on Degruyter and Huber (2014). The package generates a CSV file and figures with the solution data for various variables over time.
 
 ## Installation
 #=
@@ -32,36 +33,35 @@ chamber(composition, end_time, log_volume_km3, InitialConc_H2O, InitialConc_CO2,
 
 ### Returns
 A `DataFrame` containing the solution with columns:
-- 1st colume `time`: Simulation timestamps (sec).
-- 2nd colume `P+dP`: Pressure (Pa).
-- 3rd colume `T`: Temperature (K).
-- 4th colume `eps_g`: Gas volume fraction.
-- 5th colume `V`: Volume of the magma chamber (m³).
-- 6th colume `rho_m`: Density of the melt (kg/m³).
-- 7th colume `rho_x`: Density of magma crystal (kg/m³).
-- 8th colume `X_CO2`: Mole fraction of CO2 in the gas.
-- 9th colume `total_mass`: Total mess of magma chamber (kg).
-- 10th colume `total_mass_H2O`: Total mess of water in the magma (kg).
-- 11th colume `total_mass_CO2`: Total mass of CO₂ in the magma (kg).
+- `time`: Simulation timestamps (sec).
+- `P+dP`: Pressure (Pa).
+- `T`: Temperature (K).
+- `eps_g`: Gas volume fraction.
+- `V`: Volume of the magma chamber (m³).
+- `rho_m`: Density of the melt (kg/m³).
+- `rho_x`: Density of magma crystal (kg/m³).
+- `X_CO2`: Mole fraction of CO2 in the gas.
+- `total_mass`: Total mess of magma chamber (kg).
+- `total_mass_H2O`: Total mess of water in the magma (kg).
+- `total_mass_CO2`: Total mass of CO₂ in the magma (kg).
 
 ### Outputs
 A directory named after `output_dirname` or the default value, containing the following files:
 - `out.csv`: A comma-delimited ascii file containing the solution columns listed above.
 - `eruptions.csv`: A comma-delimited ascii file. It is organized as follows:
-  - 1st colume `time_of_eruption` (sec)
-  - 2nd colume `duration_of_eruption` (sec)
-  - 3rd colume `mass_erupted` (kg)
-  - 4th colume `volume_erupted` (km³).
+  - `time_of_eruption` (sec)
+  - `duration_of_eruption` (sec)
+  - `mass_erupted` (kg)
+  - `volume_erupted` (km³).
 - Figures for P+dP(t), T(t), eps_g(t), V(t), X_CO2(t), total_mass(t).
 
 ## Examples
-Here are examples of how to use the `chamber` function
 ### Example 1: Rhyolite composition (arc magma)
 Run a simulation with silicic magma chamber:
 ```julia
 julia> using Chamber
 
-# Define simulation parameters
+julia> # Define simulation parameters
 julia> composition = Silicic()
 julia> end_time = 3e9
 julia> log_volume_km3 = 0.2
@@ -70,7 +70,7 @@ julia> InitialConc_CO2 = 0.001
 julia> log_vfr = -3.3
 julia> depth = 8e3
 
-# Run simulation
+julia> # Run simulation
 julia> dataframe = chamber(composition, end_time, log_volume_km3, InitialConc_H2O, InitialConc_CO2, log_vfr, depth)
 470×11 DataFrame
  Row │ time            P+dP       T        eps_g       V          rho_m    rho_x    X_CO2     total_mass  total_mass_H2O  total_mass_CO2
@@ -88,7 +88,7 @@ julia> dataframe = chamber(composition, end_time, log_volume_km3, InitialConc_H2
  470 │      3.0e9      2.23889e8  1043.43  0.00555656  1.5879e9   2402.02  2602.18  0.339545  3.8513e12       1.54737e11       3.86841e9
                                                                                                                          461 rows omitted
 ```
-The `chamber` returns a DataFrame containing the solution data with columns described above. Additionally, it automatically creates a directory named with the current timestamp (by default) to store the output files including figures and CSV files.
+As noted, the `chamber` function returns a DataFrame containing the solution data with columns described above. Additionally, it automatically creates a directory named with the current timestamp (by default) to store the output files including figures and CSV data files.
 
 ### Example 2: Basalt composition (rift magma)
 Run a simulation with mafic magma chamber, with custom directory name "MyDirname":
@@ -114,14 +114,11 @@ julia> chamber(composition, end_time, log_volume_km3, InitialConc_H2O, InitialCo
  458 │      3.0e9      2.22284e8  1401.01  0.00138339  1.58952e9  2421.68  2902.01  0.856746  3.9779e12       3.98257e10       3.98257e9
                                                                                                                          454 rows omitted
 ```
-The `chamber` returns a DataFrame containing the solution data with columns described above. The output directory specified by `output_dirname` contains the files generated by the function.
+The output directory specified by `output_dirname` contains the generated files.
 
 ## API Documentation
-#=
-NOTE: unfinished
-=#
 
-API documentation for the chamber package can be found [here](https://your-package-docs-url-here/).
+API documentation for Chamber.jl can be found [here](https://brown-ccv.github.io/Chamber.jl/).
 
 ## References
 - W. Degruyter and C. Huber. A model for eruption frequency of upper crustal silicic magma chambers. Earth Planet. Sci. Lett. (2014).
