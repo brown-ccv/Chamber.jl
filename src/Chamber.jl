@@ -12,18 +12,18 @@ using Sundials
 using TimerOutputs
 using Logging
 include("utils.jl")
-include("./GLQ_points_weights.jl")
+include("./glq_points_weights.jl")
 include("./initial-utils.jl")
 include("./initial.jl")
 include("./heat.jl")
 include("./write_csv.jl")
 include("./plot_figs.jl")
 include("./boundary_condition.jl")
-include("./runCode-func.jl")
+include("./runcode-func.jl")
 include("./ic_finder-utils.jl")
-include("./IC_finder.jl")
+include("./ic_finder.jl")
 include("./utils-matrix.jl")
-include("../scripts/runCode.jl")
+include("../scripts/runcode.jl")
 export Silicic,
     Mafic,
     QNDF,
