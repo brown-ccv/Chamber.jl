@@ -12,7 +12,7 @@ Add more paragraphs as needed.
 ```@autodocs
 Modules = [Chamber]
 Order   = [:function, :macro, :type]
-Filter  = chamber(composition::Union{Silicic,Mafic}, end_time::Float64, log_volume_km3::Float64, InitialConc_H2O::Float64, InitialConc_CO2::Float64, log_vfr::Float64, depth::Float64, output_dirname::String)
+Filter  = chamber(::Union{Silicic,Mafic}, ::Float64, ::Float64, ::Float64, ::Float64, ::Float64, ::Float64, ::String)
 ```
 
 ## Index
