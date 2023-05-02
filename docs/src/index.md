@@ -12,7 +12,7 @@ Add more paragraphs as needed.
 ```@autodocs
 Modules = [Chamber]
 Order   = [:function, :macro, :type]
-Filter  = chamber(::Union{Silicic,Mafic}, ::Float64, ::Float64, ::Float64, ::Float64, ::Float64, ::Float64, ::String)
+Pages   = ["runcode.jl"]
 ```
 
 ## Index
