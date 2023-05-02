@@ -1,4 +1,4 @@
-# For runCode.jl, solving the ode problems. 
+# For runcode.jl, solving the ode problems. 
 """
     odeChamber(du::Vector{Float64}, u::Vector{Float64}, params::Tuple{Param{Float64}, ParamSaved{Float64}, SW{Int8}}, t::Float64)
 
