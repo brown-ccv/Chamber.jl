@@ -1,5 +1,5 @@
 
-include("./Data/GLQ_points_weights.jl")
+include("./data/glq_points_weights.jl")
 
 function GLQ_points_weights_hard(
     n::Int64, GLQ_points_weights::Dict{Int64,Matrix{Float64}}=GLQ_points_weights

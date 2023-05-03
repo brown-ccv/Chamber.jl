@@ -12,6 +12,7 @@ Add more paragraphs as needed.
 ```@autodocs
 Modules = [Chamber]
 Order   = [:function, :macro, :type]
+Pages   = ["runcode.jl"]
 ```
 
 ## Index
