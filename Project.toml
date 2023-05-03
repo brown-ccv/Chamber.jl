@@ -4,7 +4,6 @@ authors = ["CallieHsu <kelly811113@gmail.com> and contributors"]
 version = "0.1.0"
 
 [deps]
-BenchmarkTools = "6e4b80f9-dd63-53aa-95a3-0cdb28fa8baf"
 CSV = "336ed68f-0bac-5ca0-87d4-7b16caf5d00b"
 DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
 Dates = "ade2ca70-3891-5945-98fb-dc099432e06a"
@@ -21,7 +20,17 @@ Sundials = "c3572dad-4567-51f8-b174-8c6c989267f4"
 TimerOutputs = "a759f4b9-e2f1-59dc-863e-4aeb61b1ea8f"
 
 [compat]
-julia = "1"
+CSV = "0.10.9"
+DataFrames = "1.5.0"
+DifferentialEquations = "7.7.0"
+IterableTables = "1.0.0"
+Parameters = "0.12.3"
+Plots = "1.38.9"
+Roots = "2.0.7"
+SpecialFunctions = "2.2.0"
+Sundials = "4.16.0"
+TimerOutputs = "0.5.22"
+julia = ">= 1.7.2"
 
 [extras]
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
