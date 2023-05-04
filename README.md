@@ -38,7 +38,7 @@ A `DataFrame` containing the solution with columns:
 - `rho_x`: Density of magma crystal (kg/m³).
 - `X_CO2`: Mole fraction of CO2 in the gas.
 - `total_mass`: Total mess of magma chamber (kg).
-- `total_mass_H2O`: Total mess of water in the magma (kg).
+- `total_mass_H2O`: Total mass of water in the magma (kg).
 - `total_mass_CO2`: Total mass of CO₂ in the magma (kg).
 
 ### Outputs
