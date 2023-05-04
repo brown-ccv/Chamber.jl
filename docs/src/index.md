@@ -2,11 +2,8 @@
 CurrentModule = Chamber
 ```
 
-# This is the title (edit as needed): Chamber.jl
-
-This a brief description of the package.
-
-Add more paragraphs as needed.
+# Chamber.jl
+This is the API documentation for Chamber.jl. See the package's [README](https://github.com/brown-ccv/Chamber.jl#readme) for instructions about general useage.
 
 ## Functions
 ```@autodocs
