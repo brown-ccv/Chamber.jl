@@ -5,10 +5,6 @@
 `Chamber.jl` is a Julia package for simulating the eruption of a volcano using a model for the frequency of eruptions of upper crustal magma chambers based on Degruyter and Huber (2014). The package generates a CSV file and figures with the solution data for various variables over time.
 
 ## Installation
-#=
-NOTE: unfinished
-=#
-
 To install the `Chamber` package, open Julia and use the package manager:
 
 ```julia
