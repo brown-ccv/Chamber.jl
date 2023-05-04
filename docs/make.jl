@@ -8,8 +8,8 @@ makedocs(;
     format=Documenter.HTML(prettyurls=get(ENV, "CI", nothing) == "true"),
     modules=[Chamber],
     pages=[
-        "Introduction" => "index.md",
-        "Background" => "background.md",
+        "API Documentation" => "index.md",
+        # "Background" => "background.md",
         # Add more pages as needed here
     ]
 )
