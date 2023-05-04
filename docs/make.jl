@@ -6,12 +6,7 @@ using Chamber
 makedocs(;
     sitename="Chamber.jl",
     format=Documenter.HTML(prettyurls=get(ENV, "CI", nothing) == "true"),
-    modules=[Chamber],
-    pages=[
-        "API Documentation" => "index.md",
-        # "Background" => "background.md",
-        # Add more pages as needed here
-    ]
+    modules=[Chamber]
 )
 
 # Hosting: update repo
