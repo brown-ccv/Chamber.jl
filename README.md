@@ -1,5 +1,6 @@
 [![Build Status](https://github.com/brown-ccv/Chamber.jl/actions/workflows/test.yml/badge.svg)](https://github.com/brown-ccv/Chamber.jl/actions?query=workflows/test)
-[![Dev](https://img.shields.io/badge/docs-dev-blue.svg)][docs-dev-url]
+[![][docs-stable-img]][docs-stable-url]
+[![][docs-dev-img]][docs-dev-url]
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/brown-ccv/Chamber.jl/blob/master/notebooks/notebook_for_chamber.ipynb)
 
 # Chamber.jl
@@ -115,10 +116,14 @@ The output directory specified by `output_dirname` contains the generated files.
 
 ## API Documentation
 
-API documentation for Chamber.jl can be found [here][docs-dev-url].
+API documentation for Chamber.jl can be found [here][docs-stable-url].
 
 ## References
 - W. Degruyter and C. Huber. A model for eruption frequency of upper crustal silicic magma chambers. Earth Planet. Sci. Lett. (2014).
 - DifferentialEquations.jl. Available at https://github.com/SciML/DifferentialEquations.jl.
 
-[docs-dev-url]: https://brown-ccv.github.io/Chamber.jl/
+[docs-dev-url]: https://brown-ccv.github.io/Chamber.jl/dev
+[docs-stable-url]: https://brown-ccv.github.io/Chamber.jl/stable/
+[docs-dev-img]: https://img.shields.io/badge/docs-dev-blue.svg
+[docs-stable-img]: https://img.shields.io/badge/docs-stable-blue.svg
+
