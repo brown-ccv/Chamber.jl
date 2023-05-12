@@ -113,12 +113,12 @@ julia> chamber(composition, end_time, log_volume_km3, InitialConc_H2O, InitialCo
 ```
 The output directory specified by `output_dirname` contains the generated files.
 
+## Notebook for Google Colaboratory
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/brown-ccv/Chamber.jl/blob/master/notebooks/notebook_for_chamber.ipynb)
+
 ## API Documentation
 
 API documentation for Chamber.jl can be found [here][docs-stable-url].
-
-## Notebook for Google Colaboratory
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/brown-ccv/Chamber.jl/blob/master/notebooks/notebook_for_chamber.ipynb)
 
 ## References
 - W. Degruyter and C. Huber. A model for eruption frequency of upper crustal silicic magma chambers. Earth Planet. Sci. Lett. (2014).
