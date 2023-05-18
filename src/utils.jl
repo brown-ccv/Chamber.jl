@@ -25,7 +25,6 @@ end
     mm_h2o::T = 18.02e-3     # molecular mass of H2O
 end
 
-
 """
 Rheology of the crust
 """
@@ -400,3 +399,10 @@ function record_erupt_end(
     push!(erupt_saved.volume, volume)
     return nothing
 end
+
+function print_timer_log(io::IO, to::TimerOutput)::Nothing
+    print_timer(io, to; compact=true, allocations=false, sortby=:firstexec)
+    return nothing
+end
+
+vector_uniq(x) = if typeof(x) <: Vector unique!(x) else Vector([x]) end
