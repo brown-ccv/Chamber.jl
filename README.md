@@ -2,7 +2,6 @@
 [![][docs-stable-img]][docs-stable-url]
 [![][docs-dev-img]][docs-dev-url]
 
-
 # Chamber.jl
 `Chamber.jl` is a Julia package for simulating the eruption of a volcano using a model for the frequency of eruptions of upper crustal magma chambers based on Degruyter and Huber (2014). The package generates a CSV file and figures with the solution data for various variables over time.
 
@@ -113,6 +112,9 @@ julia> chamber(composition, end_time, log_volume_km3, InitialConc_H2O, InitialCo
                                                                                                                          454 rows omitted
 ```
 The output directory specified by `output_dirname` contains the generated files.
+
+## Notebook for Google Colaboratory
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/brown-ccv/Chamber.jl/blob/master/notebooks/notebook_for_chamber.ipynb)
 
 ## API Documentation
 
