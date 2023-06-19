@@ -4,7 +4,7 @@ struct Silicic end
 struct Mafic end
 
 function get_timestamp()::String
-    return Dates.format(now(), "YYmmddHHMM")
+    return Dates.format(now(), "YYmmddHHMMSSsss")
 end
 
 """
@@ -405,4 +405,10 @@ function print_timer_log(io::IO, to::TimerOutput)::Nothing
     return nothing
 end
 
-vector_uniq(x) = if typeof(x) <: Vector unique!(x) else Vector([x]) end
+function vector_uniq(x::Union{Float64,Vector{Float64}})::Vector{Float64}
+    if typeof(x) <: Vector
+        return unique!(x)
+    else
+        return Vector([x])
+    end
+end
