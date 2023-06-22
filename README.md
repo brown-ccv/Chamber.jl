@@ -23,7 +23,7 @@ chamber(composition, end_time, log_volume_km3, InitialConc_H2O, InitialConc_CO2,
 - `end_time`: Maximum magma chamber evolution duration in seconds.
 - `log_volume_km3`: The initial volume of the chamber in logarithmic scale. The actual initial chamber volume is calculated as 10^(log_volume_km3) in km³.
 - `InitialConc_H2O`: The initial weight fraction of water in the magma (exsolved + dissolved).
-- `InitialConc_H2O`: The initial weight fraction of CO₂ in the magma (exsolved + dissolved).
+- `InitialConc_CO2`: The initial weight fraction of CO₂ in the magma (exsolved + dissolved).
 - `log_vfr`: Magma recharge rate in km³/yr calculated as 10^(`log_vfr`).
 - `depth`: Depth of the magma chamber in meters.
 - `output_dirname`: (Optional) Name of the output directory. Defaults to current timestamp.
