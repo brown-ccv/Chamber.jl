@@ -7,7 +7,7 @@ include("test-matrix-a-data.jl")
     @test a21 == a21_f(
         eps_m,
         dm_eq_dP,
-        m_eq,
+        C_h2o,
         deps_x_dP,
         dV_dP,
         V,
@@ -23,7 +23,7 @@ include("test-matrix-a-data.jl")
     @test a22 == a22_f(
         eps_m,
         dm_eq_dT,
-        m_eq,
+        C_h2o,
         deps_x_dT,
         dV_dT,
         V,
@@ -36,7 +36,7 @@ include("test-matrix-a-data.jl")
         drho_g_dT,
         rho_g,
     )
-    @test a23 == a23_f(m_eq, X_co2, m_g, rho_g, mm_h2o, rho_m)
+    @test a23 == a23_f(C_h2o, X_co2, m_g, rho_g, mm_h2o, rho_m)
     @test a24 == a24_f(eps_m, dm_eq_dX_co2, m_g, eps_g, rho_g, mm_h2o, rho_m, X_co2, mm_co2)
 
     @test a31 == a31_f(
@@ -54,7 +54,7 @@ include("test-matrix-a-data.jl")
         dm_eq_dP,
         rho_m,
         eps_m,
-        m_eq,
+        C_h2o,
         drho_m_dP,
     )
     @test a32 == a32_f(
@@ -72,10 +72,10 @@ include("test-matrix-a-data.jl")
         dm_eq_dT,
         rho_m,
         eps_m,
-        m_eq,
+        C_h2o,
         drho_m_dT,
     )
-    @test a33 == a33_f(rho_g, c_g, rho_m, c_m, rc, L_e, m_eq, T)
+    @test a33 == a33_f(rho_g, c_g, rho_m, c_m, rc, L_e, C_h2o, T)
     @test a34 == a34_f(L_e, rho_m, eps_m, dm_eq_dX_co2, rc, T)
 
     @test a41 == a41_f(
@@ -129,15 +129,13 @@ include("test-matrix-b-data.jl")
         dM_h2o_t_dt,
         deps_x_dmco2_t,
         dM_co2_t_dt,
-        a11,
-        dP_lit_dt,
     )
     @test b2 == b2_f(
         Mdot_v_in,
         Mdot_v_out,
         rho_m,
         V,
-        m_eq,
+        C_h2o,
         deps_x_dmh2o_t,
         dM_h2o_t_dt,
         deps_x_dmco2_t,
@@ -149,8 +147,6 @@ include("test-matrix-b-data.jl")
         rho_g,
         eps_g,
         mm_h2o,
-        a21,
-        dP_lit_dt,
     )
     @test b3 == b3_f(
         Hdot_in,
@@ -168,12 +164,10 @@ include("test-matrix-b-data.jl")
         dM_co2_t_dt,
         L_m,
         L_e,
-        m_eq,
+        C_h2o,
         P_loss,
         eps_x,
         eps_m,
-        a31,
-        dP_lit_dt,
     )
     @test b4 == b4_f(
         Mdot_c_in,
@@ -192,8 +186,6 @@ include("test-matrix-b-data.jl")
         rho_g,
         eps_g,
         mm_co2,
-        a41,
-        dP_lit_dt,
     )
 end
 
@@ -218,7 +210,7 @@ A, b = build_matrix(
     dm_eq_dP,
     rho_m,
     eps_m,
-    m_eq,
+    C_h2o,
     drho_m_dP,
     drc_dT,
     drho_x_dT,
@@ -232,7 +224,6 @@ A, b = build_matrix(
     m_h2o,
     m_co2,
     deps_x_dmco2_t,
-    dP_lit_dt,
     Hdot_in,
     Hdot_out,
     c_x,
@@ -284,7 +275,7 @@ A, b = build_matrix(
     dm_eq_dP,
     rho_m,
     eps_m,
-    m_eq,
+    C_h2o,
     drho_m_dP,
     drc_dT,
     drho_x_dT,
@@ -298,7 +289,6 @@ A, b = build_matrix(
     m_h2o,
     m_co2,
     deps_x_dmco2_t,
-    dP_lit_dt,
     Hdot_in,
     Hdot_out,
     c_x,
