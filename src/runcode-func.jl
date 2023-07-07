@@ -87,8 +87,8 @@ function odeChamber(
         C_co2 = C_co2_t
         C_h2o = m_eq
     elseif phase == 2
-        C_co2 = M_co2/(rho_m*eps_m*V)
-        C_h2o = M_h2o/(rho_m*eps_m*V)
+        C_co2 = M_co2 / (rho_m * eps_m * V)
+        C_h2o = M_h2o / (rho_m * eps_m * V)
     end
 
     # specific heat of gas
@@ -304,7 +304,6 @@ function affect!(
     param_IC_Finder::ParamICFinder{Float64},
     erupt_saved::EruptSaved{Float64},
 )
-    @info("*event idx: ", idx)
     composition = param.composition
     storeTime = param_saved_var.storeTime
     storeTemp = param_saved_var.storeTemp
@@ -332,17 +331,20 @@ function affect!(
         sw.eruption = 1
         rho_g0 = eos_g_rho_g(P_0, int.u[2])
         record_erupt_start(int.t, int.u[3], eps_x0, int.u[5], int.u[6], rho_g0, erupt_saved)
-        @info("time: $(int.t), Reached critical pressure and need to start an eruption")
+        @info(
+            "*event idx: $idx\n  time: $(int.t), Reached critical pressure and need to start an eruption"
+        )
     elseif idx == 4
         sw.eruption = 0
         record_erupt_end(int.t, erupt_saved, param)
-        @info("time: $(int.t), Finished an eruption...")
+        @info("*event idx: $idx\n  time: $(int.t), Finished an eruption...")
     elseif idx == 6 || idx == 8
         phase_here = param_saved_var.phase
         @info(
-            "time: $(int.t), starting ic finder for conversion of phase, phase_here: $phase_here",
+            "*event idx: $idx\n  time: $(int.t), starting ic finder for conversion of phase, phase_here: $phase_here",
         )
-        eps_g_temp, X_co2_temp, C_co2_temp, phase = IC_Finder(
+        eps_g_temp, X_co2_temp, C_co2_temp, phase = ic_phase_conversion(
+            phase_here,
             composition,
             int.u[9],
             int.u[10],
@@ -353,66 +355,10 @@ function affect!(
             int.u[5],
             param_IC_Finder,
         )
-
         param_saved_var.phase = phase
-        if phase_here != phase
-            @info("1st try in IC Finder successful")
-            int.u[3] = eps_g_temp
-            int.u[7] = X_co2_temp
-            C_co2 = C_co2_temp
-        else
-            @info("1st try in IC Finder unsuccessful, trying new IC parameters...")
-            param_IC_Finder.max_count = 150
-            eps_g_temp, X_co2_temp, C_co2_temp, phase = IC_Finder(
-                composition,
-                int.u[9],
-                int.u[10],
-                int.u[8],
-                P_0,
-                int.u[2],
-                int.u[4],
-                int.u[5],
-                param_IC_Finder,
-            )
-            param_saved_var.phase = phase
-            ## change back to initial max_count
-            param_IC_Finder.max_count = 100
-            if phase_here != phase
-                @info("2nd try in IC Finder successful")
-                int.u[3] = eps_g_temp
-                int.u[7] = X_co2_temp
-                C_co2 = C_co2_temp
-            else
-                @info("2nd try in IC Finder unsuccessful, trying new IC parameters...")
-                param_IC_Finder.max_count = 100
-                param_IC_Finder.Tol = param_IC_Finder.Tol * 0.1
-                eps_g_temp, X_co2_temp, C_co2_temp, phase = IC_Finder(
-                    composition,
-                    int.u[9],
-                    int.u[10],
-                    int.u[8],
-                    P_0,
-                    int.u[2],
-                    int.u[4],
-                    int.u[5],
-                    param_IC_Finder,
-                )
-                param_saved_var.phase = phase
-                ## change back to initial Tol
-                param_IC_Finder.Tol = param_IC_Finder.Tol * 10
-                if phase_here != phase
-                    @info("3rd try in IC Finder successful")
-                    int.u[3] = eps_g_temp
-                    int.u[7] = X_co2_temp
-                    C_co2 = C_co2_temp
-                else
-                    @warn("3rd try in IC Finder unsuccessful")
-                    @info("IC_Finder results: $eps_g_temp, $X_co2_temp, $C_co2_temp, $phase = IC_Finder($composition, $(int.u[9]), $(int.u[10]), $(int.u[8]), $(P_0), $(int.u[2]), $(int.u[4]), $(int.u[5]), $(param_IC_Finder))")
-                end
-            end
-        end
-        @info("phase_here: $phase_here, new_phase: $phase")
-
+        int.u[3] = eps_g_temp
+        int.u[7] = X_co2_temp
+        C_co2 = C_co2_temp
     elseif idx == 1 || idx == 2 || idx == 5 || idx == 7 || idx === nothing
         if idx == 1
             @info("eps_x became 0.")
