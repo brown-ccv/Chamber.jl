@@ -320,7 +320,7 @@ julia> output_dirname = "MyDirname"
 julia> chamber(composition, end_time, log_volume_km3, InitialConc_H2O, InitialConc_CO2, log_vfr, depth, output_dirname)
 ```
 """
-function arraychamber(
+function chamber(
     composition::Union{Silicic,Mafic},
     end_time::Float64,
     log_volume_km3_vector::Union{Float64,Vector{Float64}},
