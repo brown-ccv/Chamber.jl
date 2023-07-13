@@ -404,11 +404,3 @@ function print_timer_log(io::IO, to::TimerOutput)::Nothing
     print_timer(io, to; compact=true, allocations=false, sortby=:firstexec)
     return nothing
 end
-
-function vector_uniq(x::Union{Float64,Vector{Float64}})::Vector{Float64}
-    if typeof(x) <: Vector
-        return unique!(x)
-    else
-        return Vector([x])
-    end
-end
