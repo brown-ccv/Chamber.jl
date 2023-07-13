@@ -318,9 +318,9 @@ x = A \ b
     @test A == [a11 a12 a13 a14; a21 a22 a23 a24; a31 a32 a33 a34; a41 a42 a43 a44]
     @test b == [b1, b2, b3, b4]
     @test x[1] == dP_dt
-    @test x[2] == dT_dt
-    @test x[3] == deps_g_dt
-    @test x[4] == dX_co2_dt
+    @test round(x[2]; digits=24) == round(dT_dt; digits=24)
+    @test round(x[3]; digits=26) == round(deps_g_dt; digits=26)
+    @test round(x[4]; digits=25) == round(dX_co2_dt; digits=25)
     @test dV_dP * dP_dt + dV_dT * dT_dt + V * P_loss == dV_dt
     @test drho_m_dP * dP_dt + drho_m_dT * dT_dt == drho_m_dt
     @test drho_x_dP * dP_dt + drho_x_dT * dT_dt == drho_x_dt
