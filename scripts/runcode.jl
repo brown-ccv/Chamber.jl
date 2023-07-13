@@ -257,7 +257,7 @@ julia> chamber(composition, end_time, log_volume_km3, InitialConc_H2O, InitialCo
 end
 
 """
-    arraychamber(composition::Union{Silicic,Mafic}, end_time::Float64, log_volume_km3_vector::Union{Float64,Vector{Float64}}, InitialConc_H2O_vector::Union{Float64,Vector{Float64}}, InitialConc_CO2_vector::Union{Float64,Vector{Float64}}, log_vfr_vector::Union{Float64,Vector{Float64}}, depth_vector::Union{Float64,Vector{Float64}}, output_dirname::String)
+    chamber(composition::Union{Silicic,Mafic}, end_time::Float64, log_volume_km3_vector::Union{Float64,Vector{Float64}}, InitialConc_H2O_vector::Union{Float64,Vector{Float64}}, InitialConc_CO2_vector::Union{Float64,Vector{Float64}}, log_vfr_vector::Union{Float64,Vector{Float64}}, depth_vector::Union{Float64,Vector{Float64}}, output_dirname::String)
 
 Simulate the eruption of a volcano using a model for the frequency of eruptions of upper crustal magma chambers based on Degruyter and Huber (2014).
 
