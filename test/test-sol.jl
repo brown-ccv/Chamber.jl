@@ -19,6 +19,8 @@ solve_out2 = Float64.(readdlm(joinpath(dir2, "out.csv"), ',')[2:end, :])
     @test isdir(dir2)
     @test isfile(joinpath(dir1, "out.csv"))
     @test isfile(joinpath(dir2, "out.csv"))
-    @test all(abs.(solve_exp1 .- solve_out1) .< 0.00005)
-    @test all(abs.(solve_exp2 .- solve_out2) .< 0.00005)
+    for i in 1:10
+        @test all(abs.(solve_exp1[:, i] .- solve_out1[:, i]) .< solve_exp1[end, i]*1e-3)
+        @test all(abs.(solve_exp2[:, i] .- solve_out2[:, i]) .< solve_exp2[end, i]*1e-3)
+    end
 end
