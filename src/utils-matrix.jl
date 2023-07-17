@@ -314,9 +314,9 @@ function b3_f(
                temp *
                V *
                (deps_x_dmh2o_t * dM_h2o_t_dt + deps_x_dmco2_t * dM_co2_t_dt)
-           ) +
+           ) -
            L_m * rho_x * V / (rc * V * temp) *
-           (deps_x_dmh2o_t * dM_h2o_t_dt + deps_x_dmco2_t * dM_co2_t_dt) +
+           (deps_x_dmh2o_t * dM_h2o_t_dt + deps_x_dmco2_t * dM_co2_t_dt) -
            L_e * C_h2o * rho_m * V / (rc * V * temp) *
            (deps_x_dmh2o_t * dM_h2o_t_dt + deps_x_dmco2_t * dM_co2_t_dt) +
            P_loss * (
