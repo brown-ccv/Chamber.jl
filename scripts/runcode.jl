@@ -329,7 +329,7 @@ function chamber(
     log_vfr_vector::Union{Float64,Vector{Float64}},
     depth_vector::Union{Float64,Vector{Float64}},
     output_dirname::String=get_timestamp(),
-)::Nothing
+)::String
     path0 = joinpath(pwd(), output_dirname)
     mkdir(path0)
     to = TimerOutput()
@@ -369,5 +369,5 @@ function chamber(
     end
     print_timer_log(io0, to)
     close(io0)
-    return nothing
+    return output_dirname
 end
