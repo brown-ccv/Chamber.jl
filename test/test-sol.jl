@@ -4,9 +4,9 @@ solve_exp = Float64.(readdlm("out.csv", ',')[2:end, :])
 df = chamber(Silicic(), 1e9, 0.2, 0.04, 0.001, -3.3, 8e3)
 
 @testset "solve_ode" begin
-    for i in 1:10
-        println("$i: ", maximum!([1.0], abs.(solve_exp[:, i] .- Matrix(df)[:, i]))/solve_exp[end, i])
-        @test all(abs.(solve_exp[:, i] .- Matrix(df)[:, i]) .< abs(solve_exp[end, i]*1e-8))
+    for i in 1:11
+        println("col$i maximum diff: ", maximum!([1.0], abs.(solve_exp[:, i] .- Matrix(df)[:, i])))
+        @test all(abs.(solve_exp[:, i] .- Matrix(df)[:, i]) .< abs(solve_exp[end, i]*1e-9))
     end
 end
 
@@ -22,7 +22,7 @@ solve_out2 = Float64.(readdlm(joinpath(dir2, "out.csv"), ',')[2:end, :])
     @test isdir(dir2)
     @test isfile(joinpath(dir1, "out.csv"))
     @test isfile(joinpath(dir2, "out.csv"))
-    for i in 1:10
+    for i in 1:11
         println("set1-$i: ", maximum!([1.0], abs.(solve_exp1[:, i] .- solve_out1[:, i]))/solve_exp1[end, i])
         println("set2-$i: ", maximum!([1.0], abs.(solve_exp2[:, i] .- solve_out2[:, i]))/solve_exp2[end, i])
         @test all(abs.(solve_exp1[:, i] .- solve_out1[:, i]) .< solve_exp1[end, i]*1e-8)
