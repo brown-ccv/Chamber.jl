@@ -25,7 +25,6 @@ end
     mm_h2o::T = 18.02e-3     # molecular mass of H2O
 end
 
-
 """
 Rheology of the crust
 """
@@ -399,4 +398,70 @@ function record_erupt_end(
     push!(erupt_saved.mass, mass)
     push!(erupt_saved.volume, volume)
     return nothing
+end
+
+"""
+    ic_phase_conversion(phase_here::T, composition::Union{Silicic,Mafic}, M_h2o::T, M_co2::T, M_tot::T, P::T, Temp::T, V::T, rho_m::T, param_IC::ParamICFinder{T})::NamedTuple{(:eps_g_temp, :X_co2_temp, :C_co2_temp, :phase),NTuple{4,T}} where {T<:Float64}
+
+This function is used to handle phase conversion by iteratively modifying the `max_count` or `Tol` parameters of function `IC_Finder` until the correct phase is obtained.
+- This function is used within the `affect!` function.
+"""
+function ic_phase_conversion(
+    phase_here::T,
+    composition::Union{Silicic,Mafic},
+    M_h2o::T,
+    M_co2::T,
+    M_tot::T,
+    P::T,
+    Temp::T,
+    V::T,
+    rho_m::T,
+    param_IC::ParamICFinder{T},
+)::NamedTuple{
+    (:eps_g_temp, :X_co2_temp, :C_co2_temp, :phase),NTuple{4,T}
+} where {T<:Float64}
+    eps_g_temp, X_co2_temp, C_co2_temp, phase = IC_Finder(
+        composition, M_h2o, M_co2, M_tot, P, Temp, V, rho_m, param_IC
+    )
+    @info(
+        "1st attempt in IC Finder $(phase_here != phase ? "successful\n  phase_here: $phase_here, new_phase: $phase" : "unsuccessful")"
+    )
+    if phase_here != phase
+        return (; eps_g_temp, X_co2_temp, C_co2_temp, phase)
+    else
+        param_IC.max_count = 150
+        eps_g_temp, X_co2_temp, C_co2_temp, phase = IC_Finder(
+            composition, M_h2o, M_co2, M_tot, P, Temp, V, rho_m, param_IC
+        )
+        param_IC.max_count = 100
+        @info(
+            "2nd attempt in IC Finder $(phase_here != phase ? "successful\n  phase_here: $phase_here, new_phase: $phase" : "unsuccessful")"
+        )
+        if phase_here != phase
+            return (; eps_g_temp, X_co2_temp, C_co2_temp, phase)
+        else
+            i = 3
+            i_max = 6   # max iteration of IC_Finder
+            while phase_here == phase && i <= i_max
+                param_IC.Tol = param_IC.Tol * 0.1
+                eps_g_temp, X_co2_temp, C_co2_temp, phase = IC_Finder(
+                    composition, M_h2o, M_co2, M_tot, P, Temp, V, rho_m, param_IC
+                )
+                @info(
+                    "$i$(i == 3 ? "rd" : "th") attempt in IC Finder $(phase_here != phase ? "successful\n  phase_here: $phase_here, new_phase: $phase" : "unsuccessful")"
+                )
+                if phase_here != phase
+                    param_IC.Tol = param_IC.Tol * 10^(i - 2)
+                    break
+                elseif i == i_max
+                    param_IC.Tol = param_IC.Tol * 10^(i - 2)
+                    @warn(
+                        "phase conversion unsuccessful, IC_Finder results:\n  $eps_g_temp, $X_co2_temp, $C_co2_temp, $phase = IC_Finder($composition, $M_h2o, $M_co2, $M_tot, $P, $Temp, $V, $rho_m, $param_IC"
+                    )
+                end
+                i += 1
+            end
+            return (; eps_g_temp, X_co2_temp, C_co2_temp, phase)
+        end
+    end
 end

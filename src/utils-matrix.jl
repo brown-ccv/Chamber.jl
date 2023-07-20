@@ -16,7 +16,7 @@ end
 function a21_f(
     eps_m::T,
     dm_eq_dP::T,
-    m_eq::T,
+    C_h2o::T,
     deps_x_dP::T,
     dV_dP::T,
     V::T,
@@ -29,9 +29,9 @@ function a21_f(
     drho_g_dP::T,
     rho_g::T,
 )::T where {T<:Float64}
-    return eps_m * dm_eq_dP - m_eq * deps_x_dP +
-           m_eq * eps_m * dV_dP / V +
-           m_eq * eps_m * drho_m_dP / rho_m +
+    return eps_m * dm_eq_dP - C_h2o * deps_x_dP +
+           C_h2o * eps_m * dV_dP / V +
+           C_h2o * eps_m * drho_m_dP / rho_m +
            (1 - X_co2) / m_g * eps_g * mm_h2o * drho_g_dP / rho_m +
            (1 - X_co2) / m_g * eps_g * mm_h2o * rho_g * dV_dP / (rho_m * V)
 end
@@ -39,7 +39,7 @@ end
 function a22_f(
     eps_m::T,
     dm_eq_dT::T,
-    m_eq::T,
+    C_h2o::T,
     deps_x_dT::T,
     dV_dT::T,
     V::T,
@@ -52,16 +52,17 @@ function a22_f(
     drho_g_dT::T,
     rho_g::T,
 )::T where {T<:Float64}
-    return eps_m * dm_eq_dT - m_eq * deps_x_dT - m_eq * eps_m * dV_dT / V +
-           m_eq * eps_m * drho_m_dT / rho_m +
+    return eps_m * dm_eq_dT - C_h2o * deps_x_dT +
+           C_h2o * eps_m * dV_dT / V +
+           C_h2o * eps_m * drho_m_dT / rho_m +
            (1 - X_co2) / m_g * eps_g * mm_h2o * drho_g_dT / rho_m +
            (1 - X_co2) / m_g * eps_g * mm_h2o * rho_g * dV_dT / (rho_m * V)
 end
 
 function a23_f(
-    m_eq::T, X_co2::T, m_g::T, rho_g::T, mm_h2o::T, rho_m::T
+    C_h2o::T, X_co2::T, m_g::T, rho_g::T, mm_h2o::T, rho_m::T
 )::T where {T<:Float64}
-    return -m_eq + (1 - X_co2) / m_g * rho_g * mm_h2o / rho_m
+    return -C_h2o + (1 - X_co2) / m_g * rho_g * mm_h2o / rho_m
 end
 
 function a24_f(
@@ -97,7 +98,7 @@ function a31_f(
     dm_eq_dP::T,
     rho_m::T,
     eps_m::T,
-    m_eq::T,
+    C_h2o::T,
     drho_m_dP::T,
 )::T where {T<:Float64}
     return drc_dP / (rc) +
@@ -108,9 +109,9 @@ function a31_f(
            ) +
            L_e * (
                -dm_eq_dP * rho_m * eps_m / (rc * temp) -
-               m_eq * eps_m * drho_m_dP / (rc * temp) +
-               m_eq * rho_m * deps_x_dP / (rc * temp) -
-               m_eq * rho_m * eps_m * dV_dP / (rc * V * temp)
+               C_h2o * eps_m * drho_m_dP / (rc * temp) +
+               C_h2o * rho_m * deps_x_dP / (rc * temp) -
+               C_h2o * rho_m * eps_m * dV_dP / (rc * V * temp)
            )
 end
 
@@ -129,7 +130,7 @@ function a32_f(
     dm_eq_dT::T,
     rho_m::T,
     eps_m::T,
-    m_eq::T,
+    C_h2o::T,
     drho_m_dT::T,
 )::T where {T<:Float64}
     return drc_dT / (rc) +
@@ -141,16 +142,16 @@ function a32_f(
            ) +
            L_e * (
                -dm_eq_dT * rho_m * eps_m / (rc * temp) -
-               m_eq * eps_m * drho_m_dT / (rc * temp) +
-               m_eq * rho_m * deps_x_dT / (rc * temp) -
-               m_eq * rho_m * eps_m * dV_dT / (rc * temp * V)
+               C_h2o * eps_m * drho_m_dT / (rc * temp) +
+               C_h2o * rho_m * deps_x_dT / (rc * temp) -
+               C_h2o * rho_m * eps_m * dV_dT / (rc * temp * V)
            )
 end
 
 function a33_f(
-    rho_g::T, c_g::T, rho_m::T, c_m::T, rc::T, L_e::T, m_eq::T, temp::T
+    rho_g::T, c_g::T, rho_m::T, c_m::T, rc::T, L_e::T, C_h2o::T, temp::T
 )::T where {T<:Float64}
-    return (rho_g * c_g - rho_m * c_m) / rc + L_e * m_eq * rho_m / (rc * temp)
+    return (rho_g * c_g - rho_m * c_m) / rc + L_e * C_h2o * rho_m / (rc * temp)
 end
 
 function a34_f(
@@ -198,7 +199,8 @@ function a42_f(
     drho_g_dT::T,
     rho_g::T,
 )::T where {T<:Float64}
-    return eps_m * dC_co2_dT - C_co2 * deps_x_dT - C_co2 * eps_m * dV_dT / V +
+    return eps_m * dC_co2_dT - C_co2 * deps_x_dT +
+           C_co2 * eps_m * dV_dT / V +
            C_co2 * eps_m * drho_m_dT / rho_m +
            X_co2 / m_g * eps_g * mm_co2 * drho_g_dT / rho_m +
            X_co2 / m_g * eps_g * rho_g * mm_co2 * dV_dT / (rho_m * V)
@@ -255,12 +257,10 @@ function b1_f(
     dM_h2o_t_dt::T,
     deps_x_dmco2_t::T,
     dM_co2_t_dt::T,
-    a11::T,
-    dP_lit_dt::T,
 )::T where {T<:Float64}
     return (Mdot_in - Mdot_out) / (rho * V) - P_loss -
            (rho_x - rho_m) / rho * deps_x_dmh2o_t * dM_h2o_t_dt -
-           (rho_x - rho_m) / rho * deps_x_dmco2_t * dM_co2_t_dt - a11 * dP_lit_dt
+           (rho_x - rho_m) / rho * deps_x_dmco2_t * dM_co2_t_dt
 end
 # b2: conservation of water mass
 function b2_f(
@@ -268,7 +268,7 @@ function b2_f(
     Mdot_v_out::T,
     rho_m::T,
     V::T,
-    m_eq::T,
+    C_h2o::T,
     deps_x_dmh2o_t::T,
     dM_h2o_t_dt::T,
     deps_x_dmco2_t::T,
@@ -280,13 +280,11 @@ function b2_f(
     rho_g::T,
     eps_g::T,
     mm_h2o::T,
-    a21::T,
-    dP_lit_dt::T,
 )::T where {T<:Float64}
-    return (Mdot_v_in - Mdot_v_out) / (rho_m * V) -
-           m_eq * (deps_x_dmh2o_t * dM_h2o_t_dt + deps_x_dmco2_t * dM_co2_t_dt) -
-           m_eq * eps_m * P_loss -
-           (1 - X_co2) / m_g * rho_g / rho_m * eps_g * mm_h2o * P_loss - a21 * dP_lit_dt
+    return (Mdot_v_in - Mdot_v_out) / (rho_m * V) +
+           C_h2o * (deps_x_dmh2o_t * dM_h2o_t_dt + deps_x_dmco2_t * dM_co2_t_dt) -
+           C_h2o * eps_m * P_loss -
+           (1 - X_co2) / m_g * rho_g / rho_m * eps_g * mm_h2o * P_loss
 end
 # b3: conservation of (total) enthalpy
 function b3_f(
@@ -305,12 +303,10 @@ function b3_f(
     dM_co2_t_dt::T,
     L_m::T,
     L_e::T,
-    m_eq::T,
+    C_h2o::T,
     P_loss::T,
     eps_x::T,
     eps_m::T,
-    a31::T,
-    dP_lit_dt::T,
 )::T where {T<:Float64}
     return (Hdot_in - Hdot_out) / (rc * temp * V) -
            1 / (rc * V * temp) * (
@@ -318,16 +314,16 @@ function b3_f(
                temp *
                V *
                (deps_x_dmh2o_t * dM_h2o_t_dt + deps_x_dmco2_t * dM_co2_t_dt)
-           ) +
+           ) -
            L_m * rho_x * V / (rc * V * temp) *
-           (deps_x_dmh2o_t * dM_h2o_t_dt + deps_x_dmco2_t * dM_co2_t_dt) +
-           L_e * m_eq * rho_m * V / (rc * V * temp) *
+           (deps_x_dmh2o_t * dM_h2o_t_dt + deps_x_dmco2_t * dM_co2_t_dt) -
+           L_e * C_h2o * rho_m * V / (rc * V * temp) *
            (deps_x_dmh2o_t * dM_h2o_t_dt + deps_x_dmco2_t * dM_co2_t_dt) +
            P_loss * (
                -1 +
                L_m * rho_x * eps_x * V / (rc * V * temp) +
-               L_e * m_eq * rho_m * eps_m * V / (rc * V * temp)
-           ) - a31 * dP_lit_dt
+               L_e * C_h2o * rho_m * eps_m * V / (rc * V * temp)
+           )
 end
 # b4: conservation of CO2 mass
 function b4_f(
@@ -347,13 +343,10 @@ function b4_f(
     rho_g::T,
     eps_g::T,
     mm_co2::T,
-    a41::T,
-    dP_lit_dt::T,
 )::T where {T<:Float64}
-    return (Mdot_c_in - Mdot_c_out) / (rho_m * V) -
+    return (Mdot_c_in - Mdot_c_out) / (rho_m * V) +
            C_co2 * (deps_x_dmh2o_t * dM_h2o_t_dt + deps_x_dmco2_t * dM_co2_t_dt) -
-           C_co2 * eps_m * P_loss -
-           (X_co2) / m_g * rho_g / rho_m * eps_g * mm_co2 * P_loss - a41 * dP_lit_dt
+           C_co2 * eps_m * P_loss - (X_co2) / m_g * rho_g / rho_m * eps_g * mm_co2 * P_loss
 end
 
 function build_matrix(
@@ -376,7 +369,7 @@ function build_matrix(
     dm_eq_dP::T,
     rho_m::T,
     eps_m::T,
-    m_eq::T,
+    C_h2o::T,
     drho_m_dP::T,
     drc_dT::T,
     drho_x_dT::T,
@@ -390,7 +383,6 @@ function build_matrix(
     m_h2o::T,
     m_co2::T,
     deps_x_dmco2_t::T,
-    dP_lit_dt::T,
     Hdot_in::T,
     Hdot_out::T,
     c_x::T,
@@ -432,7 +424,7 @@ function build_matrix(
         dm_eq_dP,
         rho_m,
         eps_m,
-        m_eq,
+        C_h2o,
         drho_m_dP,
     )
     a32 = a32_f(
@@ -450,7 +442,7 @@ function build_matrix(
         dm_eq_dT,
         rho_m,
         eps_m,
-        m_eq,
+        C_h2o,
         drho_m_dT,
     )
     dM_h2o_t_dt = dM_X_t_dt_f(rho, V, Mdot_v_in, Mdot_v_out, m_h2o, Mdot_in, Mdot_out)
@@ -467,8 +459,6 @@ function build_matrix(
         dM_h2o_t_dt,
         deps_x_dmco2_t,
         dM_co2_t_dt,
-        a11,
-        dP_lit_dt,
     )
     b3 = b3_f(
         Hdot_in,
@@ -486,12 +476,10 @@ function build_matrix(
         dM_co2_t_dt,
         L_m,
         L_e,
-        m_eq,
+        C_h2o,
         P_loss,
         eps_x,
         eps_m,
-        a31,
-        dP_lit_dt,
     )
     if phase != 3
         A = [a11 a12; a31 a32]
@@ -503,7 +491,7 @@ function build_matrix(
         a21 = a21_f(
             eps_m,
             dm_eq_dP,
-            m_eq,
+            C_h2o,
             deps_x_dP,
             dV_dP,
             V,
@@ -519,7 +507,7 @@ function build_matrix(
         a22 = a22_f(
             eps_m,
             dm_eq_dT,
-            m_eq,
+            C_h2o,
             deps_x_dT,
             dV_dT,
             V,
@@ -532,9 +520,9 @@ function build_matrix(
             drho_g_dT,
             rho_g,
         )
-        a23 = a23_f(m_eq, X_co2, m_g, rho_g, mm_h2o, rho_m)
+        a23 = a23_f(C_h2o, X_co2, m_g, rho_g, mm_h2o, rho_m)
         a24 = a24_f(eps_m, dm_eq_dX_co2, m_g, eps_g, rho_g, mm_h2o, rho_m, X_co2, mm_co2)
-        a33 = a33_f(rho_g, c_g, rho_m, c_m, rc, L_e, m_eq, temp)
+        a33 = a33_f(rho_g, c_g, rho_m, c_m, rc, L_e, C_h2o, temp)
         a34 = a34_f(L_e, rho_m, eps_m, dm_eq_dX_co2, rc, temp)
         a41 = a41_f(
             eps_m,
@@ -576,7 +564,7 @@ function build_matrix(
             Mdot_v_out,
             rho_m,
             V,
-            m_eq,
+            C_h2o,
             deps_x_dmh2o_t,
             dM_h2o_t_dt,
             deps_x_dmco2_t,
@@ -588,8 +576,6 @@ function build_matrix(
             rho_g,
             eps_g,
             mm_h2o,
-            a21,
-            dP_lit_dt,
         )
         b4 = b4_f(
             Mdot_c_in,
@@ -608,8 +594,6 @@ function build_matrix(
             rho_g,
             eps_g,
             mm_co2,
-            a41,
-            dP_lit_dt,
         )
 
         A = [a11 a12 a13 a14; a21 a22 a23 a24; a31 a32 a33 a34; a41 a42 a43 a44]
