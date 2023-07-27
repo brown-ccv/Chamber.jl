@@ -4,6 +4,7 @@ using DataFrames
 using Dates
 using DifferentialEquations
 using LinearAlgebra
+using Memoize
 using Parameters
 using Plots
 using Roots
@@ -24,7 +25,8 @@ include("./ic_finder-utils.jl")
 include("./ic_finder.jl")
 include("./utils-matrix.jl")
 include("../scripts/runcode.jl")
-export Silicic,
+export @memoize,
+    Silicic,
     Mafic,
     QNDF,
     FBDF,
@@ -36,8 +38,11 @@ export Silicic,
     TimerOutput,
     @timeit,
     reset_timer!,
+    print_timer,
+    print_timer_log,
     SimpleLogger,
     global_logger,
+    with_logger,
     get_timer,
     SciMLBase,
     VectorContinuousCallback,

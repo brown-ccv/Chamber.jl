@@ -4,7 +4,7 @@ struct Silicic end
 struct Mafic end
 
 function get_timestamp()::String
-    return Dates.format(now(), "YYmmddHHMM")
+    return Dates.format(now(), "YYmmddHHMMSSsss")
 end
 
 """
@@ -397,6 +397,11 @@ function record_erupt_end(
     push!(erupt_saved.duration, duration)
     push!(erupt_saved.mass, mass)
     push!(erupt_saved.volume, volume)
+    return nothing
+end
+
+function print_timer_log(io::IO, to::TimerOutput)::Nothing
+    print_timer(io, to; compact=true, allocations=false, sortby=:firstexec)
     return nothing
 end
 
