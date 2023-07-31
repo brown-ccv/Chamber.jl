@@ -357,20 +357,30 @@ function chamber(
     path0 = joinpath(pwd(), output_dirname)
     mkdir(path0)
     to = TimerOutput()
+    df_outputs = Vector{ChamberOutput}(
+        undef,
+        length(log_volume_km3_vector) *
+        length(InitialConc_H2O_vector) *
+        length(InitialConc_CO2_vector) *
+        length(log_vfr_vector) *
+        length(depth_vector),
+    )
     @timeit to "chamber" begin
         Threads.@threads for (
-            log_volume_km3, InitialConc_H2O, InitialConc_CO2, log_vfr, depth
+            idx, (log_volume_km3, InitialConc_H2O, InitialConc_CO2, log_vfr, depth)
         ) in collect(
-            Iterators.product(
-                log_volume_km3_vector,
-                InitialConc_H2O_vector,
-                InitialConc_CO2_vector,
-                log_vfr_vector,
-                depth_vector,
+            enumerate(
+                Iterators.product(
+                    log_volume_km3_vector,
+                    InitialConc_H2O_vector,
+                    InitialConc_CO2_vector,
+                    log_vfr_vector,
+                    depth_vector,
+                ),
             ),
         )
             dataset = "vol$(log_volume_km3)_h2o$(InitialConc_H2O)_gas$(InitialConc_CO2)_vfr$(log_vfr)_dep$(depth)"
-            chamber(
+            df = chamber(
                 composition,
                 end_time,
                 log_volume_km3,
@@ -378,10 +388,15 @@ function chamber(
                 InitialConc_CO2,
                 log_vfr,
                 depth,
-                joinpath(output_dirname, dataset),
-                ;
-                plotfig=plotfig,
+                joinpath(output_dirname, dataset);
+                plotfig=false,
             )
+            df_outputs[idx] = ChamberOutput(df, joinpath(output_dirname, dataset))
+        end
+        if plotfig
+            for output in df_outputs
+                plot_figs(output.df, output.path)
+            end
         end
     end
     io0 = open("$path0/$output_dirname.log", "w+")

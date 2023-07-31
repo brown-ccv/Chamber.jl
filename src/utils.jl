@@ -147,6 +147,11 @@ end
     volume::Vector{T} = []
 end
 
+struct ChamberOutput
+    df::DataFrame
+    path::String
+end
+
 """
     rho_f(;eps_m::T, eps_g::T, eps_x::T, rho_m::T, rho_g::T, rho_x::T)::T where {T<:Float64}
 
