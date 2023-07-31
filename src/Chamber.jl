@@ -134,6 +134,7 @@ export @memoize,
     build_rho_rc,
     write_csv,
     plot_figs,
+    check_for_duplicates,
     chamber
 
 # Write your package code here.

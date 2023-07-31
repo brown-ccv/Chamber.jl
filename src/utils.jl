@@ -470,3 +470,19 @@ function ic_phase_conversion(
         end
     end
 end
+
+function check_for_duplicates(args...)
+    duplicate_arguments = []
+    argument_names = ["log_volume_km3", "InitialConc_H2O", "InitialConc_CO2", "log_vfr", "depth"]
+
+    for (i, array) in enumerate(args)
+        if length(unique(array)) != length(array)
+            push!(duplicate_arguments, argument_names[i])
+        end
+    end
+
+    if !isempty(duplicate_arguments)
+        joined_arguments = join(duplicate_arguments, ", ")
+        error("The following arguments contain duplicates: $joined_arguments. Please remove the duplicate elements and submit again.")
+    end
+end
