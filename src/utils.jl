@@ -471,11 +471,25 @@ function ic_phase_conversion(
     end
 end
 
-function check_for_duplicates(args...)
+function check_for_duplicates(
+    log_volume_km3_vector::Union{Float64,Vector{Float64}},
+    InitialConc_H2O_vector::Union{Float64,Vector{Float64}},
+    InitialConc_CO2_vector::Union{Float64,Vector{Float64}},
+    log_vfr_vector::Union{Float64,Vector{Float64}},
+    depth_vector::Union{Float64,Vector{Float64}},
+)::Nothing
     duplicate_arguments = []
-    argument_names = ["log_volume_km3", "InitialConc_H2O", "InitialConc_CO2", "log_vfr", "depth"]
+    argument_names = [
+        "log_volume_km3", "InitialConc_H2O", "InitialConc_CO2", "log_vfr", "depth"
+    ]
 
-    for (i, array) in enumerate(args)
+    for (i, array) in enumerate([
+        log_volume_km3_vector,
+        InitialConc_H2O_vector,
+        InitialConc_CO2_vector,
+        log_vfr_vector,
+        depth_vector,
+    ])
         if length(unique(array)) != length(array)
             push!(duplicate_arguments, argument_names[i])
         end
@@ -483,6 +497,9 @@ function check_for_duplicates(args...)
 
     if !isempty(duplicate_arguments)
         joined_arguments = join(duplicate_arguments, ", ")
-        error("The following arguments contain duplicates: $joined_arguments. Please remove the duplicate elements and submit again.")
+        error(
+            "The following arguments contain duplicates: $joined_arguments. Please remove the duplicate elements and submit again.",
+        )
     end
+    return nothing
 end

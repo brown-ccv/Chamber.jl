@@ -347,7 +347,13 @@ function chamber(
     ;
     plotfig::Bool=true,
 )::String
-    check_for_duplicates(log_volume_km3_vector, InitialConc_H2O_vector, InitialConc_CO2_vector, log_vfr_vector, depth_vector)
+    check_for_duplicates(
+        log_volume_km3_vector,
+        InitialConc_H2O_vector,
+        InitialConc_CO2_vector,
+        log_vfr_vector,
+        depth_vector,
+    )
     path0 = joinpath(pwd(), output_dirname)
     mkdir(path0)
     to = TimerOutput()
