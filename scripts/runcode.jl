@@ -2,7 +2,7 @@ using Chamber
 include("./solver_methods.jl")
 
 """
-    chamber(composition::Union{Silicic,Mafic}, end_time::Float64, log_volume_km3::Float64, InitialConc_H2O::Float64, InitialConc_CO2::Float64, log_vfr::Float64, depth::Float64, output_dirname::String)
+    chamber(composition::Union{Silicic,Mafic}, end_time::Float64, log_volume_km3::Float64, InitialConc_H2O::Float64, InitialConc_CO2::Float64, log_vfr::Float64, depth::Float64, output_dirname::String; kwargs...)
 
 Simulate the eruption of a volcano using a model for the frequency of eruptions of upper crustal magma chambers based on Degruyter and Huber (2014).
 
@@ -15,6 +15,9 @@ Simulate the eruption of a volcano using a model for the frequency of eruptions 
 - `log_vfr`: Magma recharge rate in km³/yr calculated as 10^(`log_vfr`).
 - `depth`: Depth of the magma chamber in meters.
 - `output_dirname`(optional): Name of the output directory. Defaults to current timestamp.
+
+## Keyword Arguments
+- `plotfig`(optional): (default: `true`). Generate and plot figures for each result if true.
 
 ## Returns
 A `DataFrame` containing the solution with columns:
@@ -272,7 +275,7 @@ julia> chamber(composition, end_time, log_volume_km3, InitialConc_H2O, InitialCo
 end
 
 """
-    chamber(composition::Union{Silicic,Mafic}, end_time::Float64, log_volume_km3_vector::Union{Float64,Vector{Float64}}, InitialConc_H2O_vector::Union{Float64,Vector{Float64}}, InitialConc_CO2_vector::Union{Float64,Vector{Float64}}, log_vfr_vector::Union{Float64,Vector{Float64}}, depth_vector::Union{Float64,Vector{Float64}}, output_dirname::String)
+    chamber(composition::Union{Silicic,Mafic}, end_time::Float64, log_volume_km3_vector::Union{Float64,Vector{Float64}}, InitialConc_H2O_vector::Union{Float64,Vector{Float64}}, InitialConc_CO2_vector::Union{Float64,Vector{Float64}}, log_vfr_vector::Union{Float64,Vector{Float64}}, depth_vector::Union{Float64,Vector{Float64}}, output_dirname::String; kwargs...)
 
 Simulate the eruption of a volcano using a model for the frequency of eruptions of upper crustal magma chambers based on Degruyter and Huber (2014).
 
@@ -285,6 +288,9 @@ Simulate the eruption of a volcano using a model for the frequency of eruptions 
 - `log_vfr`: Magma recharge rate in km³/yr calculated as 10^(`log_vfr`).
 - `depth`: Depth of the magma chamber in meters.
 - `output_dirname`(optional): Name of the output directory. Defaults to current timestamp.
+
+## Keyword Arguments
+- `plotfig`(optional): (default: `true`). Generate and plot figures for each result if true.
 
 ## Returns
 A `DataFrame` containing the solution with columns:
