@@ -363,14 +363,14 @@ function chamber(
     path0 = joinpath(pwd(), output_dirname)
     mkdir(path0)
     to = TimerOutput()
-    df_outputs = Vector{ChamberOutput}(
-        undef,
-        length(log_volume_km3_vector) *
-        length(InitialConc_H2O_vector) *
-        length(InitialConc_CO2_vector) *
-        length(log_vfr_vector) *
-        length(depth_vector),
+    _n = prod(
+        length.([log_volume_km3_vector,
+            InitialConc_H2O_vector,
+            InitialConc_CO2_vector,
+            log_vfr_vector, depth_vector
+        ])
     )
+    df_outputs = Vector{ChamberOutput}(undef, _n)
     @timeit to "chamber" begin
         Threads.@threads for (
             idx, (log_volume_km3, InitialConc_H2O, InitialConc_CO2, log_vfr, depth)
