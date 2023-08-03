@@ -16,7 +16,7 @@ Pkg.add("Chamber")
 ## Usage
 The main function in the `Chamber` package is `chamber`, which simulates the evolution of a magma chamber over time and returns a `DataFrame` with the solution data. The function takes the following arguments:
 ```julia
-chamber(composition, end_time, log_volume_km3, InitialConc_H2O, InitialConc_CO2, log_vfr, depth, output_dirname)
+chamber(composition, end_time, log_volume_km3, InitialConc_H2O, InitialConc_CO2, log_vfr, depth, output_dirname; kwargs...)
 ```
 ### Arguments
 - `composition`: The magma composition. Use `Silicic()` for rhyolite composition (arc magma) or `Mafic()` for basalt composition (rift).
@@ -27,6 +27,9 @@ chamber(composition, end_time, log_volume_km3, InitialConc_H2O, InitialConc_CO2,
 - `log_vfr`: Magma recharge rate in km³/yr calculated as 10^(`log_vfr`).
 - `depth`: Depth of the magma chamber in meters.
 - `output_dirname`: (Optional) Name of the output directory. Defaults to current timestamp.
+
+### Keyword Arguments
+- `plotfig`: (Optional, default: `true`). Generate and plot figures for each result if true.
 
 ### Returns
 A `DataFrame` containing the solution with columns:
@@ -112,6 +115,26 @@ julia> chamber(composition, end_time, log_volume_km3, InitialConc_H2O, InitialCo
                                                                                                                          454 rows omitted
 ```
 The output directory specified by `output_dirname` contains the generated files.
+
+### Example 3: Performing Multi-Dataset Computations
+This function also allows you to perform computations for all combinations of input parameters(`log_volume_km3`, `InitialConc_H2O`, `InitialConc_CO2`, `log_vfr`, `depth`) specified by multiple datasets provided as vectors.
+```julia
+julia> composition = Mafic()
+julia> end_time = 3e9
+julia> log_volume_km3 = 0.2
+julia> InitialConc_H2O = [0.01, 0.02]
+julia> InitialConc_CO2 = 0.001
+julia> log_vfr = -3.3
+julia> depth = [7e3, 8e3]
+julia> output_dirname = "MyDirname"
+
+julia> chamber(composition, end_time, log_volume_km3, InitialConc_H2O, InitialConc_CO2, log_vfr, depth, output_dirname)
+Output path: YOUR_PATH\MyDirname\vol0.2_h2o0.01_gas0.001_vfr-3.3_dep7000.0
+Output path: YOUR_PATH\MyDirname\vol0.2_h2o0.01_gas0.001_vfr-3.3_dep8000.0
+Output path: YOUR_PATH\MyDirname\vol0.2_h2o0.02_gas0.001_vfr-3.3_dep7000.0
+Output path: YOUR_PATH\MyDirname\vol0.2_h2o0.02_gas0.001_vfr-3.3_dep8000.0
+"MyDirname"
+```
 
 ## Notebook for Google Colaboratory
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/brown-ccv/Chamber.jl/blob/master/notebooks/notebook_for_chamber.ipynb)
