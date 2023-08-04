@@ -22,4 +22,9 @@ jobs:
       - uses: julia-actions/julia-runtest@v1
         with:
           annotate: true
+      - uses: julia-actions/julia-runtest@v1 # for threaded code
+        env:
+          JULIA_NUM_THREADS: 2  
+        with:
+          annotate: true
           

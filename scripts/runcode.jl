@@ -2,7 +2,7 @@ using Chamber
 include("./solver_methods.jl")
 
 """
-    chamber(composition::Union{Silicic,Mafic}, end_time::Float64, log_volume_km3::Float64, InitialConc_H2O::Float64, InitialConc_CO2::Float64, log_vfr::Float64, depth::Float64, output_dirname::String)
+    chamber(composition::Union{Silicic,Mafic}, end_time::Float64, log_volume_km3::Float64, InitialConc_H2O::Float64, InitialConc_CO2::Float64, log_vfr::Float64, depth::Float64, output_dirname::String; kwargs...)
 
 Simulate the eruption of a volcano using a model for the frequency of eruptions of upper crustal magma chambers based on Degruyter and Huber (2014).
 
@@ -15,6 +15,9 @@ Simulate the eruption of a volcano using a model for the frequency of eruptions 
 - `log_vfr`: Magma recharge rate in km³/yr calculated as 10^(`log_vfr`).
 - `depth`: Depth of the magma chamber in meters.
 - `output_dirname`(optional): Name of the output directory. Defaults to current timestamp.
+
+## Keyword Arguments
+- `plotfig`(optional): (default: `true`). Generate and plot figures for each result if true.
 
 ## Returns
 A `DataFrame` containing the solution with columns:
@@ -77,187 +80,202 @@ julia> chamber(composition, end_time, log_volume_km3, InitialConc_H2O, InitialCo
     ;
     method::String="CVODE_BDF",
     rheol::String="old",
+    plotfig::Bool=true,
 )::DataFrame
     datetime = get_timestamp()
     composition_str = string(typeof(composition))
     path = joinpath(pwd(), output_dirname)
     mkdir(path)
-    println("Output path: $path")
-    io = open("$path/$datetime.log", "w+")
-    logger = SimpleLogger(io)
-    global_logger(logger)
-
-    @info(
-        "Arguments:",
-        composition,
-        end_time,
-        log_volume_km3,
-        InitialConc_H2O,
-        InitialConc_CO2,
-        log_vfr,
-        depth,
-        path
+    println(
+        "$(Threads.nthreads() > 1 ? "(thread $(Threads.threadid()) / $(Threads.nthreads())) " : "")Output path: $path",
     )
-
-    to = TimerOutput()
-    @timeit to "vol$(log_volume_km3)_h2o$(InitialConc_H2O)_gas$(InitialConc_CO2)_vfr$(log_vfr)_dep$(depth)" begin
-        rc = rheol_composition_dict[composition_str]
-        param = Param{Float64}(;
-            composition=composition,
-            rheol=rheol,
-            rho_m0=rc.rho_m0,
-            rho_x0=rc.rho_x0,
-            c_m=rc.c_m,
-            c_x=rc.c_x,
-            L_m=rc.L_m,
-        )
-        r = rheol_dict[rheol]
-        if rheol == "new"
-            param.A, param.B, param.G = r.A, r.B, r.G
-        elseif rheol == "old"
-            param.nn, param.AA, param.G, param.M = r.nn, r.AA, r.G, r.M
-        end
-
-        c = ConstantValues{Float64}()
-        param_IC_Finder = ParamICFinder{Float64}()
-        param_saved_var = ParamSaved{Float64}()
-        sw = SW{Int8}()
-        odesetting = OdeSetting{Float64}()
-        erupt_saved = EruptSaved{Float64}()
-
-        # Initial temperature and viscosity profile around chamber
-        param_saved_var.storeSumk = zeros(param.maxn)
-        param_saved_var.storeSumk_2 = zeros(param.maxn)
-        param_saved_var.storeSumk_old = zeros(param.maxn)
-        param_saved_var.storeSumk_2_old = zeros(param.maxn)
-
-        volume_km3 = 10^log_volume_km3                             # range of volume in km3
-        range_radius = 1000 * (volume_km3 / (4 * pi / 3))^(1 / 3)  # range of radius in m
-        V_0 = 4 * pi / 3 * range_radius^3                          # initial volume of the chamber (m^3)
-
-        # thermal gradient
-        param.Tb = c.T_surface + c.T_gradient * depth        # background temperature crust (K)
-
-        # lithostatic pressure
-        P_0 = param.rho_r * c.grav_acc * depth   # initial chamber pressure (Pa)
-        param.P_lit = P_0
-        param.P_lit_0 = P_0
-        if param.single_eruption
-            P_0 = P_0 + param.DP_crit
-        end
-
-        T_0 = find_liq(composition, InitialConc_H2O, InitialConc_CO2, P_0, param.ini_eps_x)
-
-        T_in = T_0 + 50        # Temperature of inflowing magma (K)
-        param.T_in = T_in
-
-        # set the mass inflow rate
-        param.Mdot_in_pass = build_mdot_in(param.fluxing, rc.rho_m0, log_vfr, P_0, T_in)
-
-        rho_g0 = eos_g_rho_g(P_0, T_0)   # initial gas density
-        eps_x0 = crystal_fraction_eps_x(
-            composition, T_0, P_0, InitialConc_H2O, InitialConc_CO2
+    io = open("$path/$datetime.log", "w+")
+    df = with_logger(SimpleLogger(io)) do
+        @info(
+            "Arguments:",
+            composition,
+            end_time,
+            log_volume_km3,
+            InitialConc_H2O,
+            InitialConc_CO2,
+            log_vfr,
+            depth,
+            path
         )
 
-        eps_m0 = 1 - eps_x0
-        rho = rc.rho_m0 * eps_m0 + rc.rho_x0 * eps_x0
-        M_tot = V_0 * rho   # Total mass, initial
-        M_co2_0 = InitialConc_CO2 * V_0 * rho   # Total mass of CO2, initial
-        M_h2o_0 = InitialConc_H2O * V_0 * rho   # Total mass of H2O, initial
+        to = TimerOutput()
+        @timeit to "vol$(log_volume_km3)_h2o$(InitialConc_H2O)_gas$(InitialConc_CO2)_vfr$(log_vfr)_dep$(depth)" begin
+            rc = rheol_composition_dict[composition_str]
+            param = Param{Float64}(;
+                composition=composition,
+                rheol=rheol,
+                rho_m0=rc.rho_m0,
+                rho_x0=rc.rho_x0,
+                c_m=rc.c_m,
+                c_x=rc.c_x,
+                L_m=rc.L_m,
+            )
+            r = rheol_dict[rheol]
+            if rheol == "new"
+                param.A, param.B, param.G = r.A, r.B, r.G
+            elseif rheol == "old"
+                param.nn, param.AA, param.G, param.M = r.nn, r.AA, r.G, r.M
+            end
 
-        # IC Finder parameters
-        param_IC_Finder.Tol = if composition == Silicic()
-            1e-9
-        else
-            1e-8
-        end
+            c = ConstantValues{Float64}()
+            param_IC_Finder = ParamICFinder{Float64}()
+            param_saved_var = ParamSaved{Float64}()
+            sw = SW{Int8}()
+            odesetting = OdeSetting{Float64}()
+            erupt_saved = EruptSaved{Float64}()
 
-        eps_g0, X_co20, C_co2, phase = IC_Finder(
-            composition, M_h2o_0, M_co2_0, M_tot, P_0, T_0, V_0, rc.rho_m0, param_IC_Finder
-        )
+            # Initial temperature and viscosity profile around chamber
+            param_saved_var.storeSumk = zeros(param.maxn)
+            param_saved_var.storeSumk_2 = zeros(param.maxn)
+            param_saved_var.storeSumk_old = zeros(param.maxn)
+            param_saved_var.storeSumk_2_old = zeros(param.maxn)
 
-        @info("First IC_Finder done: ", eps_g0, X_co20, C_co2, phase)
-        param_saved_var.phase = phase
+            volume_km3 = 10^log_volume_km3                             # range of volume in km3
+            range_radius = 1000 * (volume_km3 / (4 * pi / 3))^(1 / 3)  # range of radius in m
+            V_0 = 4 * pi / 3 * range_radius^3                          # initial volume of the chamber (m^3)
 
-        # update initial bulk density (kg/m^3)
-        rho_0 = rho_0_f(eps_g0, eps_x0, rho_g0, rc.rho_m0, rc.rho_x0)
+            # thermal gradient
+            param.Tb = c.T_surface + c.T_gradient * depth        # background temperature crust (K)
 
-        # update solubility
-        if phase == 2
-            X_co20 = 0.0
-        end
+            # lithostatic pressure
+            P_0 = param.rho_r * c.grav_acc * depth   # initial chamber pressure (Pa)
+            param.P_lit = P_0
+            param.P_lit_0 = P_0
+            if param.single_eruption
+                P_0 = P_0 + param.DP_crit
+            end
 
-        # Calculate the water content (concentration) for inflowing magma contents
-        tot_h2o_frac_in = M_h2o_0 / (rho_0 * V_0)   # CHANGE MASS FRACTION FROM XCO2_IN
-        tot_co2_frac_in = M_co2_0 / (rho_0 * V_0)
-        if param.fluxing
-            tot_co2_frac_in =
-                param.XCO2_in * param.mm_co2 /
-                (param.XCO2_in * param.mm_co2 + (1 - param.XCO2_in) * param.mm_h2o)
-            tot_h2o_frac_in = 1 - tot_co2_frac_in
-        end
-        param.tot_h2o_frac_in = tot_h2o_frac_in
-        param.tot_co2_frac_in = tot_co2_frac_in
+            T_0 = find_liq(
+                composition, InitialConc_H2O, InitialConc_CO2, P_0, param.ini_eps_x
+            )
 
-        tot_Mass_0 = V_0 * rho_0
-        tot_Mass_H2O_0 = M_h2o_0
-        tot_Mass_CO2_0 = M_co2_0
+            T_in = T_0 + 50        # Temperature of inflowing magma (K)
+            param.T_in = T_in
 
-        if param.single_eruption
-            sw.eruption = 1
-        end
+            # set the mass inflow rate
+            param.Mdot_in_pass = build_mdot_in(param.fluxing, rc.rho_m0, log_vfr, P_0, T_in)
 
-        # initialize vector to store quantities
-        param_saved_var.storeTime = Vector{Float64}([0])
-        param_saved_var.storeTemp = Vector{Float64}([T_0])
+            rho_g0 = eos_g_rho_g(P_0, T_0)   # initial gas density
+            eps_x0 = crystal_fraction_eps_x(
+                composition, T_0, P_0, InitialConc_H2O, InitialConc_CO2
+            )
 
-        @info("IC_Finder parameters: $(param_IC_Finder)")
+            eps_m0 = 1 - eps_x0
+            rho = rc.rho_m0 * eps_m0 + rc.rho_x0 * eps_x0
+            M_tot = V_0 * rho   # Total mass, initial
+            M_co2_0 = InitialConc_CO2 * V_0 * rho   # Total mass of CO2, initial
+            M_h2o_0 = InitialConc_H2O * V_0 * rho   # Total mass of H2O, initial
 
-        stopChamber_MT′(out, u, t, int) = stopChamber_MT(out, u, t, int, sw, param)
-        function affect!′(int, idx)
-            return affect!(
-                int, idx, sw, param, param_saved_var, param_IC_Finder, erupt_saved
+            # IC Finder parameters
+            param_IC_Finder.Tol = if composition == Silicic()
+                1e-9
+            else
+                1e-8
+            end
+
+            eps_g0, X_co20, C_co2, phase = IC_Finder(
+                composition,
+                M_h2o_0,
+                M_co2_0,
+                M_tot,
+                P_0,
+                T_0,
+                V_0,
+                rc.rho_m0,
+                param_IC_Finder,
+            )
+
+            @info("First IC_Finder done: ", eps_g0, X_co20, C_co2, phase)
+            param_saved_var.phase = phase
+
+            # update initial bulk density (kg/m^3)
+            rho_0 = rho_0_f(eps_g0, eps_x0, rho_g0, rc.rho_m0, rc.rho_x0)
+
+            # update solubility
+            if phase == 2
+                X_co20 = 0.0
+            end
+
+            # Calculate the water content (concentration) for inflowing magma contents
+            tot_h2o_frac_in = M_h2o_0 / (rho_0 * V_0)   # CHANGE MASS FRACTION FROM XCO2_IN
+            tot_co2_frac_in = M_co2_0 / (rho_0 * V_0)
+            if param.fluxing
+                tot_co2_frac_in =
+                    param.XCO2_in * param.mm_co2 /
+                    (param.XCO2_in * param.mm_co2 + (1 - param.XCO2_in) * param.mm_h2o)
+                tot_h2o_frac_in = 1 - tot_co2_frac_in
+            end
+            param.tot_h2o_frac_in = tot_h2o_frac_in
+            param.tot_co2_frac_in = tot_co2_frac_in
+
+            tot_Mass_0 = V_0 * rho_0
+            tot_Mass_H2O_0 = M_h2o_0
+            tot_Mass_CO2_0 = M_co2_0
+
+            if param.single_eruption
+                sw.eruption = 1
+            end
+
+            # initialize vector to store quantities
+            param_saved_var.storeTime = Vector{Float64}([0])
+            param_saved_var.storeTemp = Vector{Float64}([T_0])
+
+            @info("IC_Finder parameters: $(param_IC_Finder)")
+
+            stopChamber_MT′(out, u, t, int) = stopChamber_MT(out, u, t, int, sw, param)
+            function affect!′(int, idx)
+                return affect!(
+                    int, idx, sw, param, param_saved_var, param_IC_Finder, erupt_saved
+                )
+            end
+
+            timespan = (0, end_time)
+            IC = [
+                P_0,
+                T_0,
+                eps_g0,
+                V_0,
+                rc.rho_m0,
+                rc.rho_x0,
+                X_co20,
+                tot_Mass_0,
+                tot_Mass_H2O_0,
+                tot_Mass_CO2_0,
+            ]
+            @info("ODE solver settings: ", method, odesetting, IC, timespan, param, sw)
+            cb = VectorContinuousCallback(
+                stopChamber_MT′, affect!′, 8; rootfind=SciMLBase.RightRootFind
+            )
+            prob = ODEProblem(odeChamber, IC, timespan, (param, param_saved_var, sw))
+            sol = solve(
+                prob,
+                methods[method];
+                callback=cb,
+                reltol=odesetting.reltol,
+                abstol=odesetting.abstol,
+                dt=odesetting.first_step,
+                dtmax=odesetting.max_step,
             )
         end
-
-        timespan = (0, end_time)
-        IC = [
-            P_0,
-            T_0,
-            eps_g0,
-            V_0,
-            rc.rho_m0,
-            rc.rho_x0,
-            X_co20,
-            tot_Mass_0,
-            tot_Mass_H2O_0,
-            tot_Mass_CO2_0,
-        ]
-        @info("ODE solver settings: ", method, odesetting, IC, timespan, param, sw)
-        cb = VectorContinuousCallback(
-            stopChamber_MT′, affect!′, 8; rootfind=SciMLBase.RightRootFind
-        )
-        prob = ODEProblem(odeChamber, IC, timespan, (param, param_saved_var, sw))
-        sol = solve(
-            prob,
-            methods[method];
-            callback=cb,
-            reltol=odesetting.reltol,
-            abstol=odesetting.abstol,
-            dt=odesetting.first_step,
-            dtmax=odesetting.max_step,
-        )
+        print_timer_log(io, to)
+        close(io)
+        df = DataFrame(sol)
+        write_csv(df, erupt_saved, path)
+        if plotfig
+            plot_figs(df, path)
+        end
+        return df
     end
-    print_timer_log(io, to)
-    close(io)
-    df = DataFrame(sol)
-    write_csv(df, erupt_saved, path)
-    plot_figs(df, path)
     return df
 end
 
 """
-    chamber(composition::Union{Silicic,Mafic}, end_time::Float64, log_volume_km3_vector::Union{Float64,Vector{Float64}}, InitialConc_H2O_vector::Union{Float64,Vector{Float64}}, InitialConc_CO2_vector::Union{Float64,Vector{Float64}}, log_vfr_vector::Union{Float64,Vector{Float64}}, depth_vector::Union{Float64,Vector{Float64}}, output_dirname::String)
+    chamber(composition::Union{Silicic,Mafic}, end_time::Float64, log_volume_km3_vector::Union{Float64,Vector{Float64}}, InitialConc_H2O_vector::Union{Float64,Vector{Float64}}, InitialConc_CO2_vector::Union{Float64,Vector{Float64}}, log_vfr_vector::Union{Float64,Vector{Float64}}, depth_vector::Union{Float64,Vector{Float64}}, output_dirname::String; kwargs...)
 
 Simulate the eruption of a volcano using a model for the frequency of eruptions of upper crustal magma chambers based on Degruyter and Huber (2014).
 
@@ -270,6 +288,9 @@ Simulate the eruption of a volcano using a model for the frequency of eruptions 
 - `log_vfr`: Magma recharge rate in km³/yr calculated as 10^(`log_vfr`).
 - `depth`: Depth of the magma chamber in meters.
 - `output_dirname`(optional): Name of the output directory. Defaults to current timestamp.
+
+## Keyword Arguments
+- `plotfig`(optional): (default: `true`). Generate and plot figures for each result if true.
 
 ## Returns
 A `DataFrame` containing the solution with columns:
@@ -329,19 +350,43 @@ function chamber(
     log_vfr_vector::Union{Float64,Vector{Float64}},
     depth_vector::Union{Float64,Vector{Float64}},
     output_dirname::String=get_timestamp(),
+    ;
+    plotfig::Bool=true,
 )::String
+    check_for_duplicates(
+        log_volume_km3_vector,
+        InitialConc_H2O_vector,
+        InitialConc_CO2_vector,
+        log_vfr_vector,
+        depth_vector,
+    )
     path0 = joinpath(pwd(), output_dirname)
     mkdir(path0)
     to = TimerOutput()
+    _n = prod(
+        length.([log_volume_km3_vector,
+            InitialConc_H2O_vector,
+            InitialConc_CO2_vector,
+            log_vfr_vector, depth_vector
+        ])
+    )
+    df_outputs = Vector{ChamberOutput}(undef, _n)
     @timeit to "chamber" begin
-        for log_volume_km3 in log_volume_km3_vector,
-            InitialConc_H2O in InitialConc_H2O_vector,
-            InitialConc_CO2 in InitialConc_CO2_vector,
-            log_vfr in log_vfr_vector,
-            depth in depth_vector
-
+        Threads.@threads for (
+            idx, (log_volume_km3, InitialConc_H2O, InitialConc_CO2, log_vfr, depth)
+        ) in collect(
+            enumerate(
+                Iterators.product(
+                    log_volume_km3_vector,
+                    InitialConc_H2O_vector,
+                    InitialConc_CO2_vector,
+                    log_vfr_vector,
+                    depth_vector,
+                ),
+            ),
+        )
             dataset = "vol$(log_volume_km3)_h2o$(InitialConc_H2O)_gas$(InitialConc_CO2)_vfr$(log_vfr)_dep$(depth)"
-            chamber(
+            df = chamber(
                 composition,
                 end_time,
                 log_volume_km3,
@@ -349,8 +394,15 @@ function chamber(
                 InitialConc_CO2,
                 log_vfr,
                 depth,
-                joinpath(output_dirname, dataset),
+                joinpath(output_dirname, dataset);
+                plotfig=false,
             )
+            df_outputs[idx] = ChamberOutput(df, joinpath(output_dirname, dataset))
+        end
+        if plotfig
+            for output in df_outputs
+                plot_figs(output.df, output.path)
+            end
         end
     end
     io0 = open("$path0/$output_dirname.log", "w+")

@@ -147,6 +147,11 @@ end
     volume::Vector{T} = []
 end
 
+struct ChamberOutput
+    df::DataFrame
+    path::String
+end
+
 """
     rho_f(;eps_m::T, eps_g::T, eps_x::T, rho_m::T, rho_g::T, rho_x::T)::T where {T<:Float64}
 
@@ -469,4 +474,34 @@ function ic_phase_conversion(
             return (; eps_g_temp, X_co2_temp, C_co2_temp, phase)
         end
     end
+end
+
+"""
+    check_for_duplicates(log_volume_km3_vector::Union{Float64,Vector{Float64}}, InitialConc_H2O_vector::Union{Float64,Vector{Float64}}, InitialConc_CO2_vector::Union{Float64,Vector{Float64}}, log_vfr_vector::Union{Float64,Vector{Float64}}, depth_vector::Union{Float64,Vector{Float64}})::Nothing
+
+This function checks if any of the input arrays contain duplicate elements. If duplicates are found, it raises an error indicating which arguments have duplicates.
+- This function is used within the `chamber` function
+"""
+function check_for_duplicates(
+    log_volume_km3_vector::Union{Float64,Vector{Float64}},
+    InitialConc_H2O_vector::Union{Float64,Vector{Float64}},
+    InitialConc_CO2_vector::Union{Float64,Vector{Float64}},
+    log_vfr_vector::Union{Float64,Vector{Float64}},
+    depth_vector::Union{Float64,Vector{Float64}},
+)::Nothing
+    argument_names = [
+        "log_volume_km3", "InitialConc_H2O", "InitialConc_CO2", "log_vfr", "depth"
+    ]
+    reps = [argument_names[i] for (i, array) in enumerate([
+        log_volume_km3_vector,
+        InitialConc_H2O_vector,
+        InitialConc_CO2_vector,
+        log_vfr_vector,
+        depth_vector,
+    ]) if length(unique(array)) != length(array)]
+
+    !isempty(reps) && error(
+        "The following arguments contain duplicates: $(join(reps, ", ")). Please remove the duplicate elements and submit again.",
+    )
+    return nothing
 end
