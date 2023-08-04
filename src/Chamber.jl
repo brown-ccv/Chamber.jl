@@ -87,6 +87,7 @@ export @memoize,
     ParamICFinder,
     SW,
     EruptSaved,
+    ChamberOutput,
     rho_f,
     drho_dX_f,
     rc_f,
@@ -134,6 +135,7 @@ export @memoize,
     build_rho_rc,
     write_csv,
     plot_figs,
+    check_for_duplicates,
     chamber
 
 # Write your package code here.
