@@ -224,6 +224,7 @@ julia> chamber(composition, end_time, log_volume_km3, InitialConc_H2O, InitialCo
             # initialize vector to store quantities
             param_saved_var.storeTime = Vector{Float64}([0])
             param_saved_var.storeTemp = Vector{Float64}([T_0])
+            param_saved_var.storeEps_x = Vector{Float64}([eps_x0])
 
             @info("IC_Finder parameters: $(param_IC_Finder)")
 
@@ -269,6 +270,8 @@ julia> chamber(composition, end_time, log_volume_km3, InitialConc_H2O, InitialCo
         if plotfig
             plot_figs(df, path)
         end
+        write_ϵx_csv(param_saved_var.storeTime, param_saved_var.storeEps_x, path)
+        plot_ϵx(param_saved_var.storeTime, param_saved_var.storeEps_x, path)
         return df
     end
     return df

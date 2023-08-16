@@ -137,6 +137,7 @@ end
     storeSumk_2::Vector{T} = []
     storeSumk_old::Vector{T} = []
     storeSumk_2_old::Vector{T} = []
+    storeEps_x::Vector{T} = []
 end
 
 @with_kw mutable struct EruptSaved{T}

@@ -135,6 +135,8 @@ export @memoize,
     build_rho_rc,
     write_csv,
     plot_figs,
+    plot_ϵx,
+    write_ϵx_csv,
     check_for_duplicates,
     chamber
 

@@ -31,6 +31,7 @@ function odeChamber(
     composition = param.composition
     storeTime = param_saved_var.storeTime
     storeTemp = param_saved_var.storeTemp
+    storeEps_x = param_saved_var.storeEps_x
     phase = param_saved_var.phase
     c_x, c_m = param.c_x, param.c_m
     L_e, L_m = param.L_e, param.L_m
@@ -45,25 +46,6 @@ function odeChamber(
     # effective gas molar mass
     m_g = mm_co2 * X_co2 + mm_h2o * (1 - X_co2)
 
-    #=
-    NOTE:
-        push! method is NOT work for odechamber, it may cause some errors when running `chamber`. 
-        using `storeTime = [storeTime; t]` instead of `push!(storeTime, t)`
-    =#
-    if storeTime[end] == t
-        storeTemp[end] = T
-    elseif t != 0
-        storeTime = [storeTime; t]
-        storeTemp = [storeTemp; T]
-    end
-
-    cross = findfirst(!=(0), diff(sign.(diff(storeTime))))
-    if cross !== nothing
-        cross_time = storeTime[end]
-        storeTemp = [storeTemp[storeTime .< cross_time]; storeTemp[end]]
-        storeTime = [storeTime[storeTime .< cross_time]; cross_time]
-    end
-
     V, dV_dP, dV_dT = compute_dXdP_dXdT(u[4], param, "r")
     rho_m, drho_m_dP, drho_m_dT = compute_dXdP_dXdT(u[5], param, "m")
     rho_x, drho_x_dP, drho_x_dT = compute_dXdP_dXdT(u[6], param, "x")
@@ -77,6 +59,29 @@ function odeChamber(
     eps_x, deps_x_dP, deps_x_dT, deps_x_deps_g, deps_x_dmco2_t, deps_x_dmh2o_t = crystal_fraction(
         composition, T, P, m_h2o, m_co2
     )
+
+    #=
+    NOTE:
+        push! method is NOT work for odechamber, it may cause some errors when running `chamber`. 
+        using `storeTime = [storeTime; t]` instead of `push!(storeTime, t)`
+    =#
+    if storeTime[end] == t
+        storeTemp[end] = T
+        storeEps_x[end] = eps_x
+    elseif t != 0
+        storeTime = [storeTime; t]
+        storeTemp = [storeTemp; T]
+        storeEps_x = [storeEps_x; eps_x]
+    end
+
+    cross = findfirst(!=(0), diff(sign.(diff(storeTime))))
+    if cross !== nothing
+        cross_time = storeTime[end]
+        storeTemp = [storeTemp[storeTime .< cross_time]; storeTemp[end]]
+        storeEps_x = [storeEps_x[storeTime .< cross_time]; storeEps_x[end]]
+        storeTime = [storeTime[storeTime .< cross_time]; cross_time]
+    end
+
     eps_m = 1 - eps_x - eps_g
 
     m_eq, dm_eq_dP, dm_eq_dT, dm_eq_dX_co2, C_co2_t, dC_co2_dP, dC_co2_dT, dC_co2_dX_co2 = exsolve(
@@ -199,6 +204,7 @@ function odeChamber(
     du[10] = Mdot_c_in - Mdot_c_out
     param_saved_var.storeTime = storeTime
     param_saved_var.storeTemp = storeTemp
+    param_saved_var.storeEps_x = storeEps_x
     return du
 end
 
@@ -305,12 +311,9 @@ function affect!(
     erupt_saved::EruptSaved{Float64},
 )
     composition = param.composition
-    storeTime = param_saved_var.storeTime
-    storeTemp = param_saved_var.storeTemp
-    storeTemp = storeTemp[storeTime .< int.t]
-    storeTime = storeTime[storeTime .< int.t]
-    param_saved_var.storeTime = storeTime
-    param_saved_var.storeTemp = storeTemp
+    param_saved_var.storeTemp = param_saved_var.storeTemp[param_saved_var.storeTime .< int.t]
+    param_saved_var.storeEps_x = param_saved_var.storeEps_x[param_saved_var.storeTime .< int.t]
+    param_saved_var.storeTime = param_saved_var.storeTime[param_saved_var.storeTime .< int.t]
 
     if param.dP_lit_dt_0 == 0
         temp_P_lit = 0.0

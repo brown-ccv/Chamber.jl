@@ -15,14 +15,20 @@ function write_csv(df::DataFrame, erupt_saved::EruptSaved{Float64}, path::String
     ]
     rename!(df, ["timestamp" => "time"])
     rename!(df, ["value$i" => names[i] for i in 1:10])
+    n = length(erupt_saved.time)
     df_erupt = DataFrame(
-        reduce(
-            hcat,
-            [erupt_saved.time, erupt_saved.duration, erupt_saved.mass, erupt_saved.volume],
-        ),
-        ["time_of_eruption", "duration_of_eruption", "mass_erupted", "volume_erupted"],
+        time_of_eruption = erupt_saved.time,
+        duration_of_eruption = [erupt_saved.duration; fill(NaN, n - length(erupt_saved.duration))],
+        mass_erupted = [erupt_saved.mass; fill(NaN, n - length(erupt_saved.mass))],
+        volume_erupted = [erupt_saved.volume; fill(NaN, n - length(erupt_saved.volume))]
     )
     CSV.write("$path/out.csv", df)
     CSV.write("$path/eruptions.csv", df_erupt)
+    return nothing
+end
+
+function write_ϵx_csv(storeTime::Vector{Float64}, storeEps_x::Vector{Float64}, path::String)::Nothing
+    df = DataFrame(Time = storeTime, eps_x = storeEps_x)
+    CSV.write("$path/eps_x.csv", df)
     return nothing
 end
