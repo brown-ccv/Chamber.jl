@@ -268,10 +268,12 @@ julia> chamber(composition, end_time, log_volume_km3, InitialConc_H2O, InitialCo
         df = DataFrame(sol)
         write_csv(df, erupt_saved, path)
         if plotfig
-            plot_figs(df, path)
+            title = latexstringtitle(composition, log_volume_km3, InitialConc_H2O, InitialConc_CO2, log_vfr, depth)
+            plot_combined_fig(df, path, title)
+            plot_dual_axis(df, param_saved_var.storeTime, param_saved_var.storeEps_x, path)
         end
-        write_ϵx_csv(param_saved_var.storeTime, param_saved_var.storeEps_x, path)
-        plot_ϵx(param_saved_var.storeTime, param_saved_var.storeEps_x, path)
+        # write_ϵx_csv(param_saved_var.storeTime, param_saved_var.storeEps_x, path)
+        # plot_ϵx(param_saved_var.storeTime, param_saved_var.storeEps_x, path)
         return df
     end
     return df
