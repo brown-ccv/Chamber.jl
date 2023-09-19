@@ -4,8 +4,8 @@ function plot_sol(df, x_axis_col, y_axis_col)
         df[:, y_axis_col];
         xaxis=x_axis_col,
         yaxis=y_axis_col,
+        label="Chamber.jl",
         linewidth=2,
-        legend=false,
         marker=(:x, 3, Plots.stroke(2)),
     )
 end

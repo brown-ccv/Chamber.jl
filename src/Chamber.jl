@@ -11,7 +11,6 @@ using Roots
 using SpecialFunctions
 using Sundials
 using TimerOutputs
-using LaTeXStrings
 using Logging
 include("utils.jl")
 include("./glq_points_weights.jl")
