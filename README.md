@@ -44,6 +44,7 @@ A `DataFrame` containing the solution with columns:
 - `total_mass`: Total mass of magma chamber (kg).
 - `total_mass_H2O`: Total mass of water in the magma (kg).
 - `total_mass_CO2`: Total mass of CO₂ in the magma (kg).
+- `eps_x`: Crystal volume fraction.
 
 ### Outputs
 A directory named after `output_dirname` or the default value, containing the following files:
