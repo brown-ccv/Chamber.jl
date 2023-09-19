@@ -140,8 +140,6 @@ export @memoize,
     latexstringtitle,
     plot_combined_fig,
     plot_dual_axis,
-    plot_ϵx,
-    write_ϵx_csv,
     check_for_duplicates,
     chamber
 

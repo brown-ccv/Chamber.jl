@@ -224,7 +224,6 @@ julia> chamber(composition, end_time, log_volume_km3, InitialConc_H2O, InitialCo
             # initialize vector to store quantities
             param_saved_var.storeTime = Vector{Float64}([0])
             param_saved_var.storeTemp = Vector{Float64}([T_0])
-            param_saved_var.storeEps_x = Vector{Float64}([eps_x0])
 
             @info("IC_Finder parameters: $(param_IC_Finder)")
 
@@ -266,14 +265,13 @@ julia> chamber(composition, end_time, log_volume_km3, InitialConc_H2O, InitialCo
         print_timer_log(io, to)
         close(io)
         df = DataFrame(sol)
-        write_csv(df, erupt_saved, path)
+        write_csv(df, erupt_saved, path, composition)
         if plotfig
             title = latexstringtitle(composition, log_volume_km3, InitialConc_H2O, InitialConc_CO2, log_vfr, depth)
             plot_combined_fig(df, path, title)
-            plot_dual_axis(df, param_saved_var.storeTime, param_saved_var.storeEps_x, path)
+            # plot_figs(df, path)
+            plot_dual_axis(df, path)
         end
-        # write_ϵx_csv(param_saved_var.storeTime, param_saved_var.storeEps_x, path)
-        # plot_ϵx(param_saved_var.storeTime, param_saved_var.storeEps_x, path)
         return df
     end
     return df

@@ -31,7 +31,6 @@ function odeChamber(
     composition = param.composition
     storeTime = param_saved_var.storeTime
     storeTemp = param_saved_var.storeTemp
-    storeEps_x = param_saved_var.storeEps_x
     phase = param_saved_var.phase
     c_x, c_m = param.c_x, param.c_m
     L_e, L_m = param.L_e, param.L_m
@@ -67,18 +66,15 @@ function odeChamber(
     =#
     if storeTime[end] == t
         storeTemp[end] = T
-        storeEps_x[end] = eps_x
     elseif t != 0
         storeTime = [storeTime; t]
         storeTemp = [storeTemp; T]
-        storeEps_x = [storeEps_x; eps_x]
     end
 
     cross = findfirst(!=(0), diff(sign.(diff(storeTime))))
     if cross !== nothing
         cross_time = storeTime[end]
         storeTemp = [storeTemp[storeTime .< cross_time]; storeTemp[end]]
-        storeEps_x = [storeEps_x[storeTime .< cross_time]; storeEps_x[end]]
         storeTime = [storeTime[storeTime .< cross_time]; cross_time]
     end
 
@@ -204,7 +200,6 @@ function odeChamber(
     du[10] = Mdot_c_in - Mdot_c_out
     param_saved_var.storeTime = storeTime
     param_saved_var.storeTemp = storeTemp
-    param_saved_var.storeEps_x = storeEps_x
     return du
 end
 
@@ -312,7 +307,6 @@ function affect!(
 )
     composition = param.composition
     param_saved_var.storeTemp = param_saved_var.storeTemp[param_saved_var.storeTime .< int.t]
-    param_saved_var.storeEps_x = param_saved_var.storeEps_x[param_saved_var.storeTime .< int.t]
     param_saved_var.storeTime = param_saved_var.storeTime[param_saved_var.storeTime .< int.t]
 
     if param.dP_lit_dt_0 == 0
@@ -342,6 +336,7 @@ function affect!(
         record_erupt_end(int.t, erupt_saved, param)
         @info("*event idx: $idx\n  time: $(int.t), Finished an eruption...")
     elseif idx == 6 || idx == 8
+        println("idx = 8..")
         phase_here = param_saved_var.phase
         @info(
             "*event idx: $idx\n  time: $(int.t), starting ic finder for conversion of phase, phase_here: $phase_here",
