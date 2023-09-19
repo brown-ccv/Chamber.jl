@@ -45,20 +45,6 @@ function odeChamber(
     # effective gas molar mass
     m_g = mm_co2 * X_co2 + mm_h2o * (1 - X_co2)
 
-    V, dV_dP, dV_dT = compute_dXdP_dXdT(u[4], param, "r")
-    rho_m, drho_m_dP, drho_m_dT = compute_dXdP_dXdT(u[5], param, "m")
-    rho_x, drho_x_dP, drho_x_dT = compute_dXdP_dXdT(u[6], param, "x")
-    eos_g_res = eos_g(P, T)
-    rho_g, drho_g_dP, drho_g_dT = eos_g_res.rho_g, eos_g_res.drho_g_dP, eos_g_res.drho_g_dT
-
-    total_Mass, M_h2o, M_co2 = u[8], u[9], u[10]
-    m_h2o = M_h2o / (total_Mass)
-    m_co2 = M_co2 / (total_Mass)
-
-    eps_x, deps_x_dP, deps_x_dT, deps_x_deps_g, deps_x_dmco2_t, deps_x_dmh2o_t = crystal_fraction(
-        composition, T, P, m_h2o, m_co2
-    )
-
     #=
     NOTE:
         push! method is NOT work for odechamber, it may cause some errors when running `chamber`. 
@@ -78,6 +64,19 @@ function odeChamber(
         storeTime = [storeTime[storeTime .< cross_time]; cross_time]
     end
 
+    V, dV_dP, dV_dT = compute_dXdP_dXdT(u[4], param, "r")
+    rho_m, drho_m_dP, drho_m_dT = compute_dXdP_dXdT(u[5], param, "m")
+    rho_x, drho_x_dP, drho_x_dT = compute_dXdP_dXdT(u[6], param, "x")
+    eos_g_res = eos_g(P, T)
+    rho_g, drho_g_dP, drho_g_dT = eos_g_res.rho_g, eos_g_res.drho_g_dP, eos_g_res.drho_g_dT
+
+    total_Mass, M_h2o, M_co2 = u[8], u[9], u[10]
+    m_h2o = M_h2o / (total_Mass)
+    m_co2 = M_co2 / (total_Mass)
+
+    eps_x, deps_x_dP, deps_x_dT, deps_x_deps_g, deps_x_dmco2_t, deps_x_dmh2o_t = crystal_fraction(
+        composition, T, P, m_h2o, m_co2
+    )
     eps_m = 1 - eps_x - eps_g
 
     m_eq, dm_eq_dP, dm_eq_dT, dm_eq_dX_co2, C_co2_t, dC_co2_dP, dC_co2_dT, dC_co2_dX_co2 = exsolve(
