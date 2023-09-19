@@ -336,7 +336,6 @@ function affect!(
         record_erupt_end(int.t, erupt_saved, param)
         @info("*event idx: $idx\n  time: $(int.t), Finished an eruption...")
     elseif idx == 6 || idx == 8
-        println("idx = 8..")
         phase_here = param_saved_var.phase
         @info(
             "*event idx: $idx\n  time: $(int.t), starting ic finder for conversion of phase, phase_here: $phase_here",

@@ -505,5 +505,3 @@ function check_for_duplicates(
     )
     return nothing
 end
-
-latexstringtitle(composition, log_volume_km3, InitialConc_H2O, InitialConc_CO2, log_vfr, depth) = L"\textrm{%$(string(typeof(composition)))\ \ H_2O:%$(InitialConc_H2O*100)\ \%,\ CO_2: %$(InitialConc_CO2*1000000)\ ppm,\ depth:%$(depth/1000)\ km,\ vfr: 10^{%$(log_vfr)}\ km^{3}/yr,\ V_0:10^{%$(log_volume_km3)}\ km^{3}}"

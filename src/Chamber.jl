@@ -136,11 +136,6 @@ export @memoize,
     build_rho_rc,
     write_csv,
     plot_figs,
-    plot_sol_year_unit,
-    latexstringtitle,
-    plot_combined_fig,
-    plot_dual_axis,
-    check_for_duplicates,
     chamber
 
 # Write your package code here.

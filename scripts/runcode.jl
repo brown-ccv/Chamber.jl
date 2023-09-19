@@ -267,10 +267,7 @@ julia> chamber(composition, end_time, log_volume_km3, InitialConc_H2O, InitialCo
         df = DataFrame(sol)
         write_csv(df, erupt_saved, path, composition)
         if plotfig
-            title = latexstringtitle(composition, log_volume_km3, InitialConc_H2O, InitialConc_CO2, log_vfr, depth)
-            plot_combined_fig(df, path, title)
-            # plot_figs(df, path)
-            plot_dual_axis(df, path)
+            plot_figs(df, path)
         end
         return df
     end
