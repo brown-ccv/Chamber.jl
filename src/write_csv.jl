@@ -18,7 +18,7 @@ function write_csv(df::DataFrame, erupt_saved::EruptSaved{Float64}, path::String
         "total_mass_CO2",
     ]
     rename!(df, ["timestamp" => "time"])
-    rename!(df, ["value$i" => names[i] for i in 1:10])
+    rename!(df, ["value$i" => name for (i, name) in enumerate(names)])
     # add eps_x column
     m_h2o = df[:, "total_mass_H2O"] ./ df[:, "total_mass"]
     m_co2 = df[:, "total_mass_CO2"] ./ df[:, "total_mass"]
