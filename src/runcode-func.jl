@@ -305,8 +305,9 @@ function affect!(
     erupt_saved::EruptSaved{Float64},
 )
     composition = param.composition
-    param_saved_var.storeTemp = param_saved_var.storeTemp[param_saved_var.storeTime .< int.t]
-    param_saved_var.storeTime = param_saved_var.storeTime[param_saved_var.storeTime .< int.t]
+    IsStoreTimeLTt = param_saved_var.storeTime .< int.t
+    param_saved_var.storeTemp = param_saved_var.storeTemp[IsStoreTimeLTt]
+    param_saved_var.storeTime = param_saved_var.storeTime[IsStoreTimeLTt]
 
     if param.dP_lit_dt_0 == 0
         temp_P_lit = 0.0
