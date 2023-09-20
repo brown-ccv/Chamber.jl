@@ -32,6 +32,7 @@ A `DataFrame` containing the solution with columns:
 - `total_mass`: Total mass of magma chamber in kg.
 - `total_mass_H2O`: Total mass of water in the magma in kg.
 - `total_mass_CO2`: Total mass of CO₂ in the magma in kg.
+- `eps_x`: Crystal volume fraction.
 
 ## Outputs
 A directory named after `output_dirname` or the default value, containing the following files:
@@ -265,7 +266,7 @@ julia> chamber(composition, end_time, log_volume_km3, InitialConc_H2O, InitialCo
         print_timer_log(io, to)
         close(io)
         df = DataFrame(sol)
-        write_csv(df, erupt_saved, path)
+        write_csv(df, erupt_saved, path, composition)
         if plotfig
             plot_figs(df, path)
         end
@@ -305,6 +306,7 @@ A `DataFrame` containing the solution with columns:
 - `total_mass`: Total mass of magma chamber in kg.
 - `total_mass_H2O`: Total mass of water in the magma in kg.
 - `total_mass_CO2`: Total mass of CO₂ in the magma in kg.
+- `eps_x`: Crystal volume fraction.
 
 ## Outputs
 A directory named after `output_dirname` or the default value, containing the following files:

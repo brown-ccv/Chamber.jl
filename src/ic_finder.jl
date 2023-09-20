@@ -268,7 +268,7 @@ function IC_Finder(
         end
     end
 
-    if eps_g0 <= 0 || X_co20 < 0
+    if eps_g0 <= 0 || X_co20 < 0 || any(isnan, [X_co20, eps_g0])
         X_co20 = 0.0
         eps_g0 = 0.0
         mco2_diss = m_co2_melt
